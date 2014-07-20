@@ -43,15 +43,37 @@ struct argument_t
     else if(type == "string")
       return "std::string";
     else if(type == "object")
-      return "int32_t";
+      return "proxy_t";
     else if(type == "new_id")
       return "proxy_t";
     else if(type == "fd")
       return "int";
     else if(type == "array")
-      return "std::vector<uint32_t>";
+      return "std::vector<char>";
     else
       return type;
+  }
+
+  std::string print_short()
+  {
+    if(type == "int")
+      return "i";
+    else if(type == "uint")
+      return "u";
+    else if(type == "fixed")
+      return "f";
+    else if(type == "string")
+      return "s";
+    else if(type == "object")
+      return "o";
+    else if(type == "new_id")
+      return "n";
+    else if(type == "array")
+      return "a";
+    else if(type == "fd")
+      return "h";
+    else
+      return "x";
   }
 
   std::string print_argument()
@@ -76,32 +98,34 @@ struct event_t
     return tmp;
   }
 
-  std::string print_function_header()
+  std::string print_dispatcher(int opcode)
   {
-    std::string tmp = "static void " + name + "_handler(void *data, ";
-    for(auto arg : args)
-      tmp += arg.print_argument() + ", ";
-    tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ");";
-    return tmp;
-  }
+    std::stringstream ss;
+    ss << "    case " << opcode << ":" << std::endl
+       << "      if(events->" << name << ") events->" << name << "(";
 
-  std::string print_function_body(std::string interface_name)
-  {
-    std::string tmp = "void " + interface_name + "_t::" + name + "_handler(void *data, ";
+    int c = 0;
     for(auto arg : args)
-      tmp += arg.print_argument() + ", ";
-    tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ")\n{\n";
-    tmp += "  events_t *events = static_cast<events_t*>(data);\n";
-    tmp += "  if(events->" + name + ")\n";
-    tmp += "    events->" + name + "(";
-    for(auto arg : args)
-      tmp += arg.name + ", ";
+      {
+        if(arg.type == "array")
+          {
+            ss << "std::vector<char>((char*)args[" << c << "].a->data, "
+               << "(char*)args[" << c << "].a->data + args[" << c << "].a->size), ";
+            c++;
+          }
+        else if(arg.type == "object" || arg.type == "new_id") // wayland/src/connection.c:886
+          {
+            ss << "proxy_t((wl_proxy*)args[" << c << "].o), ";
+            c++;
+          }
+        else
+          ss << "args[" << c++ << "]." << arg.print_short() << ", ";
+      }
     if(args.size())
-      tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ");\n}";
-    return tmp;
+      ss.str(ss.str().substr(0, ss.str().size()-2));
+    ss.seekp(0, std::ios_base::end);
+    ss << ");";
+    return ss.str();
   }
 
   std::string print_signal()
@@ -263,14 +287,9 @@ struct interface_t
     ss << "  };" << std::endl
        << std::endl
        << "  std::shared_ptr<events_t> events;" << std::endl
-       << std::endl;
-
-    for(auto &event : events)
-      ss << "  " << event.print_function_header() << std::endl;
-    
-    ss << "  static std::array<void(*)(), " << events.size() << "> handlers;" << std::endl;
-
-    ss << std::endl
+       << "  static int dispatcher(const void *data, void *target, uint32_t opcode, const wl_message *message, wl_argument *args);" << std::endl
+       << "  static std::array<void(*)(), " << events.size() << "> handlers;" << std::endl
+       << std::endl
        << "public:" << std::endl
        << "  " + name + "_t(const proxy_t &proxy);" << std::endl;
 
@@ -296,17 +315,8 @@ struct interface_t
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
        << "  : proxy_t(p), events(new events_t)" << std::endl
        << "{" << std::endl
-       << "  wl_proxy_add_listener(*proxy, handlers.data(), events.get());" << std::endl
+       << "  wl_proxy_add_dispatcher(*proxy, dispatcher, NULL, events.get());" << std::endl
        << "}" << std::endl
-       << std::endl
-       << "std::array<void(*)(), " << events.size() << "> " << name << "_t::handlers = {" << std::endl;
-
-    std::string tmp;
-    for(auto &event : events)
-      tmp += "  reinterpret_cast<void(*)()>(" + event.name + "_handler),\n"; // TODO: TYPESAFETY!!!
-    tmp = tmp.substr(0, tmp.size()-2);
-    tmp += "\n};";
-    ss << tmp << std::endl
        << std::endl;
 
     int opcode = 0; // Opcodes are in order of the XML. (Sadly undocumented)
@@ -314,9 +324,24 @@ struct interface_t
       ss << request.print_body(name, opcode++) << std::endl
        << std::endl;
 
-    for(auto &event : events)
-      ss << event.print_function_body(name) << std::endl
-       << std::endl;
+    ss << "int " << name << "_t::dispatcher(const void *data, void *target, uint32_t opcode, const wl_message *message, wl_argument *args)" << std::endl
+       << "{" << std::endl;
+
+    if(events.size())
+      {
+        ss << "  const events_t *events = static_cast<const events_t*>(data);" << std::endl
+           << "  switch(opcode)" << std::endl
+           << "    {" << std::endl;
+        
+        opcode = 0;
+        for(auto &event : events)
+          ss << event.print_dispatcher(opcode++) << std::endl;
+        
+        ss << "    }" << std::endl;
+      }
+
+    ss << "  return 0;" << std::endl
+       << "}" << std::endl;
 
     return ss.str();
   }
@@ -330,21 +355,18 @@ int main()
 
   std::list<interface_t> interfaces;
 
-  for(xml_node interface = protocol.child("interface"); interface;
-      interface = interface.next_sibling("interface"))
+  for(xml_node &interface : protocol.children("interface"))
     {
       interface_t iface;
       iface.name = interface.attribute("name").value();
       iface.name = iface.name.substr(3, iface.name.size());
       iface.version = interface.attribute("version").value();
 
-      for(xml_node request = interface.child("request"); request;
-          request = request.next_sibling("request"))
+      for(xml_node &request : interface.children("request"))
         {
           request_t req;
           req.name = request.attribute("name").value();
-          for(xml_node argument = request.child("arg"); argument;
-              argument = argument.next_sibling("arg"))
+          for(xml_node &argument : request.children("arg"))
             {
               argument_t arg;
               arg.type = argument.attribute("type").value();
@@ -357,13 +379,11 @@ int main()
           iface.requests.push_back(req);
         }
 
-      for(xml_node event = interface.child("event"); event;
-          event = event.next_sibling("event"))
+      for(xml_node &event : interface.children("event"))
         {
           event_t ev;
           ev.name = event.attribute("name").value();
-          for(xml_node argument = event.child("arg"); argument;
-              argument = argument.next_sibling("arg"))
+          for(xml_node &argument : event.children("arg"))
             {
               argument_t arg;
               arg.type = argument.attribute("type").value();
@@ -375,8 +395,7 @@ int main()
           iface.events.push_back(ev);
         }
 
-      for(xml_node enumeration = interface.child("enum"); enumeration;
-          enumeration = enumeration.next_sibling("enum"))
+      for(xml_node &enumeration : interface.children("enum"))
         {
           enumeration_t enu;
           enu.name = enumeration.attribute("name").value();
@@ -417,6 +436,7 @@ int main()
             << "  {" << std::endl
             << "  }" << std::endl
             << "  " << std::endl
+            << "public:" << std::endl
             << "  proxy_t(const proxy_t& p)" << std::endl
             << "    : proxy(new proxy_ptr(*p.proxy))" << std::endl
             << "  {" << std::endl
