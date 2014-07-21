@@ -191,10 +191,10 @@ struct request_t : public event_t
     tmp += ")\n{\n";
 
     if(ret.name == "")
-      tmp += "  wl_proxy_marshal(*proxy, " + std::to_string(opcode) + ", ";
+      tmp += "  wl_proxy_marshal(proxy->proxy, " + std::to_string(opcode) + ", ";
     else
       {
-        tmp += "  return proxy_t(wl_proxy_marshal_constructor(*proxy, " + std::to_string(opcode) + ", ";
+        tmp += "  return proxy_t(wl_proxy_marshal_constructor(proxy->proxy, " + std::to_string(opcode) + ", ";
         if(ret.interface == "")
           tmp += "interface";
         else
@@ -211,7 +211,7 @@ struct request_t : public event_t
             tmp += "NULL, ";
           }
         else if(arg.interface != "")
-          tmp += "*" + arg.name + ".proxy, ";
+          tmp += arg.name + ".proxy->proxy, ";
         else if(arg.type == "string")
           tmp += arg.name + ".c_str(), ";
         else
@@ -315,7 +315,7 @@ struct interface_t
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
        << "  : proxy_t(p), events(new events_t)" << std::endl
        << "{" << std::endl
-       << "  wl_proxy_add_dispatcher(*proxy, dispatcher, NULL, events.get());" << std::endl
+       << "  wl_proxy_add_dispatcher(proxy->proxy, dispatcher, NULL, events.get());" << std::endl
        << "}" << std::endl
        << std::endl;
 
@@ -428,17 +428,25 @@ int main()
   std::cout << "class proxy_t" << std::endl
             << "{" << std::endl
             << "protected:" << std::endl
-            << "  typedef wl_proxy* proxy_ptr;" << std::endl
+            << "  struct proxy_ptr" << std::endl
+            << "  {" << std::endl
+            << "    wl_proxy *proxy;" << std::endl
+            << "    ~proxy_ptr()" << std::endl
+            << "    {" << std::endl
+            << "      wl_proxy_destroy(proxy);" << std::endl
+            << "    }" << std::endl
+            << "  };" << std::endl
+            << "  " << std::endl
             << "  std::shared_ptr<proxy_ptr> proxy;" << std::endl
             << "  " << std::endl
             << "  proxy_t(wl_proxy *p)" << std::endl
-            << "    : proxy(new proxy_ptr(p))" << std::endl
+            << "    : proxy(new proxy_ptr({p}))" << std::endl
             << "  {" << std::endl
             << "  }" << std::endl
             << "  " << std::endl
             << "public:" << std::endl
             << "  proxy_t(const proxy_t& p)" << std::endl
-            << "    : proxy(new proxy_ptr(*p.proxy))" << std::endl
+            << "    : proxy(new proxy_ptr({p.proxy->proxy}))" << std::endl
             << "  {" << std::endl
             << "  }" << std::endl
             << std::endl;
