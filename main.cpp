@@ -285,7 +285,8 @@ struct interface_t
        << "  static std::array<void(*)(), " << events.size() << "> handlers;" << std::endl
        << std::endl
        << "public:" << std::endl
-       << "  " + name + "_t(const proxy_t &proxy);" << std::endl;
+       << "  " + name + "_t(const proxy_t &proxy);" << std::endl
+       << "  " + name + "_t();" << std::endl;
 
     for(auto &request : requests)
       ss << "  " << request.print_header(name) << std::endl;
@@ -310,6 +311,10 @@ struct interface_t
        << "  : proxy_t(p), events(new events_t)" << std::endl
        << "{" << std::endl
        << "  add_dispatcher(dispatcher, events.get());" << std::endl
+       << "}" << std::endl
+       << std::endl
+       << name << "_t::" << name << "_t()" << std::endl
+       << "{" << std::endl
        << "}" << std::endl
        << std::endl;
 

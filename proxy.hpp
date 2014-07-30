@@ -15,10 +15,6 @@ private:
   
   std::shared_ptr<proxy_ptr> proxy;
 
-  proxy_t()
-  {
-  }
-
   // handles integers, file descriptors and fixed point numbers
   // (this works, because wl_argument is an union)
   template <typename...T>
@@ -70,6 +66,11 @@ private:
     return proxy_t();
   }
 
+protected:
+  proxy_t()
+  {
+  }
+
 public:
   proxy_t(wl_proxy *p)
     : proxy(new proxy_ptr({p}))
@@ -84,18 +85,22 @@ public:
   template <typename...T>
   void marshal(uint32_t opcode, T...args)
   {
-    marshal_single(opcode, NULL, {}, args...);
+    if(proxy)
+      marshal_single(opcode, NULL, {}, args...);
   }
 
   template <typename...T>
   proxy_t marshal_constructor(uint32_t opcode, const wl_interface *interface, T...args)
   {
-    return marshal_single(opcode, interface, {}, args...);
+    if(proxy)
+      return marshal_single(opcode, interface, {}, args...);
+    return proxy_t();
   }
 
   void add_dispatcher(wl_dispatcher_func_t dispatcher, void *data)
   {
-    wl_proxy_add_dispatcher(proxy->proxy, dispatcher, data, NULL);
+    if(proxy)
+      wl_proxy_add_dispatcher(proxy->proxy, dispatcher, data, NULL);
   }
 };
 
