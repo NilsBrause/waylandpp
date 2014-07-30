@@ -77,7 +77,7 @@ public:
   }
   
   proxy_t(const proxy_t& p)
-    : proxy(new proxy_ptr({p.proxy->proxy}))
+    : proxy(p.proxy)
   {
   }
 
