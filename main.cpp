@@ -191,10 +191,10 @@ struct request_t : public event_t
     tmp += ")\n{\n";
 
     if(ret.name == "")
-      tmp += "  wl_proxy_marshal(proxy->proxy, " + std::to_string(opcode) + ", ";
+      tmp += "  marshal(" + std::to_string(opcode) + ", ";
     else
       {
-        tmp += "  return proxy_t(wl_proxy_marshal_constructor(proxy->proxy, " + std::to_string(opcode) + ", ";
+        tmp += "  return marshal_constructor(" + std::to_string(opcode) + ", ";
         if(ret.interface == "")
           tmp += "interface";
         else
@@ -210,19 +210,12 @@ struct request_t : public event_t
               tmp += "interface->name, version, ";
             tmp += "NULL, ";
           }
-        else if(arg.interface != "")
-          tmp += arg.name + ".proxy->proxy, ";
-        else if(arg.type == "string")
-          tmp += arg.name + ".c_str(), ";
         else
           tmp += arg.name + ", ";
       }
 
     tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ")";
-    if(ret.name != "")
-      tmp += ")";
-    tmp += ";\n}";
+    tmp += ");\n}";
     return tmp;
   }
 };
@@ -315,7 +308,7 @@ struct interface_t
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
        << "  : proxy_t(p), events(new events_t)" << std::endl
        << "{" << std::endl
-       << "  wl_proxy_add_dispatcher(proxy->proxy, dispatcher, NULL, events.get());" << std::endl
+       << "  add_dispatcher(dispatcher, events.get());" << std::endl
        << "}" << std::endl
        << std::endl;
 
@@ -417,6 +410,7 @@ int main()
   std::cout << "#include <memory>" << std::endl
             << "#include <vector>" << std::endl
             << "#include <wayland-client.h>" << std::endl
+            << "#include <proxy.hpp>" << std::endl
             << std::endl;
 
   // forward declarations
@@ -424,39 +418,6 @@ int main()
     std::cout << iface.print_forward() << std::endl;
   std::cout << std::endl;
 
-  // generic proxy class
-  std::cout << "class proxy_t" << std::endl
-            << "{" << std::endl
-            << "protected:" << std::endl
-            << "  struct proxy_ptr" << std::endl
-            << "  {" << std::endl
-            << "    wl_proxy *proxy;" << std::endl
-            << "    ~proxy_ptr()" << std::endl
-            << "    {" << std::endl
-            << "      wl_proxy_destroy(proxy);" << std::endl
-            << "    }" << std::endl
-            << "  };" << std::endl
-            << "  " << std::endl
-            << "  std::shared_ptr<proxy_ptr> proxy;" << std::endl
-            << "  " << std::endl
-            << "  proxy_t(wl_proxy *p)" << std::endl
-            << "    : proxy(new proxy_ptr({p}))" << std::endl
-            << "  {" << std::endl
-            << "  }" << std::endl
-            << "  " << std::endl
-            << "public:" << std::endl
-            << "  proxy_t(const proxy_t& p)" << std::endl
-            << "    : proxy(new proxy_ptr({p.proxy->proxy}))" << std::endl
-            << "  {" << std::endl
-            << "  }" << std::endl
-            << std::endl;
-
-  for(auto &iface : interfaces)
-    std::cout << iface.print_friend() << std::endl;
-  
-  std::cout << "};"
-            << std::endl << std::endl;
-  
   // class declarations
   for(auto &iface : interfaces)
     std::cout << iface.print_header() << std::endl;
