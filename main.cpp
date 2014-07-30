@@ -358,6 +358,7 @@ int main()
     {
       interface_t iface;
       iface.name = interface.attribute("name").value();
+      if(iface.name == "wl_display") continue; // skip in favor of hand written version
       iface.name = iface.name.substr(3, iface.name.size());
       iface.version = interface.attribute("version").value();
 
@@ -425,7 +426,7 @@ int main()
               << "#include <string>" << std::endl
               << "#include <vector>" << std::endl
               << std::endl
-              << "#include <proxy.hpp>" << std::endl
+              << "#include <core.hpp>" << std::endl
               << std::endl;
 
   // forward declarations

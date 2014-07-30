@@ -6,9 +6,7 @@
 
 int main()
 {
-  wl_display *d = wl_display_connect(NULL);
-  display_t display(reinterpret_cast<wl_proxy*>(d));
-
+  display_t display;
   registry_t registry = display.get_registry();
   compositor_t compositor;
   shell_t shell;
@@ -16,7 +14,6 @@ int main()
   shm_t shm;
   registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
     {
-      std::cout << name << ": " << interface << " v" << version << std::endl;
       if(interface == "wl_compositor")
         compositor = registry.bind(name, &wl_compositor_interface, version);
       else if(interface == "wl_shell")
@@ -27,7 +24,7 @@ int main()
         shm = registry.bind(name, &wl_shm_interface, version);
     };
 
-  wl_display_dispatch(d);
+  display.dispatch();
 
   surface_t surface = compositor.create_surface();
   egl e(display, surface, 320, 240);
@@ -41,7 +38,7 @@ int main()
   glClear(GL_COLOR_BUFFER_BIT);
   e.end();
 
-  while(true) wl_display_dispatch(d);
+  while(true) display.dispatch();
 
   return 0;
 }

@@ -1,10 +1,32 @@
-#ifndef PROXY_HPP
-#define PROXY_HPP
+#ifndef CORE_HPP
+#define CORE_HPP
 
 #include <memory>
 #include <string>
 #include <vector>
 #include <wayland-client.h>
+
+class event_queue_t
+{
+private:
+  struct queue_ptr
+  {
+    wl_event_queue *queue;
+    ~queue_ptr()
+    {
+      wl_event_queue_destroy(queue);
+    }
+  };
+
+  std::shared_ptr<queue_ptr> queue;
+
+  friend class display_t;
+
+  event_queue_t(wl_event_queue *q)
+    : queue(new queue_ptr({q}))
+  {
+  }
+};
 
 class proxy_t
 {
@@ -12,15 +34,20 @@ private:
   struct proxy_ptr
   {
     wl_proxy *proxy;
+    bool display;
     ~proxy_ptr()
     {
-      wl_proxy_destroy(proxy);
+      if(!display)
+        wl_proxy_destroy(proxy);
+      else
+        wl_display_disconnect(reinterpret_cast<wl_display*>(proxy));
     }
   };
   
   std::shared_ptr<proxy_ptr> proxy;
 
   friend class egl;
+  friend class display_t;
 
   // handles integers, file descriptors and fixed point numbers
   // (this works, because wl_argument is an union)
@@ -79,8 +106,8 @@ protected:
   }
 
 public:
-  proxy_t(wl_proxy *p)
-    : proxy(new proxy_ptr({p}))
+    proxy_t(wl_proxy *p, bool is_display = false)
+      : proxy(new proxy_ptr({p, is_display}))
   {
   }
   
@@ -110,5 +137,36 @@ public:
       wl_proxy_add_dispatcher(proxy->proxy, dispatcher, data, NULL);
   }
 };
+
+class callback_t;
+class registry_t;
+
+class display_t : public proxy_t
+{
+public:
+  display_t(int fd);
+  display_t(std::string name = "");
+  event_queue_t create_queue();
+  int get_fd();
+  int roundtrip();
+  int read_events();
+  int prepare_read();
+  void cancel_read();
+  int dispatch_queue(event_queue_t queue);
+  int dispatch_queue_pending(event_queue_t queue);
+  int dispatch();
+  int dispatch_pending();
+  int get_error();
+  int flush();
+  callback_t sync();
+  registry_t get_registry();
+};
+
+enum display_error
+  {
+    display_error_invalid_object = 0,
+    display_error_invalid_method = 1,
+    display_error_no_memory = 2
+  };
 
 #endif
