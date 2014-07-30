@@ -12,20 +12,15 @@ private:
   struct queue_ptr
   {
     wl_event_queue *queue;
-    ~queue_ptr()
-    {
-      wl_event_queue_destroy(queue);
-    }
+    ~queue_ptr();
   };
 
   std::shared_ptr<queue_ptr> queue;
 
+  friend class proxy_t;
   friend class display_t;
 
-  event_queue_t(wl_event_queue *q)
-    : queue(new queue_ptr({q}))
-  {
-  }
+  event_queue_t(wl_event_queue *q);
 };
 
 class proxy_t
@@ -35,13 +30,7 @@ private:
   {
     wl_proxy *proxy;
     bool display;
-    ~proxy_ptr()
-    {
-      if(!display)
-        wl_proxy_destroy(proxy);
-      else
-        wl_display_disconnect(reinterpret_cast<wl_display*>(proxy));
-    }
+    ~proxy_ptr();
   };
   
   std::shared_ptr<proxy_ptr> proxy;
@@ -92,29 +81,10 @@ private:
   }
 
   // no more arguments
-  proxy_t marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v)
-  {
-    if(interface)
-      return proxy_t(wl_proxy_marshal_array_constructor(proxy->proxy, opcode, v.data(), interface));
-    wl_proxy_marshal_array(proxy->proxy, opcode, v.data());
-    return proxy_t();
-  }
+  proxy_t marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v);
 
 protected:
-  proxy_t()
-  {
-  }
-
-public:
-    proxy_t(wl_proxy *p, bool is_display = false)
-      : proxy(new proxy_ptr({p, is_display}))
-  {
-  }
-  
-  proxy_t(const proxy_t& p)
-    : proxy(p.proxy)
-  {
-  }
+  proxy_t();
 
   template <typename...T>
   void marshal(uint32_t opcode, T...args)
@@ -131,11 +101,14 @@ public:
     return proxy_t();
   }
 
-  void add_dispatcher(wl_dispatcher_func_t dispatcher, void *data)
-  {
-    if(proxy)
-      wl_proxy_add_dispatcher(proxy->proxy, dispatcher, data, NULL);
-  }
+  void add_dispatcher(wl_dispatcher_func_t dispatcher, void *data);
+
+public:
+  proxy_t(wl_proxy *p, bool is_display = false);
+  proxy_t(const proxy_t& p);
+  uint32_t get_id();
+  std::string get_class();
+  void set_queue(event_queue_t queue);
 };
 
 class callback_t;
@@ -144,6 +117,7 @@ class registry_t;
 class display_t : public proxy_t
 {
 public:
+  display_t(const proxy_t &proxy);
   display_t(int fd);
   display_t(std::string name = "");
   event_queue_t create_queue();
@@ -151,6 +125,7 @@ public:
   int roundtrip();
   int read_events();
   int prepare_read();
+  int prepare_read_queue(event_queue_t queue);
   void cancel_read();
   int dispatch_queue(event_queue_t queue);
   int dispatch_queue_pending(event_queue_t queue);
