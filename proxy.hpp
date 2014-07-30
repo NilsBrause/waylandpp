@@ -20,6 +20,8 @@ private:
   
   std::shared_ptr<proxy_ptr> proxy;
 
+  friend class egl;
+
   // handles integers, file descriptors and fixed point numbers
   // (this works, because wl_argument is an union)
   template <typename...T>

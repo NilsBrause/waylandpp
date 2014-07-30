@@ -1,6 +1,8 @@
 #include <stdexcept>
 #include <iostream>
 #include <wayland.hpp>
+#include <egl.hpp>
+#include <GL/gl.h>
 
 int main()
 {
@@ -27,7 +29,19 @@ int main()
 
   wl_display_dispatch(d);
 
-  surface_t surfaace = compositor.create_surface();
+  surface_t surface = compositor.create_surface();
+  egl e(display, surface, 320, 240);
+  shell_surface_t shell_surface = shell.get_shell_surface(surface);
+  shell_surface.on_ping() = [&] (uint32_t serial) { shell_surface.pong(serial); };
+  shell_surface.set_title("Window");
+  shell_surface.set_toplevel();
+  
+  e.begin();
+  glClearColor(1.0f, 0.1f, 0.6f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+  e.end();
+
+  while(true) wl_display_dispatch(d);
 
   return 0;
 }

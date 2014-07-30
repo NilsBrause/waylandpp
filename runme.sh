@@ -5,4 +5,4 @@ then
 fi
 g++ -ggdb -Wall -std=c++11 -I. main.cpp pugixml.cpp -omain || return 1
 ./main || return 1
-g++ -Wall -Werror -std=c++11 -I. test.cpp wayland.cpp -lwayland-client || return 1
+g++ -Wall -Werror -std=c++11 -I. -DWAYLAND test.cpp wayland.cpp egl.cpp -lwayland-client -lwayland-egl -lGL -lEGL || return 1
