@@ -4,8 +4,8 @@
 
 #ifdef WAYLAND
 egl::egl(display_t display, surface_t surface, int width, int height)
-  : egl(reinterpret_cast<wl_display*>(display.proxy->proxy),
-        wl_egl_window_create(reinterpret_cast<wl_surface*>(surface.proxy->proxy), width, height))
+  : egl(reinterpret_cast<wl_display*>(display.c_ptr()),
+        wl_egl_window_create(reinterpret_cast<wl_surface*>(surface.c_ptr()), width, height))
 {
 }
 #endif

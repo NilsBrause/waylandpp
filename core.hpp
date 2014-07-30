@@ -17,10 +17,9 @@ private:
 
   std::shared_ptr<queue_ptr> queue;
 
-  friend class proxy_t;
-  friend class display_t;
-
+public:
   event_queue_t(wl_event_queue *q);
+  wl_event_queue *c_ptr();
 };
 
 class proxy_t
@@ -34,9 +33,6 @@ private:
   };
   
   std::shared_ptr<proxy_ptr> proxy;
-
-  friend class egl;
-  friend class display_t;
 
   // handles integers, file descriptors and fixed point numbers
   // (this works, because wl_argument is an union)
@@ -109,6 +105,7 @@ public:
   uint32_t get_id();
   std::string get_class();
   void set_queue(event_queue_t queue);
+  wl_proxy *c_ptr();
 };
 
 class callback_t;

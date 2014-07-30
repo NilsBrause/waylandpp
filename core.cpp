@@ -6,10 +6,15 @@ event_queue_t::queue_ptr::~queue_ptr()
   wl_event_queue_destroy(queue);
 }
 
-event_queue_t::  event_queue_t(wl_event_queue *q)
+event_queue_t::event_queue_t(wl_event_queue *q)
   : queue(new queue_ptr({q}))
 {
 }
+
+wl_event_queue *event_queue_t::c_ptr()
+{
+  return queue->queue;
+};
 
 proxy_t::proxy_ptr::~proxy_ptr()
 {
@@ -59,7 +64,12 @@ std::string proxy_t::get_class()
 
 void proxy_t::set_queue(event_queue_t queue)
 {
-  wl_proxy_set_queue(proxy->proxy, queue.queue->queue);
+  wl_proxy_set_queue(proxy->proxy, queue.c_ptr());
+}
+
+wl_proxy *proxy_t::c_ptr()
+{
+  return proxy->proxy;
 }
 
 display_t::display_t(const proxy_t &p)
@@ -79,67 +89,67 @@ display_t::display_t(std::string name)
 
 event_queue_t display_t::create_queue()
 {
-  return wl_display_create_queue(reinterpret_cast<wl_display*>(proxy->proxy));
+  return wl_display_create_queue(reinterpret_cast<wl_display*>(c_ptr()));
 }
 
 int display_t::get_fd()
 {
-  return wl_display_get_fd(reinterpret_cast<wl_display*>(proxy->proxy));
+  return wl_display_get_fd(reinterpret_cast<wl_display*>(c_ptr()));
 }
 
 int display_t::roundtrip()
 {
-  return wl_display_roundtrip(reinterpret_cast<wl_display*>(proxy->proxy));
+  return wl_display_roundtrip(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::read_events()
 {
-  return wl_display_read_events(reinterpret_cast<wl_display*>(proxy->proxy));
+  return wl_display_read_events(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::prepare_read()
 {
-  return wl_display_prepare_read(reinterpret_cast<wl_display*>(proxy->proxy));
+  return wl_display_prepare_read(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::prepare_read_queue(event_queue_t queue)
 {
-  return wl_display_prepare_read_queue(reinterpret_cast<wl_display*>(proxy->proxy), queue.queue->queue);
+  return wl_display_prepare_read_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
 }    
 
 void display_t::cancel_read()
 {
-  wl_display_cancel_read(reinterpret_cast<wl_display*>(proxy->proxy));
+  wl_display_cancel_read(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::dispatch_queue(event_queue_t queue)
 {
-  return wl_display_dispatch_queue(reinterpret_cast<wl_display*>(proxy->proxy), queue.queue->queue);
+  return wl_display_dispatch_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
 }    
 
 int display_t::dispatch_queue_pending(event_queue_t queue)
 {
-  return wl_display_dispatch_queue_pending(reinterpret_cast<wl_display*>(proxy->proxy), queue.queue->queue);
+  return wl_display_dispatch_queue_pending(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
 }    
 
 int display_t::dispatch()
 {
-  return wl_display_dispatch(reinterpret_cast<wl_display*>(proxy->proxy));
+  return wl_display_dispatch(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::dispatch_pending()
 {
-  return wl_display_dispatch_pending(reinterpret_cast<wl_display*>(proxy->proxy));
+  return wl_display_dispatch_pending(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::get_error()
 {
-  return wl_display_get_error(reinterpret_cast<wl_display*>(proxy->proxy));
+  return wl_display_get_error(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::flush()
 {
-  return wl_display_flush(reinterpret_cast<wl_display*>(proxy->proxy));
+  return wl_display_flush(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 callback_t display_t::sync()
