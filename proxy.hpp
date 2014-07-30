@@ -95,7 +95,7 @@ public:
 
   void add_dispatcher(wl_dispatcher_func_t dispatcher, void *data)
   {
-    wl_proxy_add_dispatcher(proxy->proxy, dispatcher, NULL, data);
+    wl_proxy_add_dispatcher(proxy->proxy, dispatcher, data, NULL);
   }
 };
 
