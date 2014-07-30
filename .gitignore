@@ -1,4 +1,5 @@
 a.out
 main
 wayland.xml
-waylandpp.cpp
+wayland.cpp
+wayland.hpp

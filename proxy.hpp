@@ -1,6 +1,11 @@
 #ifndef PROXY_HPP
 #define PROXY_HPP
 
+#include <memory>
+#include <string>
+#include <vector>
+#include <wayland-client.h>
+
 class proxy_t
 {
 private:

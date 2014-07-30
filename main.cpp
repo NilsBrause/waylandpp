@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
+#include <fstream>
 #include <list>
 #include <sstream>
 
@@ -349,7 +349,7 @@ struct interface_t
 int main()
 {
   xml_document doc;
-  doc.load(std::cin);
+  doc.load_file("wayland.xml");
   xml_node protocol = doc.child("protocol");
 
   std::list<interface_t> interfaces;
@@ -412,27 +412,46 @@ int main()
       interfaces.push_back(iface);
     }
 
-  // header
-  std::cout << "#include <memory>" << std::endl
-            << "#include <vector>" << std::endl
-            << "#include <wayland-client.h>" << std::endl
-            << "#include <proxy.hpp>" << std::endl
-            << std::endl;
+  std::fstream wayland_hpp("wayland.hpp", std::ios_base::out | std::ios_base::trunc);
+  std::fstream wayland_cpp("wayland.cpp", std::ios_base::out | std::ios_base::trunc);
+
+  // header intro
+  wayland_hpp << "#ifndef WAYLAND_HPP" << std::endl
+              << "#define WAYLAND_HPP" << std::endl
+              << std::endl
+              << "#include <array>" << std::endl
+              << "#include <functional>" << std::endl
+              << "#include <memory>" << std::endl
+              << "#include <string>" << std::endl
+              << "#include <vector>" << std::endl
+              << std::endl
+              << "#include <proxy.hpp>" << std::endl
+              << std::endl;
 
   // forward declarations
   for(auto &iface : interfaces)
-    std::cout << iface.print_forward() << std::endl;
-  std::cout << std::endl;
+    wayland_hpp << iface.print_forward() << std::endl;
+  wayland_hpp << std::endl;
 
   // class declarations
   for(auto &iface : interfaces)
-    std::cout << iface.print_header() << std::endl;
-  std::cout << std::endl;
+    wayland_hpp << iface.print_header() << std::endl;
+  wayland_hpp << std::endl
+              << "#endif" << std::endl;
+
+  // body intro
+
+  wayland_cpp << "#include <wayland.hpp>" << std::endl
+              << std::endl;
   
   // class member definitions
   for(auto &iface : interfaces)
-    std::cout << iface.print_body() << std::endl;
-  std::cout << std::endl;
+    wayland_cpp << iface.print_body() << std::endl;
+  wayland_cpp << std::endl;
+
+  // clean up
+  wayland_hpp.close();
+  wayland_cpp.close();
   
   return 0;
 }

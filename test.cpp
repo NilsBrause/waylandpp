@@ -1,6 +1,6 @@
 #include <stdexcept>
 #include <iostream>
-#include <waylandpp.cpp>
+#include <wayland.hpp>
 
 int main()
 {
@@ -26,6 +26,8 @@ int main()
     };
 
   wl_display_dispatch(d);
+
+  surface_t surfaace = compositor.create_surface();
 
   return 0;
 }
