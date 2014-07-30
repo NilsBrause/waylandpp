@@ -124,7 +124,8 @@ struct event_t
     if(args.size())
       ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
-    ss << ");";
+    ss << ");" << std::endl
+       << "      break;";
     return ss.str();
   }
 
