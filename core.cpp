@@ -27,9 +27,43 @@ proxy_t::proxy_ptr::~proxy_ptr()
 proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v)
 {
   if(interface)
-    return proxy_t(wl_proxy_marshal_array_constructor(proxy->proxy, opcode, v.data(), interface));
+    {
+      wl_proxy *p = wl_proxy_marshal_array_constructor(proxy->proxy, opcode, v.data(), interface);
+      if(!p)
+        throw std::runtime_error("wl_proxy_marshal_array_constructor");
+      return proxy_t(p);
+    }
   wl_proxy_marshal_array(proxy->proxy, opcode, v.data());
   return proxy_t();
+}
+
+wl_argument proxy_t::conv(uint32_t i)
+{
+  wl_argument arg;
+  arg.u = i;
+  return arg;
+}
+
+wl_argument proxy_t::conv(std::string s)
+{
+  wl_argument arg;
+  arg.s = s.c_str();
+  return arg;
+}
+
+wl_argument proxy_t::conv(proxy_t p)
+{
+  wl_argument arg;
+  arg.o = reinterpret_cast<wl_object*>(p.c_ptr());
+  return arg;
+}
+
+wl_argument proxy_t::conv(std::vector<char> a)
+{
+  wl_argument arg;
+  wl_array arr = { a.size(), a.size(), a.data() };
+  arg.a = &arr;
+  return arg;
 }
 
 proxy_t::proxy_t()
@@ -77,19 +111,30 @@ display_t::display_t(const proxy_t &p)
 {
 }
 
+// Checks a wl_display object and throws an exception
+wl_proxy *check(wl_display *display)
+{
+  if(!display)
+    throw std::runtime_error("wl_display_connect_to_fd");
+  return reinterpret_cast<wl_proxy*>(display);
+}
+
 display_t::display_t(int fd)
-  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect_to_fd(fd)), true)
+  : proxy_t(check(wl_display_connect_to_fd(fd)), true)
 {
 }
 
 display_t::display_t(std::string name)
-  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect(name == "" ? NULL : name.c_str())), true)
+  : proxy_t(check(wl_display_connect(name == "" ? NULL : name.c_str())), true)
 {
 }
 
 event_queue_t display_t::create_queue()
 {
-  return wl_display_create_queue(reinterpret_cast<wl_display*>(c_ptr()));
+  wl_event_queue *queue = wl_display_create_queue(reinterpret_cast<wl_display*>(c_ptr()));
+  if(!queue)
+    throw std::runtime_error("wl_display_create_queue");
+  return queue;
 }
 
 int display_t::get_fd()
