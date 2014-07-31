@@ -2,13 +2,11 @@
 #include <vector>
 #include <egl.hpp>
 
-#ifdef WAYLAND
 egl::egl(display_t display, surface_t surface, int width, int height)
   : egl(reinterpret_cast<wl_display*>(display.c_ptr()),
         wl_egl_window_create(reinterpret_cast<wl_surface*>(surface.c_ptr()), width, height))
 {
 }
-#endif
 
 egl::egl(NativeDisplayType native_display, NativeWindowType native_window)
 {

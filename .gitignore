@@ -1,6 +1,10 @@
 *~
-a.out
-main
+*.o
+*.os
+*.so
+.sconsign.dblite
+scanner
+test
 wayland.xml
 wayland.cpp
 wayland.hpp
