@@ -39,7 +39,7 @@ struct argument_t
     else if(type == "uint")
       return "uint32_t";
     else if(type == "fixed")
-      return "float";
+      return "int32_t";
     else if(type == "string")
       return "std::string";
     else if(type == "object")
@@ -441,7 +441,6 @@ int main()
               << "#endif" << std::endl;
 
   // body intro
-
   wayland_cpp << "#include <wayland.hpp>" << std::endl
               << std::endl;
   
