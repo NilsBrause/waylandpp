@@ -136,7 +136,7 @@ struct event_t
       tmp += arg.print_type() + ", ";
     if(args.size())
       tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ")> &on_" + name + "() { return events->" + name + "; };";
+    tmp += ")> &on_" + name + "() { return static_cast<events_t*>(get_user_data())->" + name + "; };";
     return tmp;
   }
 };
@@ -272,7 +272,7 @@ struct interface_t
     ss << "class " << name << "_t : public proxy_t" << std::endl
        << "{" << std::endl
        << "private:" << std::endl
-       << "  struct events_t" << std::endl
+       << "  struct events_t : public proxy_t::events_base_t" << std::endl
        << "  {" << std::endl;
 
     for(auto &event : events)
@@ -280,8 +280,7 @@ struct interface_t
 
     ss << "  };" << std::endl
        << std::endl
-       << "  std::shared_ptr<events_t> events;" << std::endl
-       << "  static int dispatcher(const void *data, void *target, uint32_t opcode, const wl_message *message, wl_argument *args);" << std::endl
+       << "  static int dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args);" << std::endl
        << "  static std::array<void(*)(), " << events.size() << "> handlers;" << std::endl
        << std::endl
        << "public:" << std::endl
@@ -308,9 +307,9 @@ struct interface_t
   {
     std::stringstream ss;
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
-       << "  : proxy_t(p), events(new events_t)" << std::endl
+       << "  : proxy_t(p)" << std::endl
        << "{" << std::endl
-       << "  add_dispatcher(dispatcher, events.get());" << std::endl
+       << "  add_dispatcher(dispatcher, new events_t);" << std::endl
        << "}" << std::endl
        << std::endl
        << name << "_t::" << name << "_t()" << std::endl
@@ -323,12 +322,12 @@ struct interface_t
       ss << request.print_body(name, opcode++) << std::endl
        << std::endl;
 
-    ss << "int " << name << "_t::dispatcher(const void *data, void *target, uint32_t opcode, const wl_message *message, wl_argument *args)" << std::endl
+    ss << "int " << name << "_t::dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args)" << std::endl
        << "{" << std::endl;
 
     if(events.size())
       {
-        ss << "  const events_t *events = static_cast<const events_t*>(data);" << std::endl
+        ss << "  const events_t *events = static_cast<const events_t*>(implementation);" << std::endl
            << "  switch(opcode)" << std::endl
            << "    {" << std::endl;
         

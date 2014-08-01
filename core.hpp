@@ -48,6 +48,11 @@ private:
   wl_argument conv(std::vector<char> a);
 
 protected:
+  struct events_base_t
+  {
+    virtual ~events_base_t() { }
+  };
+    
   proxy_t();
 
   template <typename...T>
@@ -67,7 +72,9 @@ protected:
     return proxy_t();
   }
 
-  void add_dispatcher(wl_dispatcher_func_t dispatcher, void *data);
+  void add_dispatcher(wl_dispatcher_func_t dispatcher, events_base_t *events);
+
+  events_base_t *get_user_data();
 
 public:
   proxy_t(wl_proxy *p, bool is_display = false);

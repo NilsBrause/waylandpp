@@ -23,6 +23,10 @@ proxy_t::proxy_ptr::~proxy_ptr()
 {
   if(proxy)
     {
+      events_base_t *events = static_cast<events_base_t*>(wl_proxy_get_user_data(proxy));
+      if(events)
+        delete events;
+
       if(!display)
         wl_proxy_destroy(proxy);
       else
@@ -76,10 +80,19 @@ proxy_t::proxy_t()
 {
 }
 
-void proxy_t::add_dispatcher(wl_dispatcher_func_t dispatcher, void *data)
+void proxy_t::add_dispatcher(wl_dispatcher_func_t dispatcher, events_base_t *events)
 {
   if(c_ptr())
-    wl_proxy_add_dispatcher(c_ptr(), dispatcher, data, NULL);
+    // save as 'data' and as 'implementation', since the dispatcher
+    // only gets 'implemetation' and we can only access 'data'.
+    wl_proxy_add_dispatcher(c_ptr(), dispatcher, events, events);
+}
+
+proxy_t::events_base_t *proxy_t::get_user_data()
+{
+  if(c_ptr())
+    return static_cast<events_base_t*>(wl_proxy_get_user_data(c_ptr()));
+  return NULL;
 }
 
 proxy_t::proxy_t(wl_proxy *p, bool is_display)
