@@ -34,7 +34,7 @@ private:
   
   std::shared_ptr<proxy_ptr> proxy;
 
-  // no more arguments
+  // marshal request
   proxy_t marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v);
 
   // handles integers, file descriptors and fixed point numbers
@@ -59,7 +59,7 @@ protected:
   void marshal(uint32_t opcode, T...args)
   {
     std::vector<wl_argument> v = { conv(args)... };
-    if(proxy)
+    if(c_ptr())
       marshal_single(opcode, NULL, v);
   }
 
@@ -67,7 +67,7 @@ protected:
   proxy_t marshal_constructor(uint32_t opcode, const wl_interface *interface, T...args)
   {
     std::vector<wl_argument> v = { conv(args)... };
-    if(proxy)
+    if(c_ptr())
       return marshal_single(opcode, interface, v);
     return proxy_t();
   }

@@ -38,12 +38,12 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
 {
   if(interface)
     {
-      wl_proxy *p = wl_proxy_marshal_array_constructor(proxy->proxy, opcode, v.data(), interface);
+      wl_proxy *p = wl_proxy_marshal_array_constructor(c_ptr(), opcode, v.data(), interface);
       if(!p)
         throw std::runtime_error("wl_proxy_marshal_array_constructor");
       return proxy_t(p);
     }
-  wl_proxy_marshal_array(proxy->proxy, opcode, v.data());
+  wl_proxy_marshal_array(c_ptr(), opcode, v.data());
   return proxy_t();
 }
 

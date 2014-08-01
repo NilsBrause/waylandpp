@@ -129,14 +129,28 @@ struct event_t
     return ss.str();
   }
 
-  std::string print_signal()
+  std::string print_signal_header()
   {
     std::string tmp = "std::function<void(";
     for(auto arg : args)
       tmp += arg.print_type() + ", ";
     if(args.size())
       tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ")> &on_" + name + "() { return static_cast<events_t*>(get_user_data())->" + name + "; };";
+    tmp += ")> &on_" + name + "();";
+    return tmp;
+  }
+
+  std::string print_signal_body(std::string interface_name)
+  {
+    std::string tmp = "std::function<void(";
+    for(auto arg : args)
+      tmp += arg.print_type() + ", ";
+    if(args.size())
+      tmp = tmp.substr(0, tmp.size()-2);
+    tmp += ")> &" + interface_name + "_t::on_" + name + "()\n";
+    tmp += "{\n";
+    tmp += "  return static_cast<events_t*>(get_user_data())->" + name + ";\n";
+    tmp += "}";
     return tmp;
   }
 };
@@ -145,7 +159,7 @@ struct request_t : public event_t
 {
   argument_t ret;
 
-  std::string print_header(std::string interface_name)
+  std::string print_header()
   {
     std::string tmp;
     if(ret.name == "")
@@ -259,13 +273,6 @@ struct interface_t
     return tmp;
   }
 
-  std::string print_friend()
-  {
-    std::string tmp = "  friend class ";
-    tmp += name + "_t;";
-    return tmp;
-  }
-
   std::string print_header()
   {
     std::stringstream ss;
@@ -281,17 +288,16 @@ struct interface_t
     ss << "  };" << std::endl
        << std::endl
        << "  static int dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args);" << std::endl
-       << "  static std::array<void(*)(), " << events.size() << "> handlers;" << std::endl
        << std::endl
        << "public:" << std::endl
        << "  " + name + "_t(const proxy_t &proxy);" << std::endl
        << "  " + name + "_t();" << std::endl;
 
     for(auto &request : requests)
-      ss << "  " << request.print_header(name) << std::endl;
+      ss << "  " << request.print_header() << std::endl;
 
     for(auto &event : events)
-      ss << "  " << event.print_signal() << std::endl;
+      ss << "  " << event.print_signal_header() << std::endl;
 
     ss << "};" << std::endl
        << std::endl;
@@ -320,7 +326,11 @@ struct interface_t
     int opcode = 0; // Opcodes are in order of the XML. (Sadly undocumented)
     for(auto &request : requests)
       ss << request.print_body(name, opcode++) << std::endl
-       << std::endl;
+         << std::endl;
+
+    for(auto &event : events)
+      ss << event.print_signal_body(name) << std::endl
+         << std::endl;
 
     ss << "int " << name << "_t::dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args)" << std::endl
        << "{" << std::endl;
