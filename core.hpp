@@ -24,15 +24,22 @@ public:
 
 class proxy_t
 {
-private:
-  struct proxy_ptr
+protected:
+  struct events_base_t
   {
-    wl_proxy *proxy;
-    bool display;
-    ~proxy_ptr();
+    virtual ~events_base_t() { }
   };
-  
-  std::shared_ptr<proxy_ptr> proxy;
+
+private:
+  struct proxy_data_t
+  {
+    events_base_t *events;
+    int opcode;
+    bool display;
+    unsigned int counter;
+  };
+
+  wl_proxy *proxy;
 
   // marshal request
   proxy_t marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v);
@@ -48,11 +55,6 @@ private:
   wl_argument conv(std::vector<char> a);
 
 protected:
-  struct events_base_t
-  {
-    virtual ~events_base_t() { }
-  };
-    
   proxy_t();
 
   template <typename...T>
@@ -73,12 +75,14 @@ protected:
   }
 
   void add_dispatcher(wl_dispatcher_func_t dispatcher, events_base_t *events);
-
-  events_base_t *get_user_data();
+  void set_destroy_opcode(int destroy_opcode);
+  events_base_t *get_events();
 
 public:
   proxy_t(wl_proxy *p, bool is_display = false);
   proxy_t(const proxy_t& p);
+  proxy_t &operator=(const proxy_t &p);
+  ~proxy_t();
   uint32_t get_id();
   std::string get_class();
   void set_queue(event_queue_t queue);
@@ -91,7 +95,6 @@ class registry_t;
 class display_t : public proxy_t
 {
 public:
-  display_t(const proxy_t &proxy);
   display_t(int fd);
   display_t(std::string name = "");
   event_queue_t create_queue();

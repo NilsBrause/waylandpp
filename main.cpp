@@ -149,7 +149,7 @@ struct event_t
       tmp = tmp.substr(0, tmp.size()-2);
     tmp += ")> &" + interface_name + "_t::on_" + name + "()\n";
     tmp += "{\n";
-    tmp += "  return static_cast<events_t*>(get_user_data())->" + name + ";\n";
+    tmp += "  return static_cast<events_t*>(get_events())->" + name + ";\n";
     tmp += "}";
     return tmp;
   }
@@ -158,6 +158,7 @@ struct event_t
 struct request_t : public event_t
 {
   argument_t ret;
+  int opcode;
 
   std::string print_header()
   {
@@ -183,7 +184,7 @@ struct request_t : public event_t
     return tmp;
   }
 
-  std::string print_body(std::string interface_name, int opcode)
+  std::string print_body(std::string interface_name)
   {
     std::string tmp;
     if(ret.name == "")
@@ -262,6 +263,7 @@ struct interface_t
 {
   std::string version;
   std::string name;
+  int destroy_opcode;
   std::list<request_t> requests;
   std::list<event_t> events;
   std::list<enumeration_t> enums;
@@ -316,6 +318,7 @@ struct interface_t
        << "  : proxy_t(p)" << std::endl
        << "{" << std::endl
        << "  add_dispatcher(dispatcher, new events_t);" << std::endl
+       << "  set_destroy_opcode(" << destroy_opcode << ");" << std::endl
        << "}" << std::endl
        << std::endl
        << name << "_t::" << name << "_t()" << std::endl
@@ -323,9 +326,8 @@ struct interface_t
        << "}" << std::endl
        << std::endl;
 
-    int opcode = 0; // Opcodes are in order of the XML. (Sadly undocumented)
     for(auto &request : requests)
-      ss << request.print_body(name, opcode++) << std::endl
+      ss << request.print_body(name) << std::endl
          << std::endl;
 
     for(auto &event : events)
@@ -341,7 +343,7 @@ struct interface_t
            << "  switch(opcode)" << std::endl
            << "    {" << std::endl;
         
-        opcode = 0;
+        int opcode = 0;
         for(auto &event : events)
           ss << event.print_dispatcher(opcode++) << std::endl;
         
@@ -366,15 +368,24 @@ int main()
   for(xml_node &interface : protocol.children("interface"))
     {
       interface_t iface;
+      iface.destroy_opcode = -1;
       iface.name = interface.attribute("name").value();
       if(iface.name == "wl_display") continue; // skip in favor of hand written version
       iface.name = iface.name.substr(3, iface.name.size());
       iface.version = interface.attribute("version").value();
 
+      int opcode = 0; // Opcodes are in order of the XML. (Sadly undocumented)
       for(xml_node &request : interface.children("request"))
         {
           request_t req;
+          req.opcode = opcode++;
           req.name = request.attribute("name").value();
+          // destruction takes place through the class destuctor
+          if(req.name == "destroy")
+            {
+              iface.destroy_opcode = req.opcode;
+              continue;
+            }
           for(xml_node &argument : request.children("arg"))
             {
               argument_t arg;

@@ -1,5 +1,6 @@
 #include <core.hpp>
 #include <wayland.hpp>
+#include <iostream>
 
 event_queue_t::queue_ptr::~queue_ptr()
 {
@@ -19,31 +20,16 @@ wl_event_queue *event_queue_t::c_ptr()
   return queue->queue;
 };
 
-proxy_t::proxy_ptr::~proxy_ptr()
-{
-  if(proxy)
-    {
-      events_base_t *events = static_cast<events_base_t*>(wl_proxy_get_user_data(proxy));
-      if(events)
-        delete events;
-
-      if(!display)
-        wl_proxy_destroy(proxy);
-      else
-        wl_display_disconnect(reinterpret_cast<wl_display*>(proxy));
-    }
-}
-
 proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v)
 {
   if(interface)
     {
-      wl_proxy *p = wl_proxy_marshal_array_constructor(c_ptr(), opcode, v.data(), interface);
+      wl_proxy *p = wl_proxy_marshal_array_constructor(proxy, opcode, v.data(), interface);
       if(!p)
         throw std::runtime_error("wl_proxy_marshal_array_constructor");
       return proxy_t(p);
     }
-  wl_proxy_marshal_array(c_ptr(), opcode, v.data());
+  wl_proxy_marshal_array(proxy, opcode, v.data());
   return proxy_t();
 }
 
@@ -64,7 +50,7 @@ wl_argument proxy_t::conv(std::string s)
 wl_argument proxy_t::conv(proxy_t p)
 {
   wl_argument arg;
-  arg.o = reinterpret_cast<wl_object*>(p.c_ptr());
+  arg.o = reinterpret_cast<wl_object*>(p.proxy);
   return arg;
 }
 
@@ -77,64 +63,128 @@ wl_argument proxy_t::conv(std::vector<char> a)
 }
 
 proxy_t::proxy_t()
+  : proxy(NULL)
 {
 }
 
 void proxy_t::add_dispatcher(wl_dispatcher_func_t dispatcher, events_base_t *events)
 {
-  if(c_ptr())
-    // save as 'data' and as 'implementation', since the dispatcher
-    // only gets 'implemetation' and we can only access 'data'.
-    wl_proxy_add_dispatcher(c_ptr(), dispatcher, events, events);
+  if(proxy)
+    {
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      if(!data->events)
+        {
+          data->events = events;
+          // the dispatcher gets 'implemetation'
+          wl_proxy_add_dispatcher(proxy, dispatcher, events, data);
+        }
+    }
 }
 
-proxy_t::events_base_t *proxy_t::get_user_data()
+void proxy_t::set_destroy_opcode(int destroy_opcode)
 {
-  if(c_ptr())
-    return static_cast<events_base_t*>(wl_proxy_get_user_data(c_ptr()));
+  if(proxy)
+    {
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      data->opcode = destroy_opcode;
+    }
+}
+
+proxy_t::events_base_t *proxy_t::get_events()
+{
+  if(proxy)
+    {
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      return data->events;
+    }
+  throw std::runtime_error("Returnung NULL!");
   return NULL;
 }
 
 proxy_t::proxy_t(wl_proxy *p, bool is_display)
-  : proxy(new proxy_ptr({p, is_display}))
+  : proxy(p)
 {
+  if(proxy)
+    {
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      if(!data)
+        {
+          data = new proxy_data_t{NULL, -1, is_display, 0};
+          wl_proxy_set_user_data(proxy, data);
+        }
+      data->counter++;
+    } 
 }
   
 proxy_t::proxy_t(const proxy_t& p)
-  : proxy(p.proxy)
 {
+  operator=(p);
+}
+
+proxy_t &proxy_t::operator=(const proxy_t& p)
+{
+  proxy = p.proxy;
+  if(proxy)
+    {
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      if(!data)
+        {
+          std::cout << "Found proxy_t without meta data." << std::endl;
+          data = new proxy_data_t{NULL, -1, false, 0};
+          wl_proxy_set_user_data(proxy, data);
+        }
+      data->counter++;
+    }
+  return *this;
+}
+
+proxy_t::~proxy_t()
+{
+  if(proxy)
+    {
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      data->counter--;
+      if(data->counter == 0)
+        {
+          if(data->events)
+            delete data->events;
+
+          if(!data->display)
+            {
+              if(data->opcode >= 0)
+                wl_proxy_marshal(proxy, data->opcode);
+              wl_proxy_destroy(proxy);
+            }
+          else
+            wl_display_disconnect(reinterpret_cast<wl_display*>(proxy));
+          delete data;
+        }
+    }
 }
 
 uint32_t proxy_t::get_id()
 {
-  if(c_ptr())
-    return wl_proxy_get_id(c_ptr());
+  if(proxy)
+    return wl_proxy_get_id(proxy);
   return 0;
 }
 
 std::string proxy_t::get_class()
 {
-  if(c_ptr())
-    return wl_proxy_get_class(c_ptr());
+  if(proxy)
+    return wl_proxy_get_class(proxy);
   return "";
 }
 
 void proxy_t::set_queue(event_queue_t queue)
 {
-  if(c_ptr() && queue.c_ptr())
-    wl_proxy_set_queue(c_ptr(), queue.c_ptr());
+  if(proxy && queue.c_ptr())
+    wl_proxy_set_queue(proxy, queue.c_ptr());
 }
 
 wl_proxy *proxy_t::c_ptr()
 {
-  if(!proxy)
-    return NULL;
-  return proxy->proxy;
-}
-
-display_t::display_t(const proxy_t &p)
-  : proxy_t(p)
-{
+  return proxy;
 }
 
 // Checks a wl_display object and throws an exception

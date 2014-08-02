@@ -37,13 +37,19 @@ int main()
   // no pointer
   pointer_t pointer = seat.get_pointer();
   pointer.on_enter() = [&] (uint32_t serial, surface_t, float, float) { pointer.set_cursor(serial, surface_t(), 0, 0); };
-  
+
+  // click to exit
+  bool running = true;
+  pointer.on_button() = [&] (uint32_t, uint32_t, uint32_t, uint32_t) { running = false; };
+
+  // draw stuff
   e.begin();
   glClearColor(1.0f, 0.1f, 0.6f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
   e.end();
 
-  while(true) display.dispatch();
+  // event loop
+  while(running) display.dispatch();
 
   return 0;
 }
