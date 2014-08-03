@@ -223,7 +223,7 @@ struct request_t : public event_t
         if(arg.type == "new_id")
           {
             if(arg.interface == "")
-              tmp += "interface->name, version, ";
+              tmp += "std::string(interface->name), version, ";
             tmp += "NULL, ";
           }
         else
