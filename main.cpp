@@ -149,7 +149,7 @@ struct event_t
       tmp = tmp.substr(0, tmp.size()-2);
     tmp += ")> &" + interface_name + "_t::on_" + name + "()\n";
     tmp += "{\n";
-    tmp += "  return static_cast<events_t*>(get_events())->" + name + ";\n";
+    tmp += "  return std::static_pointer_cast<events_t>(get_events())->" + name + ";\n";
     tmp += "}";
     return tmp;
   }
@@ -317,7 +317,7 @@ struct interface_t
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
        << "  : proxy_t(p)" << std::endl
        << "{" << std::endl
-       << "  add_dispatcher(dispatcher, new events_t);" << std::endl
+       << "  add_dispatcher(dispatcher, std::shared_ptr<proxy_t::events_base_t>(new events_t));" << std::endl
        << "  set_destroy_opcode(" << destroy_opcode << ");" << std::endl
        << "}" << std::endl
        << std::endl

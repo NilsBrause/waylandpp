@@ -33,7 +33,7 @@ protected:
 private:
   struct proxy_data_t
   {
-    events_base_t *events;
+    std::shared_ptr<events_base_t> events;
     int opcode;
     bool display;
     unsigned int counter;
@@ -74,9 +74,9 @@ protected:
     return proxy_t();
   }
 
-  void add_dispatcher(wl_dispatcher_func_t dispatcher, events_base_t *events);
+  void add_dispatcher(wl_dispatcher_func_t dispatcher, std::shared_ptr<events_base_t> events);
   void set_destroy_opcode(int destroy_opcode);
-  events_base_t *get_events();
+  std::shared_ptr<proxy_t::events_base_t> get_events();
 
 public:
   proxy_t(wl_proxy *p, bool is_display = false);

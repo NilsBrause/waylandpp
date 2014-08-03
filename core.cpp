@@ -67,7 +67,7 @@ proxy_t::proxy_t()
 {
 }
 
-void proxy_t::add_dispatcher(wl_dispatcher_func_t dispatcher, events_base_t *events)
+void proxy_t::add_dispatcher(wl_dispatcher_func_t dispatcher, std::shared_ptr<events_base_t> events)
 {
   if(proxy)
     {
@@ -76,7 +76,7 @@ void proxy_t::add_dispatcher(wl_dispatcher_func_t dispatcher, events_base_t *eve
         {
           data->events = events;
           // the dispatcher gets 'implemetation'
-          wl_proxy_add_dispatcher(proxy, dispatcher, events, data);
+          wl_proxy_add_dispatcher(proxy, dispatcher, events.get(), data);
         }
     }
 }
@@ -90,7 +90,7 @@ void proxy_t::set_destroy_opcode(int destroy_opcode)
     }
 }
 
-proxy_t::events_base_t *proxy_t::get_events()
+std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
 {
   if(proxy)
     {
@@ -109,7 +109,7 @@ proxy_t::proxy_t(wl_proxy *p, bool is_display)
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       if(!data)
         {
-          data = new proxy_data_t{NULL, -1, is_display, 0};
+          data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, is_display, 0};
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
@@ -146,9 +146,6 @@ proxy_t::~proxy_t()
       data->counter--;
       if(data->counter == 0)
         {
-          if(data->events)
-            delete data->events;
-
           if(!data->display)
             {
               if(data->opcode >= 0)
