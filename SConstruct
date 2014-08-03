@@ -20,13 +20,12 @@ env.Command(["wayland.cpp", "wayland.hpp"],
 env.SharedLibrary("wayland++",
                   ["core.cpp", "wayland.cpp", "egl.cpp"],
                   CPPPATH = ".",
-                  CXXFLAGS = cxxflags )
-
-libs = ["wayland++", "wayland-client", "wayland-egl", "EGL", "GL"]
+                  CXXFLAGS = cxxflags,
+                  LIBS =  ["wayland-client", "wayland-egl", "EGL"])
 
 env.Program("test",
             "test.cpp",
             CPPPATH = ".",
             CXXFLAGS = cxxflags,
-            LIBS = libs,
+            LIBS =  ["wayland++", "GL"],
             LIBPATH = ".")

@@ -62,11 +62,6 @@ wl_argument proxy_t::conv(std::vector<char> a)
   return arg;
 }
 
-proxy_t::proxy_t()
-  : proxy(NULL)
-{
-}
-
 void proxy_t::add_dispatcher(wl_dispatcher_func_t dispatcher, std::shared_ptr<events_base_t> events)
 {
   if(proxy)
@@ -101,8 +96,13 @@ std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
   return NULL;
 }
 
+proxy_t::proxy_t()
+  : proxy(NULL), interface(NULL)
+{
+}
+
 proxy_t::proxy_t(wl_proxy *p, bool is_display)
-  : proxy(p)
+  : proxy(p), interface(NULL)
 {
   if(proxy)
     {
@@ -124,6 +124,7 @@ proxy_t::proxy_t(const proxy_t& p)
 proxy_t &proxy_t::operator=(const proxy_t& p)
 {
   proxy = p.proxy;
+  interface = p.interface;
   if(proxy)
     {
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));

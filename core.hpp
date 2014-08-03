@@ -55,7 +55,8 @@ private:
   wl_argument conv(std::vector<char> a);
 
 protected:
-  proxy_t();
+  const wl_interface *interface;
+  friend class registry_t;
 
   template <typename...T>
   void marshal(uint32_t opcode, T...args)
@@ -78,11 +79,14 @@ protected:
   void set_destroy_opcode(int destroy_opcode);
   std::shared_ptr<proxy_t::events_base_t> get_events();
 
+  proxy_t();
+
 public:
   proxy_t(wl_proxy *p, bool is_display = false);
   proxy_t(const proxy_t& p);
   proxy_t &operator=(const proxy_t &p);
   ~proxy_t();
+
   uint32_t get_id();
   std::string get_class();
   void set_queue(event_queue_t queue);
@@ -97,6 +101,7 @@ class display_t : public proxy_t
 public:
   display_t(int fd);
   display_t(std::string name = "");
+
   event_queue_t create_queue();
   int get_fd();
   int roundtrip();
@@ -110,6 +115,7 @@ public:
   int dispatch_pending();
   int get_error();
   int flush();
+
   callback_t sync();
   registry_t get_registry();
 };

@@ -173,7 +173,7 @@ struct request_t : public event_t
       if(arg.type == "new_id")
         {
           if(arg.interface == "")
-            tmp += "const wl_interface* interface, uint32_t version, ";
+            tmp += "proxy_t &interface, uint32_t version, ";
         }
       else
         tmp += arg.print_argument() + ", ";
@@ -193,11 +193,15 @@ struct request_t : public event_t
       tmp += ret.print_type() + " ";
     tmp += interface_name + "_t::" + name + "(";
 
+    bool new_id_arg = false;
     for(auto arg : args)
       if(arg.type == "new_id")
         {
           if(arg.interface == "")
-            tmp += "const wl_interface* interface, uint32_t version, ";
+            {
+              tmp += "proxy_t &interface, uint32_t version, ";
+              new_id_arg = true;
+            }
         }
       else
         tmp += arg.print_argument() + ", ";
@@ -210,11 +214,11 @@ struct request_t : public event_t
       tmp += "  marshal(" + std::to_string(opcode) + ", ";
     else
       {
-        tmp += "  return marshal_constructor(" + std::to_string(opcode) + ", ";
+        tmp += "  proxy_t p = marshal_constructor(" + std::to_string(opcode) + ", ";
         if(ret.interface == "")
-          tmp += "interface";
+          tmp += "interface.interface";
         else
-          tmp += "&" + ret.interface + "_interface"; // TODO: Do not use generated C code.
+          tmp += "&" + ret.interface + "_interface";
         tmp += ", ";
       }
 
@@ -223,7 +227,7 @@ struct request_t : public event_t
         if(arg.type == "new_id")
           {
             if(arg.interface == "")
-              tmp += "std::string(interface->name), version, ";
+              tmp += "std::string(interface.interface->name), version, ";
             tmp += "NULL, ";
           }
         else
@@ -231,7 +235,15 @@ struct request_t : public event_t
       }
 
     tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ");\n}";
+    tmp += ");\n";
+
+    if(ret.name != "")
+      {
+        if(new_id_arg)
+          tmp += "  interface = p;\n";
+        tmp += "  return p;\n";
+      }
+    tmp += "}";
     return tmp;
   }
 };
@@ -319,10 +331,12 @@ struct interface_t
        << "{" << std::endl
        << "  add_dispatcher(dispatcher, std::shared_ptr<proxy_t::events_base_t>(new events_t));" << std::endl
        << "  set_destroy_opcode(" << destroy_opcode << ");" << std::endl
+       << "  interface = &wl_" << name << "_interface;" << std::endl
        << "}" << std::endl
        << std::endl
        << name << "_t::" << name << "_t()" << std::endl
        << "{" << std::endl
+       << "  interface = &wl_" << name << "_interface;" << std::endl
        << "}" << std::endl
        << std::endl;
 

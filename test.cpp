@@ -16,13 +16,13 @@ int main()
   registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
     {
       if(interface == "wl_compositor")
-        compositor = registry.bind(name, &wl_compositor_interface, version);
+        registry.bind(name, compositor, version);
       else if(interface == "wl_shell")
-        shell = registry.bind(name, &wl_shell_interface, version);
+        registry.bind(name, shell, version);
       else if(interface == "wl_seat")
-        seat = registry.bind(name, &wl_seat_interface, version);
+        registry.bind(name, seat, version);
       else if(interface == "wl_shm")
-        shm = registry.bind(name, &wl_shm_interface, version);
+        registry.bind(name, shm, version);
     };
   display.dispatch();
 
