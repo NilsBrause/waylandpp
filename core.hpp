@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <wayland-client.h>
+#include <any.hpp>
 
 class event_queue_t
 {
@@ -33,6 +34,7 @@ protected:
 private:
   struct proxy_data_t
   {
+    proxy_t *proxy;
     std::shared_ptr<events_base_t> events;
     int opcode;
     bool display;
@@ -40,6 +42,9 @@ private:
   };
 
   wl_proxy *proxy;
+
+  // universal dispatcher
+  static int c_dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args);
 
   // marshal request
   proxy_t marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v);
@@ -58,6 +63,8 @@ protected:
   const wl_interface *interface;
   friend class registry_t;
 
+  virtual int dispatcher(int opcode, std::vector<any> args);
+
   template <typename...T>
   void marshal(uint32_t opcode, T...args)
   {
@@ -75,9 +82,9 @@ protected:
     return proxy_t();
   }
 
-  void add_dispatcher(wl_dispatcher_func_t dispatcher, std::shared_ptr<events_base_t> events);
   void set_destroy_opcode(int destroy_opcode);
-  std::shared_ptr<proxy_t::events_base_t> get_events();
+  void set_events(std::shared_ptr<events_base_t> events);
+  std::shared_ptr<events_base_t> get_events();
 
   proxy_t();
 

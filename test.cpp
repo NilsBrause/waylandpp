@@ -36,15 +36,18 @@ int main()
 
   // no pointer
   pointer_t pointer = seat.get_pointer();
-  pointer.on_enter() = [&] (uint32_t serial, surface_t, float, float) { pointer.set_cursor(serial, surface_t(), 0, 0); };
+  pointer.on_enter() = [&] (uint32_t serial, surface_t, int32_t, int32_t) { pointer.set_cursor(serial, surface_t(), 0, 0); };
 
   // click to exit
   bool running = true;
   pointer.on_button() = [&] (uint32_t, uint32_t, uint32_t, uint32_t) { running = false; };
 
+  // print moving events
+  pointer.on_motion() = [&] (uint32_t, int32_t x, int32_t y) { std::cout << x/256 << " " << y/256 << std::endl; };
+
   // draw stuff
   e.begin();
-  glClearColor(1.0f, 0.1f, 0.6f, 1.0f);
+  glClearColor(1.0f, 0.1f, 0.6f, 0.5f);
   glClear(GL_COLOR_BUFFER_BIT);
   e.end();
 

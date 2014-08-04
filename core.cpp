@@ -1,6 +1,6 @@
+#include <iostream>
 #include <core.hpp>
 #include <wayland.hpp>
-#include <iostream>
 
 event_queue_t::queue_ptr::~queue_ptr()
 {
@@ -19,6 +19,48 @@ wl_event_queue *event_queue_t::c_ptr()
     return NULL;
   return queue->queue;
 };
+
+int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args)
+{
+  std::string signature(message->signature);
+  std::vector<any> vargs;
+  for(unsigned int c = 0; c < signature.size(); c++)
+    {
+      any a;
+      switch(signature[c])
+        {
+          // int_32_t
+        case 'i':
+        case 'h':
+        case 'f':
+          a = args[c].i;
+          break;
+          // uint32_T
+        case 'u':
+          a = args[c].u;
+          break;
+          // string
+        case 's':
+          a = std::string(args[c].s);
+          break;
+          // proxy
+        case 'o':
+        case 'n':
+          a = proxy_t(reinterpret_cast<wl_proxy*>(args[c].o));
+          break;
+          // array
+        case 'a':
+          a = std::vector<char>(reinterpret_cast<char*>(args[c].a->data),
+                                reinterpret_cast<char*>(args[c].a->data) + args[c].a->size);
+          break;
+        default:
+          a = 0;
+          break;
+        }
+      vargs.push_back(a);
+    }
+  return reinterpret_cast<proxy_t*>(const_cast<void*>(implementation))->dispatcher(opcode, vargs);
+}
 
 proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v)
 {
@@ -62,18 +104,9 @@ wl_argument proxy_t::conv(std::vector<char> a)
   return arg;
 }
 
-void proxy_t::add_dispatcher(wl_dispatcher_func_t dispatcher, std::shared_ptr<events_base_t> events)
+int proxy_t::dispatcher(int opcode, std::vector<any> args)
 {
-  if(proxy)
-    {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
-      if(!data->events)
-        {
-          data->events = events;
-          // the dispatcher gets 'implemetation'
-          wl_proxy_add_dispatcher(proxy, dispatcher, events.get(), data);
-        }
-    }
+  return 0;
 }
 
 void proxy_t::set_destroy_opcode(int destroy_opcode)
@@ -85,6 +118,21 @@ void proxy_t::set_destroy_opcode(int destroy_opcode)
     }
 }
 
+void proxy_t::set_events(std::shared_ptr<events_base_t> events)
+{
+  if(proxy)
+    {
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      data->events = events;
+      if(!data->proxy)
+        {
+          data->proxy = this;
+          // the dispatcher gets 'implemetation'
+          wl_proxy_add_dispatcher(proxy, c_dispatcher, data->proxy, data);
+        }
+    }
+}
+
 std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
 {
   if(proxy)
@@ -92,8 +140,8 @@ std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       return data->events;
     }
-  throw std::runtime_error("Returnung NULL!");
-  return NULL;
+  throw std::runtime_error("proxy is NULL");
+  return std::shared_ptr<events_base_t>();
 }
 
 proxy_t::proxy_t()
@@ -109,7 +157,7 @@ proxy_t::proxy_t(wl_proxy *p, bool is_display)
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       if(!data)
         {
-          data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, is_display, 0};
+          data = new proxy_data_t{NULL, std::shared_ptr<events_base_t>(), -1, is_display, 0};
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
@@ -131,7 +179,7 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
       if(!data)
         {
           std::cout << "Found proxy_t without meta data." << std::endl;
-          data = new proxy_data_t{NULL, -1, false, 0};
+          data = new proxy_data_t{NULL, std::shared_ptr<events_base_t>(), -1, false, 0};
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;

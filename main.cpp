@@ -107,19 +107,20 @@ struct event_t
     int c = 0;
     for(auto arg : args)
       {
-        if(arg.type == "array")
-          {
-            ss << "std::vector<char>((char*)args[" << c << "].a->data, "
-               << "(char*)args[" << c << "].a->data + args[" << c << "].a->size), ";
-            c++;
-          }
+        ss << "args[" << c++ << "].get<";
+        if(arg.type == "int" || arg.type == "fd" || arg.type == "fixed")
+          ss << "int32_t";
+        else if(arg.type == "uint")
+          ss << "uint32_t";
+        else if(arg.type == "string")
+          ss << "std::string";
         else if(arg.type == "object" || arg.type == "new_id") // wayland/src/connection.c:886
-          {
-            ss << "proxy_t((wl_proxy*)args[" << c << "].o), ";
-            c++;
-          }
+          ss << "proxy_t";
+        else if(arg.type == "array")
+          ss << "std::vector<char>";
         else
-          ss << "args[" << c++ << "]." << arg.print_short() << ", ";
+          ss << arg.type;
+        ss << ">(), ";
       }
     if(args.size())
       ss.str(ss.str().substr(0, ss.str().size()-2));
@@ -301,7 +302,7 @@ struct interface_t
 
     ss << "  };" << std::endl
        << std::endl
-       << "  static int dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args);" << std::endl
+       << "  int dispatcher(int opcode, std::vector<any> args) override;" << std::endl
        << std::endl
        << "public:" << std::endl
        << "  " + name + "_t(const proxy_t &proxy);" << std::endl
@@ -329,7 +330,7 @@ struct interface_t
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
        << "  : proxy_t(p)" << std::endl
        << "{" << std::endl
-       << "  add_dispatcher(dispatcher, std::shared_ptr<proxy_t::events_base_t>(new events_t));" << std::endl
+       << "  set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t));" << std::endl
        << "  set_destroy_opcode(" << destroy_opcode << ");" << std::endl
        << "  interface = &wl_" << name << "_interface;" << std::endl
        << "}" << std::endl
@@ -348,12 +349,12 @@ struct interface_t
       ss << event.print_signal_body(name) << std::endl
          << std::endl;
 
-    ss << "int " << name << "_t::dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args)" << std::endl
+    ss << "int " << name << "_t::dispatcher(int opcode, std::vector<any> args)" << std::endl
        << "{" << std::endl;
 
     if(events.size())
       {
-        ss << "  const events_t *events = static_cast<const events_t*>(implementation);" << std::endl
+        ss << "  std::shared_ptr<events_t> events = std::static_pointer_cast<events_t>(get_events());" << std::endl
            << "  switch(opcode)" << std::endl
            << "    {" << std::endl;
         
