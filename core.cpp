@@ -45,8 +45,15 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
           break;
           // proxy
         case 'o':
-        case 'n':
           a = proxy_t(reinterpret_cast<wl_proxy*>(args[c].o));
+          break;
+          // new id
+        case 'n':
+          {
+            wl_proxy *proxy = reinterpret_cast<wl_proxy*>(args[c].o);
+            wl_proxy_set_user_data(proxy, NULL); // Wayland leaves the user data uninitialized
+            a = proxy_t(proxy);
+          }
           break;
           // array
         case 'a':
@@ -69,6 +76,7 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
       wl_proxy *p = wl_proxy_marshal_array_constructor(proxy, opcode, v.data(), interface);
       if(!p)
         throw std::runtime_error("wl_proxy_marshal_array_constructor");
+      wl_proxy_set_user_data(p, NULL); // Wayland leaves the user data uninitialized
       return proxy_t(p);
     }
   wl_proxy_marshal_array(proxy, opcode, v.data());
@@ -238,7 +246,9 @@ wl_proxy *check(wl_display *display)
 {
   if(!display)
     throw std::runtime_error("wl_display_connect_to_fd");
-  return reinterpret_cast<wl_proxy*>(display);
+  wl_proxy *proxy = reinterpret_cast<wl_proxy*>(display);
+  wl_proxy_set_user_data(proxy, NULL); // Wayland leaves the user data uninitialized
+  return proxy;
 }
 
 display_t::display_t(int fd)
