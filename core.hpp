@@ -37,11 +37,11 @@ private:
     proxy_t *proxy;
     std::shared_ptr<events_base_t> events;
     int opcode;
-    bool display;
     unsigned int counter;
   };
 
   wl_proxy *proxy;
+  bool display;
 
   // universal dispatcher
   static int c_dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args);
@@ -105,9 +105,13 @@ class registry_t;
 
 class display_t : public proxy_t
 {
+private:
+  display_t(display_t &d) { }
+
 public:
   display_t(int fd);
   display_t(std::string name = "");
+  ~display_t();
 
   event_queue_t create_queue();
   int get_fd();

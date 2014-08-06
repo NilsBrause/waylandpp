@@ -119,7 +119,7 @@ int proxy_t::dispatcher(int opcode, std::vector<any> args)
 
 void proxy_t::set_destroy_opcode(int destroy_opcode)
 {
-  if(proxy)
+  if(proxy && !display)
     {
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       data->opcode = destroy_opcode;
@@ -128,7 +128,7 @@ void proxy_t::set_destroy_opcode(int destroy_opcode)
 
 void proxy_t::set_events(std::shared_ptr<events_base_t> events)
 {
-  if(proxy)
+  if(proxy && !display)
     {
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       data->events = events;
@@ -143,29 +143,28 @@ void proxy_t::set_events(std::shared_ptr<events_base_t> events)
 
 std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
 {
-  if(proxy)
+  if(proxy && !display)
     {
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       return data->events;
     }
-  throw std::runtime_error("proxy is NULL");
   return std::shared_ptr<events_base_t>();
 }
 
 proxy_t::proxy_t()
-  : proxy(NULL), interface(NULL)
+  : proxy(NULL), display(false), interface(NULL)
 {
 }
 
 proxy_t::proxy_t(wl_proxy *p, bool is_display)
-  : proxy(p), interface(NULL)
+  : proxy(p), display(is_display), interface(NULL)
 {
-  if(proxy)
+  if(proxy && !display)
     {
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       if(!data)
         {
-          data = new proxy_data_t{NULL, std::shared_ptr<events_base_t>(), -1, is_display, 0};
+          data = new proxy_data_t{NULL, std::shared_ptr<events_base_t>(), -1, 0};
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
@@ -181,13 +180,14 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
 {
   proxy = p.proxy;
   interface = p.interface;
-  if(proxy)
+  display = p.display;
+  if(proxy && !display)
     {
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       if(!data)
         {
           std::cout << "Found proxy_t without meta data." << std::endl;
-          data = new proxy_data_t{NULL, std::shared_ptr<events_base_t>(), -1, false, 0};
+          data = new proxy_data_t{NULL, std::shared_ptr<events_base_t>(), -1, 0};
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
@@ -197,20 +197,15 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
 
 proxy_t::~proxy_t()
 {
-  if(proxy)
+  if(proxy && !display)
     {
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       data->counter--;
       if(data->counter == 0)
         {
-          if(!data->display)
-            {
-              if(data->opcode >= 0)
-                wl_proxy_marshal(proxy, data->opcode);
-              wl_proxy_destroy(proxy);
-            }
-          else
-            wl_display_disconnect(reinterpret_cast<wl_display*>(proxy));
+          if(data->opcode >= 0)
+            wl_proxy_marshal(proxy, data->opcode);
+          wl_proxy_destroy(proxy);
           delete data;
         }
     }
@@ -241,24 +236,23 @@ wl_proxy *proxy_t::c_ptr()
   return proxy;
 }
 
-// Checks a wl_display object and throws an exception
-wl_proxy *check(wl_display *display)
-{
-  if(!display)
-    throw std::runtime_error("wl_display_connect_to_fd");
-  wl_proxy *proxy = reinterpret_cast<wl_proxy*>(display);
-  wl_proxy_set_user_data(proxy, NULL); // Wayland leaves the user data uninitialized
-  return proxy;
-}
-
 display_t::display_t(int fd)
-  : proxy_t(check(wl_display_connect_to_fd(fd)), true)
+  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect_to_fd(fd)), true)
 {
+  if(!c_ptr())
+    throw std::runtime_error("wl_display_connect_to_fd");
 }
 
 display_t::display_t(std::string name)
-  : proxy_t(check(wl_display_connect(name == "" ? NULL : name.c_str())), true)
+  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect(name == "" ? NULL : name.c_str())), true)
 {
+  if(!c_ptr())
+    throw std::runtime_error("wl_display_connect");
+}
+
+display_t::~display_t()
+{
+  wl_display_disconnect(reinterpret_cast<wl_display*>(c_ptr()));
 }
 
 event_queue_t display_t::create_queue()

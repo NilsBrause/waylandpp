@@ -6,7 +6,7 @@ env.Command("wayland.xml",
             "",
             "wget -qc " + url)
 
-cxxflags = "-std=c++11 -Wall -Werror -O2"
+cxxflags = "-std=c++11 -Wall -Werror -O0 -ggdb"
 
 env.Program("scanner",
             ["main.cpp", "pugixml.cpp"],
@@ -18,14 +18,14 @@ env.Command(["wayland.cpp", "wayland.hpp"],
             "./scanner")
 
 env.SharedLibrary("wayland++",
-                  ["core.cpp", "wayland.cpp", "egl.cpp"],
+                  ["core.cpp", "wayland.cpp"],
                   CPPPATH = ".",
                   CXXFLAGS = cxxflags,
-                  LIBS =  ["wayland-client", "wayland-egl", "EGL"])
+                  LIBS = ["wayland-client"])
 
 env.Program("test",
-            "test.cpp",
+            ["test.cpp", "egl.cpp"],
             CPPPATH = ".",
             CXXFLAGS = cxxflags,
-            LIBS =  ["wayland++", "GL"],
+            LIBS =  ["wayland++", "wayland-egl", "EGL", "GL"],
             LIBPATH = ".")
