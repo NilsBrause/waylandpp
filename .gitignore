@@ -3,6 +3,7 @@
 *.os
 *.so
 .sconsign.dblite
+doc
 scanner
 test
 wayland.xml
