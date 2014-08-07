@@ -32,7 +32,6 @@
 #include <string>
 #include <vector>
 #include <wayland-client.h>
-#include <any.hpp>
 
 /** \brief A queue for proxy_t object events. 
     
@@ -78,6 +77,8 @@ public:
 class proxy_t
 {
 protected:
+  #include <any.hpp>
+
   // base class for event listener storage.
   struct events_base_t
   {
