@@ -3,9 +3,9 @@
 *.os
 *.so
 .sconsign.dblite
-doc
-scanner
-test
+scanner/scanner
 wayland.xml
-wayland.cpp
-wayland.hpp
+wayland-client-protocol.cpp
+wayland-client-protocol.hpp
+example/test
+doc

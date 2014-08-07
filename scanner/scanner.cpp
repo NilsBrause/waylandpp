@@ -16,6 +16,7 @@
  */
 
 #include <fstream>
+#include <iostream>
 #include <list>
 #include <sstream>
 
@@ -372,10 +373,17 @@ struct interface_t
   }
 };
 
-int main()
+int main(int argc, char *argv[])
 {
+  if(argc < 4)
+    {
+      std::cerr << "Usage:" << std::endl
+                << "  " << argv[0] << " /path/to/wayland.xml /path/to/wayland.hpp /path/to/wayland.cpp" << std::endl;
+      return 1;
+    }
+  
   xml_document doc;
-  doc.load_file("wayland.xml");
+  doc.load_file(argv[1]);
   xml_node protocol = doc.child("protocol");
 
   std::list<interface_t> interfaces;
@@ -448,8 +456,8 @@ int main()
       interfaces.push_back(iface);
     }
 
-  std::fstream wayland_hpp("wayland.hpp", std::ios_base::out | std::ios_base::trunc);
-  std::fstream wayland_cpp("wayland.cpp", std::ios_base::out | std::ios_base::trunc);
+  std::fstream wayland_hpp(argv[2], std::ios_base::out | std::ios_base::trunc);
+  std::fstream wayland_cpp(argv[3], std::ios_base::out | std::ios_base::trunc);
 
   // header intro
   wayland_hpp << "#ifndef WAYLAND_HPP" << std::endl
@@ -461,7 +469,7 @@ int main()
               << "#include <string>" << std::endl
               << "#include <vector>" << std::endl
               << std::endl
-              << "#include <core.hpp>" << std::endl
+              << "#include <wayland-client.hpp>" << std::endl
               << std::endl;
 
   // forward declarations
@@ -476,7 +484,7 @@ int main()
               << "#endif" << std::endl;
 
   // body intro
-  wayland_cpp << "#include <wayland.hpp>" << std::endl
+  wayland_cpp << "#include <wayland-client-protocol.hpp>" << std::endl
               << std::endl;
   
   // class member definitions

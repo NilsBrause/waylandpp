@@ -24,8 +24,7 @@
  */
 
 #include <iostream>
-#include <core.hpp>
-#include <wayland.hpp>
+#include <wayland-client.hpp>
 
 event_queue_t::queue_ptr::~queue_ptr()
 {

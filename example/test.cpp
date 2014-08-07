@@ -1,6 +1,6 @@
 #include <stdexcept>
 #include <iostream>
-#include <wayland.hpp>
+#include <wayland-client.hpp>
 #include <egl.hpp>
 #include <GL/gl.h>
 #include <linux/input.h>

@@ -23,8 +23,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CORE_HPP
-#define CORE_HPP
+#ifndef WAYLAND_CLIENT_HPP
+#define WAYLAND_CLIENT_HPP
 
 /** \file */
 
@@ -588,5 +588,7 @@ enum display_error
      */
     display_error_no_memory = 2
   };
+
+#include <wayland-client-protocol.hpp>
 
 #endif
