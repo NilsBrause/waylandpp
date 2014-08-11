@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 #include <wayland-client.h>
+#include <EGL/egl.h>
 
 /** \brief A queue for proxy_t object events. 
     
@@ -49,15 +50,15 @@ private:
 
   std::shared_ptr<queue_ptr> queue;
   event_queue_t(wl_event_queue *q);
+
+  friend class proxy_t;
   friend class display_t;
 
-public:
-  /** \brief Get a pointer to the underlying C struct.
-      \return Pointer to a wl_event_queue.
-   */
+  // Get a pointer to the underlying C struct.
   wl_event_queue *c_ptr();
 };
 
+class display_t;
 
 /** \brief Represents a protocol object on the client side.
 
@@ -123,6 +124,8 @@ protected:
   const wl_interface *interface;
 
   friend class registry_t;
+  friend class egl_window_t;
+  friend EGLDisplay eglGetDisplay(display_t &display);
 
   // Event dispatcher. Overwritten by each interface class.
   virtual int dispatcher(int opcode, std::vector<any> args);
@@ -168,6 +171,9 @@ protected:
 
   // Constructs NULL proxies.
   proxy_t();
+
+  // Get a pointer to the underlying C struct.
+  wl_proxy *c_ptr();
 
 public:
   /** \brief Cronstruct a proxy_t from a wl_proxy pointer
@@ -218,11 +224,6 @@ public:
       See also: display_t::dispatch_queue().
   */
   void set_queue(event_queue_t queue);
-
-  /** \brief Get a pointer to the underlying C struct.
-      \return Pointer to a wl_proxy.
-   */
-  wl_proxy *c_ptr();
 };
 
 class callback_t;

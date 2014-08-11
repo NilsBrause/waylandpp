@@ -28,9 +28,15 @@ env.SharedLibrary("src/wayland-client++",
                   CXXFLAGS = cxxflags,
                   LIBS = ["wayland-client"])
 
+env.SharedLibrary("src/wayland-egl++",
+                  "src/wayland-egl.cpp",
+                  CPPPATH = "include",
+                  CXXFLAGS = cxxflags,
+                  LIBS = ["wayland-egl"])
+
 env.Program("example/test",
             ["example/test.cpp", "example/egl.cpp"],
             CPPPATH = ["include", "example"],
             CXXFLAGS = cxxflags,
-            LIBS =  ["wayland-client++", "wayland-egl", "EGL", "GL"],
+            LIBS =  ["wayland-client++", "wayland-egl++", "EGL", "GL"],
             LIBPATH = "src")

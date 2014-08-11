@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <wayland-client.hpp>
+#include <wayland-egl.hpp>
 #include <egl.hpp>
 #include <GL/gl.h>
 #include <linux/input.h>
@@ -57,8 +58,8 @@ int main()
     };
 
   // intitialize egl
-  egl e(reinterpret_cast<wl_display*>(display.c_ptr()),
-        wl_egl_window_create(reinterpret_cast<wl_surface*>(surface.c_ptr()), 320, 240));
+  egl_window_t egl_window(surface, 320, 240);
+  egl e(display, egl_window);
 
   // draw stuff
   e.begin();

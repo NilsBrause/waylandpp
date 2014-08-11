@@ -2,22 +2,17 @@
 #include <vector>
 #include <egl.hpp>
 
-egl::egl(NativeDisplayType native_display, NativeWindowType native_window)
+egl::egl(display_t &disp, egl_window_t &win)
 {
-  if(!count)
-    {
-      display = eglGetDisplay(native_display);
-      if(display == EGL_NO_DISPLAY)
-        throw std::runtime_error("eglGetDisplay");
-      
-      EGLint major, minor;
-      if(eglInitialize(display, &major, &minor) == EGL_FALSE)
-        throw std::runtime_error("eglInitialize");
-      if(!((major == 1 && minor >= 4) || major >= 2))
-        throw std::runtime_error("EGL version too old");
-    }
-
-  count++;
+  display = eglGetDisplay(disp);
+  if(display == EGL_NO_DISPLAY)
+    throw std::runtime_error("eglGetDisplay");
+  
+  EGLint major, minor;
+  if(eglInitialize(display, &major, &minor) == EGL_FALSE)
+    throw std::runtime_error("eglInitialize");
+  if(!((major == 1 && minor >= 4) || major >= 2))
+    throw std::runtime_error("EGL version too old");
 
   if(eglBindAPI(EGL_OPENGL_API) == EGL_FALSE)
     throw std::runtime_error("eglBindAPI");
@@ -44,7 +39,7 @@ egl::egl(NativeDisplayType native_display, NativeWindowType native_window)
 
   std::vector<EGLint> window_attribs = {
     EGL_NONE };
-  surface = eglCreateWindowSurface(display, config, native_window, window_attribs.data());
+  surface = eglCreateWindowSurface(display, config, win, window_attribs.data());
   if(surface == EGL_NO_SURFACE)
     throw std::runtime_error("eglCreateWindowSurface");  
 }
@@ -53,10 +48,8 @@ egl::~egl()
 {
   if(eglDestroyContext(display, context) == EGL_FALSE)
     throw std::runtime_error("eglDestroyContext");
-  count--;
-  if(!count)
-    if(eglTerminate(display) == EGL_FALSE)
-      throw std::runtime_error("eglTerminate");
+  if(eglTerminate(display) == EGL_FALSE)
+    throw std::runtime_error("eglTerminate");
 }
 
 void egl::begin()
@@ -70,6 +63,3 @@ void egl::end()
   if(eglSwapBuffers(display, surface) == EGL_FALSE)
     throw std::runtime_error("eglSwapBuffers");
 }
-
-EGLDisplay egl::display;
-unsigned int egl::count = 0;

@@ -1,18 +1,19 @@
 #ifndef EGL_HPP
 #define EGL_HPP
 
-#include <wayland-egl.h>
+#include <wayland-egl.hpp>
 #include <EGL/egl.h>
 
 class egl
 {
-  static EGLDisplay display;
-  static unsigned int count;
+  EGLDisplay display;
   EGLSurface surface;
   EGLContext context;
 
+  egl(const egl &) { }
+
 public:
-  egl(NativeDisplayType native_display, NativeWindowType native_window);
+  egl(display_t &disp, egl_window_t &win);
   ~egl();
   void begin();
   void end();
