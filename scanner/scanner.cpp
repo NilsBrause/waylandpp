@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <set>
 #include <sstream>
 
 #include <pugixml.hpp>
@@ -34,7 +35,7 @@ struct argument_t
   std::string print_type()
   {
     if(interface != "")
-      return interface.substr(3, interface.size()) + "_t";
+      return interface + "_t";
     else if(type == "int")
       return "int32_t";
     else if(type == "uint")
@@ -220,7 +221,7 @@ struct request_t : public event_t
         if(ret.interface == "")
           tmp += "interface.interface";
         else
-          tmp += "&" + ret.interface + "_interface";
+          tmp += "&wl_" + ret.interface + "_interface";
         tmp += ", ";
       }
 
@@ -289,7 +290,7 @@ struct interface_t
     return tmp;
   }
 
-  std::string print_header()
+  std::string print_header(std::list<interface_t> &interfaces)
   {
     std::stringstream ss;
     ss << "class " << name << "_t : public proxy_t" << std::endl
@@ -303,10 +304,29 @@ struct interface_t
 
     ss << "  };" << std::endl
        << std::endl
-       << "  int dispatcher(int opcode, std::vector<any> args) override;" << std::endl
-       << std::endl
-       << "public:" << std::endl
        << "  " + name + "_t(const proxy_t &proxy);" << std::endl
+       << "  int dispatcher(int opcode, std::vector<any> args) override;" << std::endl
+       << std::endl;
+
+    // print only required friend classes
+    // and print then only once
+    std::set<std::string> friends;
+    for(auto &iface : interfaces)
+      {
+        for(auto &req : iface.requests)
+          for(auto &arg : req.args)
+            if(arg.interface == name)
+              friends.insert(iface.name);
+        for(auto &ev : iface.events)
+          for(auto &arg : ev.args)
+            if(arg.interface == name)
+              friends.insert(iface.name);
+      }
+    for(auto &frnd : friends)
+      ss << "  friend class " << frnd << "_t;" << std::endl;
+    ss << std::endl;
+
+    ss << "public:" << std::endl
        << "  " + name + "_t();" << std::endl;
 
     for(auto &request : requests)
@@ -393,7 +413,6 @@ int main(int argc, char *argv[])
       interface_t iface;
       iface.destroy_opcode = -1;
       iface.name = interface.attribute("name").value();
-      if(iface.name == "wl_display") continue; // skip in favor of hand written version
       iface.name = iface.name.substr(3, iface.name.size());
       iface.version = interface.attribute("version").value();
 
@@ -414,7 +433,11 @@ int main(int argc, char *argv[])
               argument_t arg;
               arg.type = argument.attribute("type").value();
               arg.name = argument.attribute("name").value();
-              arg.interface = argument.attribute("interface") ? argument.attribute("interface").value() : "";
+              if(argument.attribute("interface"))
+                {
+                  arg.interface = argument.attribute("interface").value();
+                  arg.interface = arg.interface.substr(3, arg.interface.size());
+                }
               if(arg.type == "new_id")
                 req.ret = arg;
               req.args.push_back(arg);
@@ -431,8 +454,15 @@ int main(int argc, char *argv[])
               argument_t arg;
               arg.type = argument.attribute("type").value();
               arg.name = argument.attribute("name").value();
-              arg.interface = argument.attribute("interface") ? argument.attribute("interface").value() : "";
-              arg.allow_null = argument.attribute("interface") && std::string(argument.attribute("interface").value()) == "true";
+              if(argument.attribute("interface"))
+                {
+                  arg.interface = argument.attribute("interface").value();
+                  arg.interface = arg.interface.substr(3, arg.interface.size());
+                }
+              if(argument.attribute("allow_null"))
+                arg.allow_null = std::string(argument.attribute("allow_null").value()) == "true";
+              else
+                arg.allow_null = false;
               ev.args.push_back(arg);
             }
           iface.events.push_back(ev);
@@ -474,12 +504,18 @@ int main(int argc, char *argv[])
 
   // forward declarations
   for(auto &iface : interfaces)
-    wayland_hpp << iface.print_forward() << std::endl;
+    {
+      if(iface.name == "display") continue; // skip in favor of hand written version
+      wayland_hpp << iface.print_forward() << std::endl;
+    }
   wayland_hpp << std::endl;
 
   // class declarations
   for(auto &iface : interfaces)
-    wayland_hpp << iface.print_header() << std::endl;
+    {
+      if(iface.name == "display") continue; // skip in favor of hand written version
+      wayland_hpp << iface.print_header(interfaces) << std::endl;
+    }
   wayland_hpp << std::endl
               << "#endif" << std::endl;
 
@@ -489,7 +525,10 @@ int main(int argc, char *argv[])
   
   // class member definitions
   for(auto &iface : interfaces)
-    wayland_cpp << iface.print_body() << std::endl;
+    {
+      if(iface.name == "display") continue; // skip in favor of hand written version
+      wayland_cpp << iface.print_body() << std::endl;
+    }
   wayland_cpp << std::endl;
 
   // clean up
