@@ -315,31 +315,31 @@ struct enumeration_t : public element_t
   std::string name;
   std::list<enum_entry_t> entries;
   
-  std::string print(std::string interface_name)
+  std::string print()
   {
     std::stringstream ss;
     if(description != "")
       {
-        ss << "/** \\brief " << summary << std::endl
+        ss << "  /** \\brief " << summary << std::endl
            << description << std::endl
-           << "  */" << std::endl;
+           << "    */" << std::endl;
       }
-    ss << "enum " << interface_name << "_" << name << std::endl
-       << "  {" << std::endl;
+    ss << "  enum " << name << std::endl
+       << "    {" << std::endl;
     for(auto &entry : entries)
       {
         if(entry.description != "")
           {
-            ss << "    /** \\brief " << entry.summary << std::endl
+            ss << "      /** \\brief " << entry.summary << std::endl
                << entry.description << std::endl
-               << "      */" << std::endl;
+               << "        */" << std::endl;
           }
-        ss << "    " << interface_name << "_" << name << "_" << entry.name << " = " << entry.value << "," << std::endl;
+        ss << "      " << name << "_" << entry.name << " = " << entry.value << "," << std::endl;
       }
     ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
     ss << std::endl
-       << "  };";
+       << "    };" << std::endl;
     return ss.str();
   }
 };
@@ -412,13 +412,12 @@ struct interface_t : public element_t
     for(auto &event : events)
       ss << event.print_signal_header() << std::endl;
 
+    for(auto &enumeration : enums)
+      ss << enumeration.print() << std::endl;
+
     ss << "};" << std::endl
        << std::endl;
     
-    for(auto &enumeration : enums)
-      ss << enumeration.print(name) << std::endl
-       << std::endl;
-
     return ss.str();
   }
 

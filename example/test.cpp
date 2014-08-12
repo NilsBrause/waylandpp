@@ -70,7 +70,7 @@ int main()
   // window movement
   pointer.on_button() = [&] (uint32_t serial, uint32_t time, uint32_t button, uint32_t state)
     {
-      if(button == BTN_LEFT && state == pointer_button_state_pressed)
+      if(button == BTN_LEFT && state == pointer_t::button_state_pressed)
         shell_surface.move(seat, serial);
     };
 
@@ -78,7 +78,7 @@ int main()
   bool running = true;
   keyboard.on_key() = [&] (uint32_t, uint32_t, uint32_t key, uint32_t state)
     {
-      if(key == KEY_Q && state == keyboard_key_state_pressed)
+      if(key == KEY_Q && state == keyboard_t::key_state_pressed)
         running = false;
     };
 
