@@ -25,7 +25,13 @@
 
 using namespace pugi;
 
-struct argument_t
+struct element_t
+{
+  std::string summary;
+  std::string description;
+};
+
+struct argument_t : public element_t
 {
   std::string type;
   std::string name;
@@ -84,20 +90,22 @@ struct argument_t
   }
 };
 
-struct event_t
+struct event_t : public element_t
 {
   std::string name;
   std::list<argument_t> args;
 
   std::string print_functional()
   {
-    std::string tmp = "std::function<void(";
-    for(auto arg : args)
-      tmp += arg.print_type() + ", ";
+    std::stringstream ss;
+    ss << "    std::function<void(";
+    for(auto &arg : args)
+      ss << arg.print_type() << ", ";
     if(args.size())
-      tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ")> " + name + ";";
-    return tmp;
+      ss.str(ss.str().substr(0, ss.str().size()-2));
+    ss.seekp(0, std::ios_base::end);
+    ss << ")> " << name << ";";
+    return ss.str();
   }
 
   std::string print_dispatcher(int opcode)
@@ -107,7 +115,7 @@ struct event_t
        << "      if(events->" << name << ") events->" << name << "(";
 
     int c = 0;
-    for(auto arg : args)
+    for(auto &arg : args)
       {
         ss << "args[" << c++ << "].get<";
         if(arg.type == "int" || arg.type == "fd" || arg.type == "fixed")
@@ -134,27 +142,44 @@ struct event_t
 
   std::string print_signal_header()
   {
-    std::string tmp = "std::function<void(";
-    for(auto arg : args)
-      tmp += arg.print_type() + ", ";
+    std::stringstream ss;
+    if(description != "")
+      {
+        ss << "  /** \\brief " << summary << std::endl;
+        for(auto &arg : args)
+          {
+            ss << "      \\param " << arg.name << " ";
+            if(arg.summary != "")
+              ss << arg.summary;
+            ss << std::endl;
+          }
+        ss << description << std::endl
+           << "    */" << std::endl;
+      }
+    ss << "  std::function<void(";
+    for(auto &arg : args)
+      ss << arg.print_type() + ", ";
     if(args.size())
-      tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ")> &on_" + name + "();";
-    return tmp;
+      ss.str(ss.str().substr(0, ss.str().size()-2));
+    ss.seekp(0, std::ios_base::end);
+    ss << ")> &on_" <<  name << "();" << std::endl;
+    return ss.str();
   }
 
   std::string print_signal_body(std::string interface_name)
   {
-    std::string tmp = "std::function<void(";
-    for(auto arg : args)
-      tmp += arg.print_type() + ", ";
+    std::stringstream ss;
+    ss << "std::function<void(";
+    for(auto &arg : args)
+      ss << arg.print_type() << ", ";
     if(args.size())
-      tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ")> &" + interface_name + "_t::on_" + name + "()\n";
-    tmp += "{\n";
-    tmp += "  return std::static_pointer_cast<events_t>(get_events())->" + name + ";\n";
-    tmp += "}";
-    return tmp;
+      ss.str(ss.str().substr(0, ss.str().size()-2));
+    ss.seekp(0, std::ios_base::end);
+    ss << ")> &" + interface_name + "_t::on_" + name + "()" << std::endl
+       << "{" << std::endl
+       << "  return std::static_pointer_cast<events_t>(get_events())->" + name + ";" << std::endl
+       << "}" << std::endl;
+    return ss.str();
   }
 };
 
@@ -165,116 +190,161 @@ struct request_t : public event_t
 
   std::string print_header()
   {
-    std::string tmp;
-    if(ret.name == "")
-      tmp += "void ";
-    else
-      tmp += ret.print_type() + " ";
-    tmp += name +  "(";
+    std::stringstream ss;
+    if(description != "")
+      {
+        ss << "  /** \\brief " << summary << std::endl;
+        if(ret.summary != "")
+          ss << "      \return " << ret.summary << std::endl;
+        for(auto &arg : args)
+          {
+            if(arg.type == "new_id")
+              {
+                if(arg.interface == "")
+                  ss << "      \\param interface Interface to bind" << std::endl
+                     << "      \\param version Interface version" << std::endl;
+              }
+            else
+              {
+                ss << "      \\param " << arg.name << " ";
+                if(arg.summary != "")
+                  ss << arg.summary;
+                ss << std::endl;
+              }
+          }
+        ss << description << std::endl
+           << "    */" << std::endl;
+      }
 
-    for(auto arg : args)
+    if(ret.name == "")
+      ss << "  void ";
+    else
+      ss << "  " << ret.print_type() << " ";
+    ss << name << "(";
+
+    for(auto &arg : args)
       if(arg.type == "new_id")
         {
           if(arg.interface == "")
-            tmp += "proxy_t &interface, uint32_t version, ";
+            ss << "proxy_t &interface, uint32_t version, ";
         }
       else
-        tmp += arg.print_argument() + ", ";
+        ss << arg.print_argument() << ", ";
 
-    if(tmp.substr(tmp.size()-2, 2) == ", ")
-      tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ");";
-    return tmp;
+    if(ss.str().substr(ss.str().size()-2, 2) == ", ")
+      ss.str(ss.str().substr(0, ss.str().size()-2));
+    ss.seekp(0, std::ios_base::end);
+    ss << ");" << std::endl;
+    return ss.str();
   }
 
   std::string print_body(std::string interface_name)
   {
-    std::string tmp;
+    std::stringstream ss;
     if(ret.name == "")
-      tmp += "void ";
+      ss <<  "void ";
     else
-      tmp += ret.print_type() + " ";
-    tmp += interface_name + "_t::" + name + "(";
+      ss << ret.print_type() << " ";
+    ss << interface_name << "_t::" << name << "(";
 
     bool new_id_arg = false;
-    for(auto arg : args)
+    for(auto &arg : args)
       if(arg.type == "new_id")
         {
           if(arg.interface == "")
             {
-              tmp += "proxy_t &interface, uint32_t version, ";
+              ss << "proxy_t &interface, uint32_t version, ";
               new_id_arg = true;
             }
         }
       else
-        tmp += arg.print_argument() + ", ";
+        ss << arg.print_argument() << ", ";
 
-    if(tmp.substr(tmp.size()-2, 2) == ", ")
-      tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ")\n{\n";
+    if(ss.str().substr(ss.str().size()-2, 2) == ", ")
+      ss.str(ss.str().substr(0, ss.str().size()-2));
+    ss.seekp(0, std::ios_base::end);
+    ss << ")\n{" << std::endl;
 
     if(ret.name == "")
-      tmp += "  marshal(" + std::to_string(opcode) + ", ";
+      ss <<  "  marshal(" << opcode << ", ";
     else
       {
-        tmp += "  proxy_t p = marshal_constructor(" + std::to_string(opcode) + ", ";
+        ss << "  proxy_t p = marshal_constructor(" << opcode << ", ";
         if(ret.interface == "")
-          tmp += "interface.interface";
+          ss << "interface.interface";
         else
-          tmp += "&wl_" + ret.interface + "_interface";
-        tmp += ", ";
+          ss << "&wl_" << ret.interface << "_interface";
+        ss << ", ";
       }
 
-    for(auto arg : args)
+    for(auto &arg : args)
       {
         if(arg.type == "new_id")
           {
             if(arg.interface == "")
-              tmp += "std::string(interface.interface->name), version, ";
-            tmp += "NULL, ";
+              ss << "std::string(interface.interface->name), version, ";
+            ss << "NULL, ";
           }
         else
-          tmp += arg.name + ", ";
+          ss << arg.name + ", ";
       }
 
-    tmp = tmp.substr(0, tmp.size()-2);
-    tmp += ");\n";
+    ss.str(ss.str().substr(0, ss.str().size()-2));
+    ss.seekp(0, std::ios_base::end);
+    ss << ");" << std::endl;
 
     if(ret.name != "")
       {
         if(new_id_arg)
-          tmp += "  interface = p;\n";
-        tmp += "  return p;\n";
+          ss << "  interface = p;" << std::endl;
+        ss << "  return p;" << std::endl;
       }
-    tmp += "}";
-    return tmp;
+    ss << "}";
+    return ss.str();
   }
 };
 
-struct enum_entry_t
+struct enum_entry_t : public element_t
 {
   std::string name;
   std::string value;
 };
 
-struct enumeration_t
+struct enumeration_t : public element_t
 {
   std::string name;
   std::list<enum_entry_t> entries;
   
   std::string print(std::string interface_name)
   {
-    std::string tmp = "enum " + interface_name + "_" + name + "\n";
-    tmp += + "  {\n";
+    std::stringstream ss;
+    if(description != "")
+      {
+        ss << "/** \\brief " << summary << std::endl
+           << description << std::endl
+           << "  */" << std::endl;
+      }
+    ss << "enum " << interface_name << "_" << name << std::endl
+       << "  {" << std::endl;
     for(auto &entry : entries)
-      tmp += "    " + interface_name + "_" + name + "_" + entry.name + " = " + entry.value + ",\n";
-    tmp = tmp.substr(0, tmp.size()-2);
-    tmp += "\n  };";
-    return tmp;
+      {
+        if(entry.description != "")
+          {
+            ss << "    /** \\brief " << entry.summary << std::endl
+               << entry.description << std::endl
+               << "      */" << std::endl;
+          }
+        ss << "    " << interface_name << "_" << name << "_" << entry.name << " = " << entry.value << "," << std::endl;
+      }
+    ss.str(ss.str().substr(0, ss.str().size()-2));
+    ss.seekp(0, std::ios_base::end);
+    ss << std::endl
+       << "  };";
+    return ss.str();
   }
 };
 
-struct interface_t
+struct interface_t : public element_t
 {
   std::string version;
   std::string name;
@@ -293,6 +363,12 @@ struct interface_t
   std::string print_header(std::list<interface_t> &interfaces)
   {
     std::stringstream ss;
+    if(description != "")
+      {
+        ss << "/** \\brief " << summary << std::endl
+           << description << std::endl
+           << "  */" << std::endl;
+      }
     ss << "class " << name << "_t : public proxy_t" << std::endl
        << "{" << std::endl
        << "private:" << std::endl
@@ -300,7 +376,7 @@ struct interface_t
        << "  {" << std::endl;
 
     for(auto &event : events)
-      ss << "    " << event.print_functional() << std::endl;
+      ss << event.print_functional() << std::endl;
 
     ss << "  };" << std::endl
        << std::endl
@@ -327,13 +403,14 @@ struct interface_t
     ss << std::endl;
 
     ss << "public:" << std::endl
-       << "  " + name + "_t();" << std::endl;
+       << "  " + name + "_t();" << std::endl
+       << std::endl;
 
     for(auto &request : requests)
-      ss << "  " << request.print_header() << std::endl;
+      ss << request.print_header() << std::endl;
 
     for(auto &event : events)
-      ss << "  " << event.print_signal_header() << std::endl;
+      ss << event.print_signal_header() << std::endl;
 
     ss << "};" << std::endl
        << std::endl;
@@ -367,8 +444,7 @@ struct interface_t
          << std::endl;
 
     for(auto &event : events)
-      ss << event.print_signal_body(name) << std::endl
-         << std::endl;
+      ss << event.print_signal_body(name) << std::endl;
 
     ss << "int " << name << "_t::dispatcher(int opcode, std::vector<any> args)" << std::endl
        << "{" << std::endl;
@@ -415,6 +491,12 @@ int main(int argc, char *argv[])
       iface.name = interface.attribute("name").value();
       iface.name = iface.name.substr(3, iface.name.size());
       iface.version = interface.attribute("version").value();
+      if(interface.child("description"))
+        {
+          xml_node description = interface.child("description");
+          iface.summary = description.attribute("summary").value();
+          iface.description = description.text().get();
+        }
 
       int opcode = 0; // Opcodes are in order of the XML. (Sadly undocumented)
       for(xml_node &request : interface.children("request"))
@@ -422,6 +504,13 @@ int main(int argc, char *argv[])
           request_t req;
           req.opcode = opcode++;
           req.name = request.attribute("name").value();
+          if(request.child("description"))
+            {
+              xml_node description = request.child("description");
+              req.summary = description.attribute("summary").value();
+              req.description = description.text().get();
+            }
+
           // destruction takes place through the class destuctor
           if(req.name == "destroy")
             {
@@ -433,6 +522,13 @@ int main(int argc, char *argv[])
               argument_t arg;
               arg.type = argument.attribute("type").value();
               arg.name = argument.attribute("name").value();
+              if(argument.child("description"))
+                {
+                  xml_node description = argument.child("description");
+                  arg.summary = description.attribute("summary").value();
+                  arg.description = description.text().get();
+                }
+
               if(argument.attribute("interface"))
                 {
                   arg.interface = argument.attribute("interface").value();
@@ -449,11 +545,25 @@ int main(int argc, char *argv[])
         {
           event_t ev;
           ev.name = event.attribute("name").value();
+          if(event.child("description"))
+            {
+              xml_node description = event.child("description");
+              ev.summary = description.attribute("summary").value();
+              ev.description = description.text().get();
+            }
+
           for(xml_node &argument : event.children("arg"))
             {
               argument_t arg;
               arg.type = argument.attribute("type").value();
               arg.name = argument.attribute("name").value();
+              if(argument.child("description"))
+                {
+                  xml_node description = argument.child("description");
+                  arg.summary = description.attribute("summary").value();
+                  arg.description = description.text().get();
+                }
+
               if(argument.attribute("interface"))
                 {
                   arg.interface = argument.attribute("interface").value();
@@ -472,12 +582,25 @@ int main(int argc, char *argv[])
         {
           enumeration_t enu;
           enu.name = enumeration.attribute("name").value();
+          if(enumeration.child("description"))
+            {
+              xml_node description = enumeration.child("description");
+              enu.summary = description.attribute("summary").value();
+              enu.description = description.text().get();
+            }
+
           for(xml_node entry = enumeration.child("entry"); entry;
               entry = entry.next_sibling("entry"))
             {
               enum_entry_t enum_entry;
               enum_entry.name = entry.attribute("name").value();
               enum_entry.value = entry.attribute("value").value();
+              if(entry.child("description"))
+                {
+                  xml_node description = entry.child("description");
+                  enum_entry.summary = description.attribute("summary").value();
+                  enum_entry.description = description.text().get();
+                }
               enu.entries.push_back(enum_entry);
             }
           iface.enums.push_back(enu);
