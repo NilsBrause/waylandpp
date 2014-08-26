@@ -381,7 +381,7 @@ struct interface_t : public element_t
     ss << "  };" << std::endl
        << std::endl
        << "  " + name + "_t(const proxy_t &proxy);" << std::endl
-       << "  int dispatcher(int opcode, std::vector<any> args) override;" << std::endl
+       << "  static int dispatcher(int opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e);" << std::endl
        << std::endl;
 
     // print only required friend classes
@@ -427,7 +427,7 @@ struct interface_t : public element_t
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
        << "  : proxy_t(p)" << std::endl
        << "{" << std::endl
-       << "  set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t));" << std::endl
+       << "  set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl
        << "  set_destroy_opcode(" << destroy_opcode << ");" << std::endl
        << "  interface = &wl_" << name << "_interface;" << std::endl
        << "}" << std::endl
@@ -445,12 +445,12 @@ struct interface_t : public element_t
     for(auto &event : events)
       ss << event.print_signal_body(name) << std::endl;
 
-    ss << "int " << name << "_t::dispatcher(int opcode, std::vector<any> args)" << std::endl
+    ss << "int " << name << "_t::dispatcher(int opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
        << "{" << std::endl;
 
     if(events.size())
       {
-        ss << "  std::shared_ptr<events_t> events = std::static_pointer_cast<events_t>(get_events());" << std::endl
+        ss << "  std::shared_ptr<events_t> events = std::static_pointer_cast<events_t>(e);" << std::endl
            << "  switch(opcode)" << std::endl
            << "    {" << std::endl;
         

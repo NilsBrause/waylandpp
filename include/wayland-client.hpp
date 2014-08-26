@@ -90,10 +90,8 @@ private:
   // stored in the proxy user data
   struct proxy_data_t
   {
-    proxy_t *proxy;
     std::shared_ptr<events_base_t> events;
     int opcode; 
-    // 
     unsigned int counter;
   };
 
@@ -127,9 +125,6 @@ protected:
   friend class egl_window_t;
   friend EGLDisplay eglGetDisplay(display_t &display);
 
-  // Event dispatcher. Overwritten by each interface class.
-  virtual int dispatcher(int opcode, std::vector<any> args);
-
   // marshal a request, that doesn't lead a new proxy
   // Valid types for args are:
   // - uint32_t
@@ -160,11 +155,12 @@ protected:
   void set_destroy_opcode(int destroy_opcode);
 
   /*
-    Set user data for the dispatcher. Must be an instance of a class
-    derived from events_base_t, allocated wthi new. Will automatically
-    be deleted upon destruction.
+    Sets the dispatcher and its user data. User data must be an
+    instance of a class derived from events_base_t, allocated with
+    new. Will automatically be deleted upon destruction.
   */
-  void set_events(std::shared_ptr<events_base_t> events);
+  void set_events(std::shared_ptr<events_base_t> events,
+                  int(*dispatcher)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>));
 
   // Retrieve the perviously set user data
   std::shared_ptr<events_base_t> get_events();

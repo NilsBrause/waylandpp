@@ -90,7 +90,10 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
         }
       vargs.push_back(a);
     }
-  return reinterpret_cast<proxy_t*>(const_cast<void*>(implementation))->dispatcher(opcode, vargs);
+  proxy_t p(reinterpret_cast<wl_proxy*>(target), false);
+  typedef int(*dispatcher_func)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>);
+  dispatcher_func dispatcher = reinterpret_cast<dispatcher_func>(const_cast<void*>(implementation));
+  return dispatcher(opcode, vargs, p.get_events());
 }
 
 proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v)
@@ -136,11 +139,6 @@ wl_argument proxy_t::conv(std::vector<char> a)
   return arg;
 }
 
-int proxy_t::dispatcher(int opcode, std::vector<any> args)
-{
-  return 0;
-}
-
 void proxy_t::set_destroy_opcode(int destroy_opcode)
 {
   if(proxy && !display)
@@ -150,17 +148,18 @@ void proxy_t::set_destroy_opcode(int destroy_opcode)
     }
 }
 
-void proxy_t::set_events(std::shared_ptr<events_base_t> events)
+void proxy_t::set_events(std::shared_ptr<events_base_t> events,
+                         int(*dispatcher)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
 {
   if(proxy && !display)
     {
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
-      data->events = events;
-      if(!data->proxy)
+      // set only one time
+      if(!data->events)
         {
-          data->proxy = this;
+          data->events = events;
           // the dispatcher gets 'implemetation'
-          wl_proxy_add_dispatcher(proxy, c_dispatcher, data->proxy, data);
+          wl_proxy_add_dispatcher(proxy, c_dispatcher, reinterpret_cast<void*>(dispatcher), data);
         }
     }
 }
@@ -188,7 +187,7 @@ proxy_t::proxy_t(wl_proxy *p, bool is_display)
       proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
       if(!data)
         {
-          data = new proxy_data_t{NULL, std::shared_ptr<events_base_t>(), -1, 0};
+          data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, 0};
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
@@ -211,7 +210,7 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
       if(!data)
         {
           std::cout << "Found proxy_t without meta data." << std::endl;
-          data = new proxy_data_t{NULL, std::shared_ptr<events_base_t>(), -1, 0};
+          data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, 0};
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
@@ -265,6 +264,7 @@ display_t::display_t(int fd)
 {
   if(!c_ptr())
     throw std::runtime_error("wl_display_connect_to_fd");
+  interface = &wl_display_interface;
 }
 
 display_t::display_t(std::string name)
@@ -272,6 +272,7 @@ display_t::display_t(std::string name)
 {
   if(!c_ptr())
     throw std::runtime_error("wl_display_connect");
+  interface = &wl_display_interface;
 }
 
 display_t::~display_t()
