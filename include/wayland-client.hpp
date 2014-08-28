@@ -183,7 +183,7 @@ public:
 
       For details see operator=()
   */
-  proxy_t(const proxy_t& p);
+  proxy_t(const proxy_t &p);
 
   /** \brief Assignment operator
       \param p A proxy_t object
@@ -191,6 +191,16 @@ public:
       After an assignment, both proxy_t objects will point to the same proxy.
   */
   proxy_t &operator=(const proxy_t &p);
+
+  /** \brief Move Constructior
+      \param p A proxy_t object
+  */
+  proxy_t(proxy_t &&p);
+
+  /** \brief Move Asignment operator
+      \param p A proxy_t object
+  */
+  proxy_t &operator=(proxy_t &&p);
 
   /** \brief Destructor
 
@@ -288,7 +298,7 @@ class registry_t;
 class display_t : public proxy_t
 {
 private:
-  display_t(display_t &d) { }
+  display_t(const display_t &d) { }
 
 public:
   /** \brief Connect to Wayland display on an already open fd.
@@ -299,6 +309,9 @@ public:
       failure.
    */
   display_t(int fd);
+
+  display_t(display_t &&d);
+  display_t &operator=(display_t &&d);
 
   /**  \brief Connect to a Wayland display. 
        \param name Optional name of the Wayland display to connect to

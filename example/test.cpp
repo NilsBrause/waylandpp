@@ -45,7 +45,7 @@ class example
 {
 private:
   // global objects
-  std::shared_ptr<display_t> display;
+  display_t display;
   registry_t registry;
   compositor_t compositor;
   shell_t shell;
@@ -60,20 +60,16 @@ private:
   callback_t frame_cb;
 
   // EGL
-  std::shared_ptr<egl_window_t> egl_window;
+  egl_window_t egl_window;
   EGLDisplay egldisplay;
   EGLSurface eglsurface;
   EGLContext eglcontext;
 
   bool running;
 
-  example(const example &)
-  {
-  }
-
   void init_egl()
   {
-    egldisplay = eglGetDisplay(*display);
+    egldisplay = eglGetDisplay(display);
     if(egldisplay == EGL_NO_DISPLAY)
       throw std::runtime_error("eglGetDisplay");
 
@@ -110,7 +106,7 @@ private:
     if(eglcontext == EGL_NO_CONTEXT)
       throw std::runtime_error("eglCreateContext");
 
-    eglsurface = eglCreateWindowSurface(egldisplay, config, *egl_window, NULL);
+    eglsurface = eglCreateWindowSurface(egldisplay, config, egl_window, NULL);
     if(eglsurface == EGL_NO_SURFACE)
       throw std::runtime_error("eglCreateWindowSurface");
 
@@ -167,11 +163,9 @@ private:
   
 public:
   example()
-    // connect to display
-    : display(new display_t)
   {
     // retrieve global objects
-    registry = display->get_registry();
+    registry = display.get_registry();
     registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
       {
         if(interface == "wl_compositor")
@@ -183,7 +177,7 @@ public:
         else if(interface == "wl_shm")
           registry.bind(name, shm, version);
       };
-    display->dispatch();
+    display.dispatch();
 
     // create a surface
     surface = compositor.create_surface();
@@ -215,7 +209,7 @@ public:
       };
 
     // intitialize egl
-    egl_window = std::shared_ptr<egl_window_t>(new egl_window_t(surface, 320, 240));
+    egl_window = egl_window_t(surface, 320, 240);
     init_egl();
 
     // draw stuff
@@ -236,7 +230,7 @@ public:
     // event loop
     running = true;
     while(running)
-      display->dispatch();
+      display.dispatch();
   }
 };
 

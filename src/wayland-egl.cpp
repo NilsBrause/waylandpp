@@ -23,6 +23,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <utility>
 #include <wayland-egl.hpp>
 
 egl_window_t::egl_window_t(surface_t &surface, int width, int height)
@@ -30,19 +31,43 @@ egl_window_t::egl_window_t(surface_t &surface, int width, int height)
   window = wl_egl_window_create(reinterpret_cast<wl_surface*>(surface.c_ptr()), width, height);
 }
 
+egl_window_t::egl_window_t()
+  : window(NULL)
+{
+}
+
 egl_window_t::~egl_window_t()
 {
-  wl_egl_window_destroy(window);
+  if(window)
+    wl_egl_window_destroy(window);
+}
+
+egl_window_t::egl_window_t(egl_window_t &&w)
+{
+  operator=(std::move(w));
+}
+
+egl_window_t &egl_window_t::operator=(egl_window_t &&w)
+{
+  std::swap(window, w.window);
+  return *this;
 }
 
 void egl_window_t::resize(int width, int height, int dx, int dy)
 {
-  wl_egl_window_resize(window, width, height, dx, dy);
+  if(window)
+    wl_egl_window_resize(window, width, height, dx, dy);
 }
 
 void egl_window_t::get_attached_size(int &width, int &height)
 {
-  wl_egl_window_get_attached_size(window, &width, &height);
+  if(window)
+    wl_egl_window_get_attached_size(window, &width, &height);
+  else
+    {
+      width = 0;
+      height = 0;
+    }
 }
 
 // C++ Overrides

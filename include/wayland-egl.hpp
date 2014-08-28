@@ -52,6 +52,10 @@ public:
   egl_window_t(surface_t &surface, int width, int height);
   ~egl_window_t();
 
+  egl_window_t();
+  egl_window_t(egl_window_t &&w);
+  egl_window_t &operator=(egl_window_t &&w);
+
   void resize(int width, int height, int dx = 0, int dy = 0);
   void get_attached_size(int &width, int &height);
 };

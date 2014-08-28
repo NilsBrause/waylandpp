@@ -194,7 +194,7 @@ proxy_t::proxy_t(wl_proxy *p, bool is_display)
     } 
 }
   
-proxy_t::proxy_t(const proxy_t& p)
+proxy_t::proxy_t(const proxy_t &p)
 {
   operator=(p);
 }
@@ -215,6 +215,20 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
         }
       data->counter++;
     }
+  return *this;
+}
+
+proxy_t::proxy_t(proxy_t &&p)
+  : proxy(NULL), display(false), interface(NULL)
+{
+  operator=(std::move(p));
+}
+
+proxy_t &proxy_t::operator=(proxy_t &&p)
+{
+  std::swap(proxy, p.proxy);
+  std::swap(display, p.display);
+  std::swap(interface, p.interface);
   return *this;
 }
 
@@ -273,6 +287,17 @@ display_t::display_t(std::string name)
   if(!c_ptr())
     throw std::runtime_error("wl_display_connect");
   interface = &wl_display_interface;
+}
+
+display_t::display_t(display_t &&d)
+{
+  operator=(std::move(d));
+}
+
+display_t &display_t::operator=(display_t &&d)
+{
+  proxy_t::operator=(std::move(d));
+  return *this;
 }
 
 display_t::~display_t()
