@@ -4,7 +4,6 @@
 *.so
 .sconsign.dblite
 scanner/scanner
-wayland.xml
 wayland-client-protocol.cpp
 wayland-client-protocol.hpp
 example/test

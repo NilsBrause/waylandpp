@@ -7,11 +7,6 @@ env = Environment()
 env["CXX"] = os.environ.get("CXX", "g++")
 env["CXXFLAGS"] = "-std=c++11 -Wall -Werror -O0 -ggdb"
 
-url = "http://cgit.freedesktop.org/wayland/wayland/plain/protocol/wayland.xml"
-env.Command("scanner/wayland.xml",
-            "",
-            "wget -O scanner/wayland.xml -qc " + url)
-
 env.Program("scanner/scanner",
             ["scanner/scanner.cpp", "scanner/pugixml.cpp"],
             CPPPATH = "scanner")

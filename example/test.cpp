@@ -195,16 +195,16 @@ public:
     pointer.on_enter() = [&] (uint32_t serial, surface_t, int32_t, int32_t) { pointer.set_cursor(serial, surface_t(), 0, 0); };
     
     // window movement
-    pointer.on_button() = [&] (uint32_t serial, uint32_t time, uint32_t button, uint32_t state)
+    pointer.on_button() = [&] (uint32_t serial, uint32_t time, uint32_t button, pointer_button_state state)
       {
-        if(button == BTN_LEFT && state == pointer_t::button_state_pressed)
+        if(button == BTN_LEFT && state == pointer_button_state::pressed)
           shell_surface.move(seat, serial);
       };
 
     // press 'q' to exit
-    keyboard.on_key() = [&] (uint32_t, uint32_t, uint32_t key, uint32_t state)
+    keyboard.on_key() = [&] (uint32_t, uint32_t, uint32_t key, keyboard_key_state state)
       {
-        if(key == KEY_Q && state == keyboard_t::key_state_pressed)
+        if(key == KEY_Q && state == keyboard_key_state::pressed)
           running = false;
       };
 

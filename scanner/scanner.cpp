@@ -20,6 +20,7 @@
 #include <list>
 #include <set>
 #include <sstream>
+#include <cctype>
 
 #include <pugixml.hpp>
 
@@ -36,12 +37,16 @@ struct argument_t : public element_t
   std::string type;
   std::string name;
   std::string interface;
+  std::string enum_iface;
+  std::string enum_name;
   bool allow_null;
 
   std::string print_type()
   {
     if(interface != "")
       return interface + "_t";
+    else if(enum_iface != "")
+      return enum_iface + "_" + enum_name;
     else if(type == "int")
       return "int32_t";
     else if(type == "uint")
@@ -116,22 +121,12 @@ struct event_t : public element_t
 
     int c = 0;
     for(auto &arg : args)
-      {
-        ss << "args[" << c++ << "].get<";
-        if(arg.type == "int" || arg.type == "fd" || arg.type == "fixed")
-          ss << "int32_t";
-        else if(arg.type == "uint")
-          ss << "uint32_t";
-        else if(arg.type == "string")
-          ss << "std::string";
-        else if(arg.type == "object" || arg.type == "new_id") // wayland/src/connection.c:886
-          ss << "proxy_t";
-        else if(arg.type == "array")
-          ss << "std::vector<char>";
-        else
-          ss << arg.type;
-        ss << ">(), ";
-      }
+      if(arg.enum_name != "")
+        ss << "static_cast<" << arg.print_type() << ">(args[" << c++ << "].get<uint32_t>()), ";
+      else if(arg.interface != "")
+        ss << "args[" << c++ << "].get<proxy_t>(), ";
+      else
+        ss << "args[" << c++ << "].get<" << arg.print_type() << ">(), ";
     if(args.size())
       ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
@@ -285,6 +280,8 @@ struct request_t : public event_t
               ss << "std::string(interface.interface->name), version, ";
             ss << "NULL, ";
           }
+        else if(arg.enum_name != "")
+          ss << "static_cast<uint32_t>(" << arg.name + "), ";
         else
           ss << arg.name + ", ";
       }
@@ -315,7 +312,7 @@ struct enumeration_t : public element_t
   std::string name;
   std::list<enum_entry_t> entries;
   
-  std::string print()
+  std::string print(std::string iface_name)
   {
     std::stringstream ss;
     if(description != "")
@@ -324,7 +321,7 @@ struct enumeration_t : public element_t
            << description << std::endl
            << "    */" << std::endl;
       }
-    ss << "  enum " << name << std::endl
+    ss << "  enum class " << iface_name << "_" << name << " : uint32_t" << std::endl
        << "    {" << std::endl;
     for(auto &entry : entries)
       {
@@ -334,7 +331,7 @@ struct enumeration_t : public element_t
                << entry.description << std::endl
                << "        */" << std::endl;
           }
-        ss << "      " << name << "_" << entry.name << " = " << entry.value << "," << std::endl;
+        ss << "      " << entry.name << " = " << entry.value << "," << std::endl;
       }
     ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
@@ -355,9 +352,11 @@ struct interface_t : public element_t
 
   std::string print_forward()
   {
-    std::string tmp = "class ";
-    tmp += name + "_t;";
-    return tmp;
+    std::stringstream ss;
+    ss << "class " << name << "_t;" << std::endl;
+    for(auto &e : enums)
+      ss << "enum class " << name << "_" << e.name << " : uint32_t;" << std::endl;
+    return ss.str();
   }
 
   std::string print_header(std::list<interface_t> &interfaces)
@@ -412,12 +411,12 @@ struct interface_t : public element_t
     for(auto &event : events)
       ss << event.print_signal_header() << std::endl;
 
-    for(auto &enumeration : enums)
-      ss << enumeration.print() << std::endl;
-
     ss << "};" << std::endl
        << std::endl;
     
+    for(auto &enumeration : enums)
+      ss << enumeration.print(name) << std::endl;
+
     return ss.str();
   }
 
@@ -533,6 +532,14 @@ int main(int argc, char *argv[])
                   arg.interface = argument.attribute("interface").value();
                   arg.interface = arg.interface.substr(3, arg.interface.size());
                 }
+
+              if(argument.attribute("enum"))
+              {
+                std::string tmp = argument.attribute("enum").value();
+                arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
+                arg.enum_name = tmp.substr(tmp.find('.')+1);
+              }
+
               if(arg.type == "new_id")
                 req.ret = arg;
               req.args.push_back(arg);
@@ -568,6 +575,14 @@ int main(int argc, char *argv[])
                   arg.interface = argument.attribute("interface").value();
                   arg.interface = arg.interface.substr(3, arg.interface.size());
                 }
+
+              if(argument.attribute("enum"))
+              {
+                std::string tmp = argument.attribute("enum").value();
+                arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
+                arg.enum_name = tmp.substr(tmp.find('.')+1);
+              }
+
               if(argument.attribute("allow_null"))
                 arg.allow_null = std::string(argument.attribute("allow_null").value()) == "true";
               else
@@ -593,6 +608,9 @@ int main(int argc, char *argv[])
             {
               enum_entry_t enum_entry;
               enum_entry.name = entry.attribute("name").value();
+              if(enum_entry.name == "default"
+                 || isdigit(enum_entry.name.at(0)))
+                enum_entry.name.insert(0, 1, '_');
               enum_entry.value = entry.attribute("value").value();
               if(entry.child("description"))
                 {
@@ -628,7 +646,7 @@ int main(int argc, char *argv[])
   for(auto &iface : interfaces)
     {
       if(iface.name == "display") continue; // skip in favor of hand written version
-      wayland_hpp << iface.print_forward() << std::endl;
+      wayland_hpp << iface.print_forward();
     }
   wayland_hpp << std::endl;
 

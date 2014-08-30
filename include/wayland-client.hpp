@@ -574,10 +574,10 @@ public:
   */
   callback_t sync();
 
-  /* \brief get global registry object
-     
-     This request creates a registry object that allows the client to
-     list and bind the global objects available from the compositor.
+  /** \brief get global registry object
+
+      This request creates a registry object that allows the client to
+      list and bind the global objects available from the compositor.
   */
   registry_t get_registry();
  };
