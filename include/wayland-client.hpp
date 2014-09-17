@@ -582,24 +582,6 @@ public:
   registry_t get_registry();
  };
 
-/** \brief These errors are global and can be emitted in response to
-    any server request.
- */
-enum display_error
-  {
-    /** \brief server couldn't find object 
-     */
-    display_error_invalid_object = 0,
-
-    /** \brief method doesn't exist on the specified interface
-     */
-    display_error_invalid_method = 1,
-
-    /** \brief server is out of memory
-     */
-    display_error_no_memory = 2
-  };
-
 #include <wayland-client-protocol.hpp>
 
 #endif
