@@ -23,6 +23,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/** \example test.cpp
+ * This is an example of how to use the Waylanbd C++ bindings.
+ */
+
 #include <stdexcept>
 #include <iostream>
 #include <wayland-client.hpp>
