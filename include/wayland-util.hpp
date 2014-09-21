@@ -113,6 +113,78 @@ namespace wayland
           throw std::bad_cast();
       }
     };
+
+    template<unsigned int size, int id = 0>
+    class bitfield
+    {
+      uint32_t v;
+      static const uint32_t mask = (1 << size) - 1;
+
+    public:
+      explicit bitfield(const uint32_t value = 0)
+        : v(value)
+      {
+      }
+
+      explicit operator uint32_t() const
+      {
+        return v;
+      }
+
+      operator bool() const
+      {
+        return v;
+      }
+
+      bitfield(const bitfield<size, id> &b)
+      {
+        operator=(b);
+      }
+
+      bitfield<size, id> &operator=(const bitfield<size, id> &b)
+      {
+        v = static_cast<uint32_t>(b);
+        return *this;
+      }
+
+      bitfield<size, id> operator|(const bitfield<size, id> &b) const
+      {
+        return bitfield<size, id>(v | static_cast<uint32_t>(b));
+      }
+
+      bitfield<size, id> operator&(const bitfield<size, id> &b) const
+      {
+        return bitfield<size, id>(v & static_cast<uint32_t>(b));
+      }
+
+      bitfield<size, id> operator^(const bitfield<size, id> &b) const
+      {
+        return bitfield<size, id>((v ^ static_cast<uint32_t>(b)) & mask);
+      }
+
+      bitfield<size, id> operator~() const
+      {
+        return bitfield<size, id>(~v & mask);
+      }
+
+      bitfield<size, id> &operator|=(const bitfield<size, id> &b)
+      {
+        operator=(*this | b);
+        return *this;
+      }
+
+      bitfield<size, id> &operator&=(const bitfield<size, id> &b)
+      {
+        operator=(*this & b);
+        return *this;
+      }
+
+      bitfield<size, id> &operator^=(const bitfield<size, id> &b)
+      {
+        operator=(*this ^ b);
+        return *this;
+      }
+    };
   }
 }
 

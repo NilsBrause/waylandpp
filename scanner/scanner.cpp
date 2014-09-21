@@ -21,6 +21,7 @@
 #include <set>
 #include <sstream>
 #include <cctype>
+#include <cmath>
 
 #include <pugixml.hpp>
 
@@ -311,32 +312,76 @@ struct enumeration_t : public element_t
 {
   std::string name;
   std::list<enum_entry_t> entries;
-  
-  std::string print(std::string iface_name)
+  bool is_bitfield;
+  int id;
+  uint32_t width;
+
+  std::string print_forward(std::string iface_name)
+  {
+    std::stringstream ss;
+    if(!is_bitfield)
+      ss << "enum class " << iface_name << "_" << name << " : uint32_t;" << std::endl;
+    else
+      ss << "struct " << iface_name << "_" << name << ";" << std::endl;
+    return ss.str();
+  }
+
+  std::string print_header(std::string iface_name)
   {
     std::stringstream ss;
     if(description != "")
       {
-        ss << "  /** \\brief " << summary << std::endl
+        ss << "/** \\brief " << summary << std::endl
            << description << std::endl
-           << "    */" << std::endl;
+           << "  */" << std::endl;
       }
-    ss << "  enum class " << iface_name << "_" << name << " : uint32_t" << std::endl
-       << "    {" << std::endl;
+
+    if(!is_bitfield)
+      ss << "enum class " << iface_name << "_" << name << " : uint32_t" << std::endl
+         << "  {" << std::endl;
+    else
+      ss << "struct " << iface_name << "_" << name << " : public detail::bitfield<" << width << ", " << id << ">" << std::endl
+         << "{" << std::endl
+         << "  " << iface_name << "_" << name << "(const detail::bitfield<" << width << ", " << id << "> &b)" << std::endl
+         << "    : detail::bitfield<" << width << ", " << id << ">(b) {}" << std::endl
+         << "  " << iface_name << "_" << name << "(const uint32_t value)" << std::endl
+         << "    : detail::bitfield<" << width << ", " << id << ">(value) {}" << std::endl;
+
     for(auto &entry : entries)
       {
         if(entry.description != "")
           {
-            ss << "      /** \\brief " << entry.summary << std::endl
+            ss << "  /** \\brief " << entry.summary << std::endl
                << entry.description << std::endl
-               << "        */" << std::endl;
+               << "    */" << std::endl;
           }
-        ss << "      " << entry.name << " = " << entry.value << "," << std::endl;
+
+        if(!is_bitfield)
+          ss << "  " << entry.name << " = " << entry.value << "," << std::endl;
+        else
+          ss << "  static const detail::bitfield<" << width << ", " << id << "> " << entry.name << ";" << std::endl;
       }
-    ss.str(ss.str().substr(0, ss.str().size()-2));
-    ss.seekp(0, std::ios_base::end);
-    ss << std::endl
-       << "    };" << std::endl;
+
+    if(!is_bitfield)
+      {
+        ss.str(ss.str().substr(0, ss.str().size()-2));
+        ss.seekp(0, std::ios_base::end);
+        ss << std::endl;
+      }
+
+    ss << "};" << std::endl;
+    return ss.str();
+  }
+
+  std::string print_body(std::string iface_name)
+  {
+    std::stringstream ss;
+    if(is_bitfield)
+      for(auto &entry : entries)
+        {
+          ss << "const detail::bitfield<" << width << ", " << id << "> " << iface_name << "_" << name
+             << "::" << entry.name << "{" << entry.value << "};" << std::endl;
+        }
     return ss.str();
   }
 };
@@ -355,7 +400,7 @@ struct interface_t : public element_t
     std::stringstream ss;
     ss << "class " << name << "_t;" << std::endl;
     for(auto &e : enums)
-      ss << "enum class " << name << "_" << e.name << " : uint32_t;" << std::endl;
+      ss << e.print_forward(name);
     return ss.str();
   }
 
@@ -415,7 +460,7 @@ struct interface_t : public element_t
        << std::endl;
     
     for(auto &enumeration : enums)
-      ss << enumeration.print(name) << std::endl;
+      ss << enumeration.print_header(name) << std::endl;
 
     return ss.str();
   }
@@ -463,6 +508,9 @@ struct interface_t : public element_t
     ss << "  return 0;" << std::endl
        << "}" << std::endl;
 
+    for(auto &enumeration : enums)
+      ss << enumeration.print_body(name) << std::endl;
+
     return ss.str();
   }
 };
@@ -481,6 +529,7 @@ int main(int argc, char *argv[])
   xml_node protocol = doc.child("protocol");
 
   std::list<interface_t> interfaces;
+  int enum_id = 0;
 
   for(xml_node &interface : protocol.children("interface"))
     {
@@ -533,9 +582,11 @@ int main(int argc, char *argv[])
                   arg.interface = arg.interface.substr(3, arg.interface.size());
                 }
 
-              if(argument.attribute("enum"))
+              if(argument.attribute("enum") || argument.attribute("bitfield"))
               {
-                std::string tmp = argument.attribute("enum").value();
+                std::string tmp = argument.attribute("enum") ?
+                  argument.attribute("enum").value() :
+                  argument.attribute("bitfield").value();
                 arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
                 arg.enum_name = tmp.substr(tmp.find('.')+1);
               }
@@ -576,9 +627,11 @@ int main(int argc, char *argv[])
                   arg.interface = arg.interface.substr(3, arg.interface.size());
                 }
 
-              if(argument.attribute("enum"))
+              if(argument.attribute("enum") || argument.attribute("bitfield"))
               {
-                std::string tmp = argument.attribute("enum").value();
+                std::string tmp = argument.attribute("enum") ?
+                  argument.attribute("enum").value() :
+                  argument.attribute("bitfield").value();
                 arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
                 arg.enum_name = tmp.substr(tmp.find('.')+1);
               }
@@ -603,6 +656,16 @@ int main(int argc, char *argv[])
               enu.description = description.text().get();
             }
 
+          if(enumeration.attribute("is_bitfield"))
+            {
+              std::string tmp = enumeration.attribute("is_bitfield").value();
+              enu.is_bitfield = (tmp == "true");
+            }
+          else
+            enu.is_bitfield = false;
+          enu.id = enum_id++;
+          enu.width = 0;
+
           for(xml_node entry = enumeration.child("entry"); entry;
               entry = entry.next_sibling("entry"))
             {
@@ -618,6 +681,11 @@ int main(int argc, char *argv[])
                   enum_entry.summary = description.attribute("summary").value();
                   enum_entry.description = description.text().get();
                 }
+
+              uint32_t tmp = std::floor(std::log2(stol(enum_entry.value)))+1;
+                if(tmp > enu.width)
+                  enu.width = tmp;
+
               enu.entries.push_back(enum_entry);
             }
           iface.enums.push_back(enu);

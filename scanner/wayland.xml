@@ -723,7 +723,7 @@
       <arg name="serial" type="uint" summary="serial of the implicit grab on the pointer"/>
     </request>
 
-    <enum name="resize">
+    <enum name="resize" is_bitfield="true">
       <description summary="edge values for resizing">
 	These values are used to indicate which edge of a surface
 	is being dragged in a resize operation. The server may
@@ -751,7 +751,7 @@
       </description>
       <arg name="seat" type="object" interface="wl_seat" summary="the wl_seat whose pointer is used"/>
       <arg name="serial" type="uint" summary="serial of the implicit grab on the pointer"/>
-      <arg name="edges" type="uint" summary="which edge or corner is being dragged" enum="wl_shell_surface.resize"/>
+      <arg name="edges" type="uint" summary="which edge or corner is being dragged" bitfield="wl_shell_surface.resize"/>
     </request>
 
     <request name="set_toplevel">
@@ -762,7 +762,7 @@
       </description>
     </request>
 
-    <enum name="transient">
+    <enum name="transient" is_bitfield="true">
       <description summary="details of transient behaviour">
 	These flags specify details of the expected behaviour
 	of transient surfaces. Used in the set_transient request.
@@ -784,7 +784,7 @@
       <arg name="parent" type="object" interface="wl_surface"/>
       <arg name="x" type="int"/>
       <arg name="y" type="int"/>
-      <arg name="flags" type="uint" enum="wl_shell_surface.transient"/>
+      <arg name="flags" type="uint" bitfield="wl_shell_surface.transient"/>
     </request>
 
     <enum name="fullscreen_method">
@@ -868,7 +868,7 @@
       <arg name="parent" type="object" interface="wl_surface"/>
       <arg name="x" type="int"/>
       <arg name="y" type="int"/>
-      <arg name="flags" type="uint" enum="wl_shell_surface.transient"/>
+      <arg name="flags" type="uint" bitfield="wl_shell_surface.transient"/>
     </request>
 
     <request name="set_maximized">
@@ -949,7 +949,7 @@
 	in surface local coordinates.
       </description>
 
-      <arg name="edges" type="uint" enum="wl_shell_surface.resize"/>
+      <arg name="edges" type="uint" bitfield="wl_shell_surface.resize"/>
       <arg name="width" type="int"/>
       <arg name="height" type="int"/>
     </event>
@@ -1242,7 +1242,7 @@
 	wl_output.transform enum the invalid_transform protocol error
 	is raised.
       </description>
-      <arg name="transform" type="int" enum="wl_output.transform"/>
+      <arg name="transform" type="int" bitfield="wl_output.transform"/>
     </request>
 
     <!-- Version 3 additions -->
@@ -1285,7 +1285,7 @@
       maintains a keyboard focus and a pointer focus.
     </description>
 
-    <enum name="capability">
+    <enum name="capability" is_bitfield="true">
       <description summary="seat capability bitmask">
         This is a bitmask of capabilities this seat has; if a member is
         set, then it is present on the seat.
@@ -1301,7 +1301,7 @@
 	keyboard or touch capabilities.  The argument is a capability
 	enum containing the complete set of capabilities this seat has.
       </description>
-      <arg name="capabilities" type="uint" enum="wl_seat.capability"/>
+      <arg name="capabilities" type="uint" bitfield="wl_seat.capability"/>
     </event>
 
     <request name="get_pointer">
@@ -1714,7 +1714,7 @@
       <entry name="vertical_bgr" value="5"/>
     </enum>
 
-    <enum name="transform">
+    <enum name="transform" is_bitfield="true">
       <description summary="transform from framebuffer to output">
 	This describes the transform that a compositor will apply to a
 	surface to compensate for the rotation or mirroring of an
@@ -1759,11 +1759,11 @@
 	   summary="textual description of the manufacturer"/>
       <arg name="model" type="string"
 	   summary="textual description of the model"/>
-      <arg name="transform" type="int" enum="wl_output.transform"
+      <arg name="transform" type="int" bitfield="wl_output.transform"
 	   summary="transform that maps framebuffer to output"/>
     </event>
 
-    <enum name="mode">
+    <enum name="mode" is_bitfield="true">
       <description summary="mode information">
 	These flags describe properties of an output mode.
 	They are used in the flags bitfield of the mode event.
@@ -1790,7 +1790,7 @@
         the output may be scaled, as described in wl_output.scale,
         or transformed , as described in wl_output.transform.
       </description>
-      <arg name="flags" type="uint" summary="bitfield of mode flags" enum="wl_output.mode"/>
+      <arg name="flags" type="uint" summary="bitfield of mode flags" bitfield="wl_output.mode"/>
       <arg name="width" type="int" summary="width of the mode in hardware units"/>
       <arg name="height" type="int" summary="height of the mode in hardware units"/>
       <arg name="refresh" type="int" summary="vertical refresh rate in mHz"/>
