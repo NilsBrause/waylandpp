@@ -51,10 +51,14 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
 {
   std::string signature(message->signature);
   std::vector<any> vargs;
-  for(unsigned int c = 0; c < signature.size(); c++)
+  unsigned int c = 0;
+  for(char ch : signature)
     {
+      if(ch == '?' || isdigit(ch))
+        continue;
+
       any a;
-      switch(signature[c])
+      switch(ch)
         {
           // int_32_t
         case 'i':
@@ -62,36 +66,51 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
         case 'f':
           a = args[c].i;
           break;
-          // uint32_T
+          // uint32_t
         case 'u':
           a = args[c].u;
           break;
           // string
         case 's':
-          a = std::string(args[c].s);
+          if(args[c].s)
+            a = std::string(args[c].s);
+          else
+            a = std::string("");
           break;
           // proxy
         case 'o':
-          a = proxy_t(reinterpret_cast<wl_proxy*>(args[c].o));
+          if(args[c].o)
+            a = proxy_t(reinterpret_cast<wl_proxy*>(args[c].o));
+          else
+            a = proxy_t();
           break;
           // new id
         case 'n':
           {
-            wl_proxy *proxy = reinterpret_cast<wl_proxy*>(args[c].o);
-            wl_proxy_set_user_data(proxy, NULL); // Wayland leaves the user data uninitialized
-            a = proxy_t(proxy);
+            if(args[c].o)
+              {
+                wl_proxy *proxy = reinterpret_cast<wl_proxy*>(args[c].o);
+                wl_proxy_set_user_data(proxy, NULL); // Wayland leaves the user data uninitialized
+                a = proxy_t(proxy);
+              }
+            else
+              a = proxy_t();
           }
           break;
           // array
         case 'a':
-          a = std::vector<char>(reinterpret_cast<char*>(args[c].a->data),
-                                reinterpret_cast<char*>(args[c].a->data) + args[c].a->size);
+          if(args[c].a)
+            a = std::vector<char>(reinterpret_cast<char*>(args[c].a->data),
+                                  reinterpret_cast<char*>(args[c].a->data) + args[c].a->size);
+          else
+            a = std::vector<char>();
           break;
         default:
           a = 0;
           break;
         }
       vargs.push_back(a);
+      c++;
     }
   proxy_t p(reinterpret_cast<wl_proxy*>(target), false);
   typedef int(*dispatcher_func)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>);
