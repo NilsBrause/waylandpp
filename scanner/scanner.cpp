@@ -380,7 +380,7 @@ struct interface_t : public element_t
     ss << "  };" << std::endl
        << std::endl
        << "  " + name + "_t(const proxy_t &proxy);" << std::endl
-       << "  static int dispatcher(int opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e);" << std::endl
+       << "  static int dispatcher(int opcode, std::vector<detail::any> args, std::shared_ptr<proxy_t::events_base_t> e);" << std::endl
        << std::endl;
 
     // print only required friend classes
@@ -444,7 +444,7 @@ struct interface_t : public element_t
     for(auto &event : events)
       ss << event.print_signal_body(name) << std::endl;
 
-    ss << "int " << name << "_t::dispatcher(int opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
+    ss << "int " << name << "_t::dispatcher(int opcode, std::vector<detail::any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
        << "{" << std::endl;
 
     if(events.size())
@@ -640,6 +640,9 @@ int main(int argc, char *argv[])
               << "#include <vector>" << std::endl
               << std::endl
               << "#include <wayland-client.hpp>" << std::endl
+              << std::endl
+              << "namespace wayland" << std::endl
+              << "{" << std::endl
               << std::endl;
 
   // forward declarations
@@ -657,10 +660,14 @@ int main(int argc, char *argv[])
       wayland_hpp << iface.print_header(interfaces) << std::endl;
     }
   wayland_hpp << std::endl
+              << "}" << std::endl
+              << std::endl
               << "#endif" << std::endl;
 
   // body intro
   wayland_cpp << "#include <wayland-client-protocol.hpp>" << std::endl
+              << std::endl
+              << "using namespace wayland;" << std::endl
               << std::endl;
   
   // class member definitions

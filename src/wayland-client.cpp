@@ -26,6 +26,9 @@
 #include <iostream>
 #include <wayland-client.hpp>
 
+using namespace wayland;
+using namespace wayland::detail;
+
 event_queue_t::queue_ptr::~queue_ptr()
 {
   if(queue)

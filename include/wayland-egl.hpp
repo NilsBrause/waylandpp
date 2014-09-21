@@ -26,45 +26,56 @@
 #ifndef WAYLAND_EGL_HPP
 #define WAYLAND_EGL_HPP
 
-#include <wayland-client-protocol.hpp>
 #include <wayland-egl.h>
 #include <EGL/egl.h>
 
-/** \brief Native EGL window
- */
-class egl_window_t
+namespace wayland
 {
-private:
-  wl_egl_window *window;
-
-  egl_window_t(const egl_window_t &);
-
-  friend EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
-                                           egl_window_t &win,
-                                           const EGLint *attrib_list);
-
-public:
-  /** \brief Create a native egl window for use with eglCreateWindowSurface
-      \param surface The Wayland surface to use
-      \param width Width of the EGL buffer
-      \param height height of the EGL buffer
-  */
-  egl_window_t(surface_t &surface, int width, int height);
-  ~egl_window_t();
-
-  egl_window_t();
-  egl_window_t(egl_window_t &&w);
-  egl_window_t &operator=(egl_window_t &&w);
-
-  void resize(int width, int height, int dx = 0, int dy = 0);
-  void get_attached_size(int &width, int &height);
-};
+  class egl_window_t;
+  class display_t;
+  class surface_t;
+}
 
 // C++ Overrides for EGL functions that depend on native types
 
-EGLDisplay eglGetDisplay(display_t &display);
+EGLDisplay eglGetDisplay(wayland::display_t &display);
 EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
-				  egl_window_t &win,
+				  wayland::egl_window_t &win,
 				  const EGLint *attrib_list);
+
+namespace wayland
+{
+  /** \brief Native EGL window
+   */
+  class egl_window_t
+  {
+  private:
+    wl_egl_window *window;
+
+    egl_window_t(const egl_window_t &);
+
+    friend EGLSurface (::eglCreateWindowSurface)(EGLDisplay dpy, EGLConfig config,
+                                               wayland::egl_window_t &win,
+                                               const EGLint *attrib_list);
+
+  public:
+    /** \brief Create a native egl window for use with eglCreateWindowSurface
+        \param surface The Wayland surface to use
+        \param width Width of the EGL buffer
+        \param height height of the EGL buffer
+    */
+    egl_window_t(surface_t &surface, int width, int height);
+    ~egl_window_t();
+
+    egl_window_t();
+    egl_window_t(egl_window_t &&w);
+    egl_window_t &operator=(egl_window_t &&w);
+
+    void resize(int width, int height, int dx = 0, int dy = 0);
+    void get_attached_size(int &width, int &height);
+  };
+}
+
+
 
 #endif

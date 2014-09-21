@@ -25,6 +25,9 @@
 
 #include <utility>
 #include <wayland-egl.hpp>
+#include <wayland-client-protocol.hpp>
+
+using namespace wayland;
 
 egl_window_t::egl_window_t(surface_t &surface, int width, int height)
 {

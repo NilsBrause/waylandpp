@@ -34,6 +34,8 @@
 #include <GL/gl.h>
 #include <linux/input.h>
 
+using namespace wayland;
+
 // helper to create a std::function out of a member function and an object
 template <typename R, typename T, typename... Args>
 std::function<R(Args...)> bind_mem_fn(R(T::* func)(Args...), T *t)
