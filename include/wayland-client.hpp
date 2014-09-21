@@ -125,6 +125,7 @@ namespace wayland
 
     friend class registry_t;
     friend class egl_window_t;
+    friend class cursor_theme_t;
     friend EGLDisplay (::eglGetDisplay)(wayland::display_t &display);
 
     // marshal a request, that doesn't lead a new proxy
@@ -178,7 +179,7 @@ namespace wayland
         \param p Pointer to a wl_proxy
         \param is_display True, if p is a wl_display pointer
     */
-    proxy_t(wl_proxy *p, bool is_display = false);
+    proxy_t(wl_proxy *p, bool is_display = false, bool eternal = false);
 
     /** \brief Copy Constructior
         \param p A proxy_t object

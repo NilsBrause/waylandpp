@@ -5,7 +5,7 @@ import os;
 env = Environment()
 
 env["CXX"] = os.environ.get("CXX", "g++")
-env["CXXFLAGS"] = "-std=c++11 -Wall -Werror -O0 -ggdb"
+env["CXXFLAGS"] = "-std=c++11 -Wall -Werror -O2 -ggdb"
 
 env.Program("scanner/scanner",
             ["scanner/scanner.cpp", "scanner/pugixml.cpp"],
@@ -28,8 +28,13 @@ env.SharedLibrary("src/wayland-egl++",
                   CPPPATH = "include",
                   LIBS = ["wayland-egl"])
 
+env.SharedLibrary("src/wayland-cursor++",
+                  "src/wayland-cursor.cpp",
+                  CPPPATH = "include",
+                  LIBS = ["wayland-cursor"])
+
 env.Program("example/test",
             "example/test.cpp",
             CPPPATH = ["include", "example"],
-            LIBS =  ["wayland-client++", "wayland-egl++", "EGL", "GL"],
+            LIBS =  ["wayland-client++", "wayland-egl++", "wayland-cursor++", "EGL", "GL"],
             LIBPATH = "src")

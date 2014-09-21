@@ -201,7 +201,7 @@ proxy_t::proxy_t()
 {
 }
 
-proxy_t::proxy_t(wl_proxy *p, bool is_display)
+proxy_t::proxy_t(wl_proxy *p, bool is_display, bool eternal)
   : proxy(p), display(is_display), interface(NULL)
 {
   if(proxy && !display)
@@ -213,6 +213,8 @@ proxy_t::proxy_t(wl_proxy *p, bool is_display)
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
+      if(eternal)
+        data->counter++;
     } 
 }
   
