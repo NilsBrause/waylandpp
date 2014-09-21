@@ -27,6 +27,8 @@
 
 using namespace pugi;
 
+std::list<std::string> interface_names;
+
 struct element_t
 {
   std::string summary;
@@ -123,9 +125,9 @@ struct event_t : public element_t
     int c = 0;
     for(auto &arg : args)
       if(arg.enum_name != "")
-        ss << "static_cast<" << arg.print_type() << ">(args[" << c++ << "].get<uint32_t>()), ";
+        ss << arg.print_type() << "(args[" << c++ << "].get<uint32_t>()), ";
       else if(arg.interface != "")
-        ss << "args[" << c++ << "].get<proxy_t>(), ";
+        ss << arg.print_type() << "(args[" << c++ << "].get<proxy_t>()), ";
       else
         ss << "args[" << c++ << "].get<" << arg.print_type() << ">(), ";
     if(args.size())
@@ -294,8 +296,17 @@ struct request_t : public event_t
     if(ret.name != "")
       {
         if(new_id_arg)
-          ss << "  interface = p;" << std::endl;
-        ss << "  return p;" << std::endl;
+          {
+            ss << "  if(false);" << std::endl;
+            for(auto &iface : interface_names)
+              ss << "  else if(interface.interface == &wl_" << iface << "_interface)" << std::endl
+                 << "    interface = " << iface << "_t(p);" << std::endl;
+            ss << "  else" << std::endl
+               << "    interface = p;" << std::endl
+               << "  return interface;" << std::endl;
+          }
+        else
+          ss << "  return " << ret.print_type() << "(p);" << std::endl;
       }
     ss << "}";
     return ss.str();
@@ -424,30 +435,12 @@ struct interface_t : public element_t
 
     ss << "  };" << std::endl
        << std::endl
-       << "  " + name + "_t(const proxy_t &proxy);" << std::endl
        << "  static int dispatcher(int opcode, std::vector<detail::any> args, std::shared_ptr<proxy_t::events_base_t> e);" << std::endl
        << std::endl;
 
-    // print only required friend classes
-    // and print then only once
-    std::set<std::string> friends;
-    for(auto &iface : interfaces)
-      {
-        for(auto &req : iface.requests)
-          for(auto &arg : req.args)
-            if(arg.interface == name)
-              friends.insert(iface.name);
-        for(auto &ev : iface.events)
-          for(auto &arg : ev.args)
-            if(arg.interface == name)
-              friends.insert(iface.name);
-      }
-    for(auto &frnd : friends)
-      ss << "  friend class " << frnd << "_t;" << std::endl;
-    ss << std::endl;
-
     ss << "public:" << std::endl
-       << "  " + name + "_t();" << std::endl
+       << "  " << name << "_t();" << std::endl
+       << "  explicit " << name << "_t(const proxy_t &proxy);" << std::endl
        << std::endl;
 
     for(auto &request : requests)
@@ -537,6 +530,10 @@ int main(int argc, char *argv[])
       iface.destroy_opcode = -1;
       iface.name = interface.attribute("name").value();
       iface.name = iface.name.substr(3, iface.name.size());
+
+      if(iface.name == "display")
+        continue; // skip in favor of hand written version
+
       iface.version = interface.attribute("version").value();
       if(interface.child("description"))
         {
@@ -544,6 +541,8 @@ int main(int argc, char *argv[])
           iface.summary = description.attribute("summary").value();
           iface.description = description.text().get();
         }
+
+      interface_names.push_back(iface.name);
 
       int opcode = 0; // Opcodes are in order of the XML. (Sadly undocumented)
       for(xml_node &request : interface.children("request"))
@@ -715,18 +714,12 @@ int main(int argc, char *argv[])
 
   // forward declarations
   for(auto &iface : interfaces)
-    {
-      if(iface.name == "display") continue; // skip in favor of hand written version
-      wayland_hpp << iface.print_forward();
-    }
+    wayland_hpp << iface.print_forward();
   wayland_hpp << std::endl;
 
   // class declarations
   for(auto &iface : interfaces)
-    {
-      if(iface.name == "display") continue; // skip in favor of hand written version
-      wayland_hpp << iface.print_header(interfaces) << std::endl;
-    }
+    wayland_hpp << iface.print_header(interfaces) << std::endl;
   wayland_hpp << std::endl
               << "}" << std::endl
               << std::endl
@@ -740,10 +733,7 @@ int main(int argc, char *argv[])
   
   // class member definitions
   for(auto &iface : interfaces)
-    {
-      if(iface.name == "display") continue; // skip in favor of hand written version
-      wayland_cpp << iface.print_body() << std::endl;
-    }
+    wayland_cpp << iface.print_body() << std::endl;
   wayland_cpp << std::endl;
 
   // clean up

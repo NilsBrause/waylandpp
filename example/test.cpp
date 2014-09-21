@@ -72,6 +72,8 @@ private:
   EGLContext eglcontext;
 
   bool running;
+  bool has_pointer;
+  bool has_keyboard;
 
   void init_egl()
   {
@@ -185,6 +187,18 @@ public:
       };
     display.dispatch();
 
+    seat.on_capabilities() = [&] (seat_capability capability)
+      {
+        has_keyboard = capability & seat_capability::keyboard;
+        has_pointer = capability & seat_capability::pointer;
+      };
+    display.dispatch();
+
+    if(!has_keyboard)
+      throw std::runtime_error("No keyboard found.");
+    if(!has_pointer)
+      throw std::runtime_error("No pointer found.");
+
     // create a surface
     surface = compositor.create_surface();
     shell_surface = shell.get_shell_surface(surface);
@@ -193,7 +207,7 @@ public:
     shell_surface.set_title("Window");
     shell_surface.set_toplevel();
 
-    // Get input devices (Let's just assume they're present)
+    // Get input devices
     pointer = seat.get_pointer();
     keyboard = seat.get_keyboard();
 

@@ -420,10 +420,10 @@ int display_t::flush()
 
 callback_t display_t::sync()
 {
-  return marshal_constructor(0, &wl_callback_interface, NULL);
+  return callback_t(marshal_constructor(0, &wl_callback_interface, NULL));
 }
 
 registry_t display_t::get_registry()
 {
-  return marshal_constructor(1, &wl_registry_interface, NULL);
+  return registry_t(marshal_constructor(1, &wl_registry_interface, NULL));
 }
