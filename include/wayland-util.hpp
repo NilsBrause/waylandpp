@@ -141,6 +141,16 @@ namespace wayland
         operator=(b);
       }
 
+      bool operator==(const bitfield<size, id> &b)
+      {
+        return v == b.v;
+      }
+
+      bool operator!=(const bitfield<size, id> &b)
+      {
+        return !operator==(b);
+      }
+
       bitfield<size, id> &operator=(const bitfield<size, id> &b)
       {
         v = static_cast<uint32_t>(b);
