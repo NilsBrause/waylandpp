@@ -217,8 +217,8 @@ public:
     keyboard = seat.get_keyboard();
 
     // load cursor theme
-    cursor_theme = cursor_theme_t("redglass", 16, shm);
-    cursor_t cursor = cursor_theme.get_cursor("shuttle");
+    cursor_theme = cursor_theme_t("default", 16, shm);
+    cursor_t cursor = cursor_theme.get_cursor("cross");
     cursor_image_t cursor_image = cursor.image(0);
     cursor_buffer = cursor_image.get_buffer();
 
