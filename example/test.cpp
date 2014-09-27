@@ -24,7 +24,7 @@
  */
 
 /** \example test.cpp
- * This is an example of how to use the Waylanbd C++ bindings.
+ * This is an example of how to use the Wayland C++ bindings.
  */
 
 #include <stdexcept>
