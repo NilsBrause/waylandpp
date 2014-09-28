@@ -24,11 +24,12 @@
  */
 
 /** \example test.cpp
- * This is an example of how to use the Waylanbd C++ bindings.
+ * This is an example of how to use the Wayland C++ bindings.
  */
 
 #include <stdexcept>
 #include <iostream>
+#include <array>
 #include <wayland-client.hpp>
 #include <wayland-egl.hpp>
 #include <GL/gl.h>
@@ -94,7 +95,7 @@ private:
     if(eglBindAPI(EGL_OPENGL_API) == EGL_FALSE)
       throw std::runtime_error("eglBindAPI");
 
-    std::vector<EGLint> config_attribs = {
+    std::array<EGLint, 13> config_attribs = {
       EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
       EGL_RED_SIZE, 8,
       EGL_GREEN_SIZE, 8,
@@ -109,7 +110,7 @@ private:
     if(eglChooseConfig(egldisplay, config_attribs.data(), &config, 1, &num) == EGL_FALSE || num == 0)
       throw std::runtime_error("eglChooseConfig");
 
-    std::vector<EGLint> context_attribs = {
+    std::array<EGLint, 3> context_attribs = {
       EGL_CONTEXT_CLIENT_VERSION, 2,
       EGL_NONE
     };
@@ -216,8 +217,8 @@ public:
     keyboard = seat.get_keyboard();
 
     // load cursor theme
-    cursor_theme = cursor_theme_t("redglass", 16, shm);
-    cursor_t cursor = cursor_theme.get_cursor("shuttle");
+    cursor_theme = cursor_theme_t("default", 16, shm);
+    cursor_t cursor = cursor_theme.get_cursor("cross");
     cursor_image_t cursor_image = cursor.image(0);
     cursor_buffer = cursor_image.get_buffer();
 
