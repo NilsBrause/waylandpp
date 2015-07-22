@@ -6,26 +6,26 @@
     Copyright © 2010-2011 Intel Corporation
     Copyright © 2012-2013 Collabora, Ltd.
 
-    Permission to use, copy, modify, distribute, and sell this
-    software and its documentation for any purpose is hereby granted
-    without fee, provided that the above copyright notice appear in
-    all copies and that both that copyright notice and this permission
-    notice appear in supporting documentation, and that the name of
-    the copyright holders not be used in advertising or publicity
-    pertaining to distribution of the software without specific,
-    written prior permission.  The copyright holders make no
-    representations about the suitability of this software for any
-    purpose.  It is provided "as is" without express or implied
-    warranty.
+    Permission is hereby granted, free of charge, to any person
+    obtaining a copy of this software and associated documentation files
+    (the "Software"), to deal in the Software without restriction,
+    including without limitation the rights to use, copy, modify, merge,
+    publish, distribute, sublicense, and/or sell copies of the Software,
+    and to permit persons to whom the Software is furnished to do so,
+    subject to the following conditions:
 
-    THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
-    SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-    FITNESS, IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
-    SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
-    AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
-    ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
-    THIS SOFTWARE.
+    The above copyright notice and this permission notice (including the
+    next paragraph) shall be included in all copies or substantial
+    portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+    NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+    BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+    ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
   </copyright>
 
   <interface name="wl_display" version="1">
@@ -440,7 +440,7 @@
 	file descriptor.
 
 	The receiving client reads from the read end of the pipe until
-	EOF and the closes its end, at which point the transfer is
+	EOF and then closes its end, at which point the transfer is
 	complete.
       </description>
       <arg name="mime_type" type="string"/>
@@ -517,7 +517,7 @@
 
   </interface>
 
-  <interface name="wl_data_device" version="1">
+  <interface name="wl_data_device" version="2">
     <description summary="data transfer device">
       There is one wl_data_device per seat which can be obtained
       from the global wl_data_device_manager singleton.
@@ -525,6 +525,11 @@
       A wl_data_device provides access to inter-client data transfer
       mechanisms such as copy-and-paste and drag-and-drop.
     </description>
+
+    <enum name="error">
+      <entry name="role" value="0" summary="given wl_surface has another role"/>
+    </enum>
+
     <request name="start_drag">
       <description summary="start drag-and-drop operation">
 	This request asks the compositor to start a drag-and-drop
@@ -545,7 +550,9 @@
 	the top-left corner of the icon surface is placed at the cursor
 	hotspot, but subsequent wl_surface.attach request can move the
 	relative position. Attach requests must be confirmed with
-	wl_surface.commit as usual.
+	wl_surface.commit as usual. The icon surface is given the role of
+	a drag-and-drop icon. If the icon surface already has another role,
+	it raises a protocol error.
 
 	The current and pending input regions of the icon wl_surface are
 	cleared, and wl_surface.set_input_region is ignored until the
@@ -636,13 +643,23 @@
 	immediately before receiving keyboard focus and when a new
 	selection is set while the client has keyboard focus.  The
 	data_offer is valid until a new data_offer or NULL is received
-	or until the client loses keyboard focus.
+	or until the client loses keyboard focus.  The client must
+	destroy the previous selection data_offer, if any, upon receiving
+	this event.
       </description>
       <arg name="id" type="object" interface="wl_data_offer" allow-null="true"/>
     </event>
+
+    <!-- Version 2 additions -->
+
+    <request name="release" type="destructor" since="2">
+      <description summary="destroy data device">
+	This request destroys the data device.
+      </description>
+    </request>
   </interface>
 
-  <interface name="wl_data_device_manager" version="1">
+  <interface name="wl_data_device_manager" version="2">
     <description summary="data transfer interface">
       The wl_data_device_manager is a singleton global object that
       provides access to inter-client data transfer mechanisms such as
@@ -676,9 +693,15 @@
       a basic surface.
     </description>
 
+    <enum name="error">
+      <entry name="role" value="0" summary="given wl_surface has another role"/>
+    </enum>
+
     <request name="get_shell_surface">
       <description summary="create a shell surface from a surface">
-	Create a shell surface for an existing surface.
+	Create a shell surface for an existing surface. This gives
+	the wl_surface the role of a shell surface. If the wl_surface
+	already has another role, it raises a protocol error.
 
 	Only one shell surface can be associated with a given surface.
       </description>
@@ -973,8 +996,37 @@
       local coordinates of the pixel content, in case a buffer_transform
       or a buffer_scale is used.
 
-      Surfaces are also used for some special purposes, e.g. as
-      cursor images for pointers, drag icons, etc.
+      A surface without a "role" is fairly useless, a compositor does
+      not know where, when or how to present it. The role is the
+      purpose of a wl_surface. Examples of roles are a cursor for a
+      pointer (as set by wl_pointer.set_cursor), a drag icon
+      (wl_data_device.start_drag), a sub-surface
+      (wl_subcompositor.get_subsurface), and a window as defined by a
+      shell protocol (e.g. wl_shell.get_shell_surface).
+
+      A surface can have only one role at a time. Initially a
+      wl_surface does not have a role. Once a wl_surface is given a
+      role, it is set permanently for the whole lifetime of the
+      wl_surface object. Giving the current role again is allowed,
+      unless explicitly forbidden by the relevant interface
+      specification.
+
+      Surface roles are given by requests in other interfaces such as
+      wl_pointer.set_cursor. The request should explicitly mention
+      that this request gives a role to a wl_surface. Often, this
+      request also creates a new protocol object that represents the
+      role and adds additional functionality to wl_surface. When a
+      client wants to destroy a wl_surface, they must destroy this 'role
+      object' before the wl_surface.
+
+      Destroying the role object does not remove the role from the
+      wl_surface, but it may stop the wl_surface from "playing the role".
+      For instance, if a wl_subsurface object is destroyed, the wl_surface
+      it was created for will be unmapped and forget its position and
+      z-order. It is allowed to create a wl_subsurface for the same
+      wl_surface again, but it is not allowed to use the wl_surface as
+      a cursor (cursor is a different role than sub-surface, and role
+      switching is not allowed).
     </description>
 
     <enum name="error">
@@ -1337,7 +1389,7 @@
       <arg name="id" type="new_id" interface="wl_touch"/>
     </request>
 
-    <!-- Version 2 of additions -->
+    <!-- Version 2 additions -->
 
     <event name="name" since="2">
       <description summary="unique identifier for this seat">
@@ -1362,10 +1414,18 @@
       and scrolling.
     </description>
 
+    <enum name="error">
+      <entry name="role" value="0" summary="given wl_surface has another role"/>
+    </enum>
+
     <request name="set_cursor">
       <description summary="set the pointer surface">
 	Set the pointer surface, i.e., the surface that contains the
-	pointer image (cursor). This request only takes effect if the pointer
+	pointer image (cursor). This request gives the surface the role
+	of a cursor. If the surface already has another role, it raises
+	a protocol error.
+
+	The cursor actually changes only if the pointer
 	focus for this device is one of the requesting client's surfaces
 	or the surface parameter is the current pointer surface. If
 	there was a previous surface set with this request it is
@@ -1500,7 +1560,13 @@
     <!-- Version 3 additions -->
 
     <request name="release" type="destructor" since="3">
-      <description summary="release the pointer object"/>
+      <description summary="release the pointer object">
+        Using this request client can tell the server that it is not going to
+	use the pointer object anymore.
+
+	This request destroys the pointer proxy object, so user must not call
+	wl_pointer_destroy() after using this request.
+      </description>
     </request>
 
   </interface>
@@ -1704,7 +1770,7 @@
     <enum name="subpixel">
       <description summary="subpixel geometry information">
 	This enumeration describes how the physical
-	pixels on an output are layed out.
+	pixels on an output are laid out.
       </description>
       <entry name="unknown" value="0"/>
       <entry name="none" value="1"/>
@@ -1911,9 +1977,9 @@
 	associate it with the given parent surface. This turns a
 	plain wl_surface into a sub-surface.
 
-	The to-be sub-surface must not already have a dedicated
-	purpose, like any shell surface type, cursor image, drag icon,
-	or sub-surface. Otherwise a protocol error is raised.
+	The to-be sub-surface must not already have another role, and it
+	must not have an existing wl_subsurface object. Otherwise a protocol
+	error is raised.
       </description>
 
       <arg name="id" type="new_id" interface="wl_subsurface"
@@ -2001,8 +2067,10 @@
 	coordinate system. The coordinates are not restricted to the parent
 	surface area. Negative values are allowed.
 
-	The next wl_surface.commit on the parent surface will reset
-	the sub-surface's position to the scheduled coordinates.
+	The scheduled coordinates will take effect whenever the state of the
+	parent surface is applied. When this happens depends on whether the
+	parent surface is in synchronized mode or not. See
+	wl_subsurface.set_sync and wl_subsurface.set_desync for details.
 
 	If more than one set_position request is invoked by the client before
 	the commit of the parent surface, the position of a new request always
@@ -2024,9 +2092,11 @@
 	will cause a protocol error.
 
 	The z-order is double-buffered. Requests are handled in order and
-	applied immediately to a pending state, then committed to the active
-	state on the next commit of the parent surface.
-	See wl_surface.commit and wl_subcompositor.get_subsurface.
+	applied immediately to a pending state. The final pending state is
+	copied to the active state the next time the state of the parent
+	surface is applied. When this happens depends on whether the parent
+	surface is in synchronized mode or not. See wl_subsurface.set_sync and
+	wl_subsurface.set_desync for details.
 
 	A new sub-surface is initially added as the top-most in the stack
 	of its siblings and parent.
@@ -2049,7 +2119,7 @@
     <request name="set_sync">
       <description summary="set sub-surface to synchronized mode">
 	Change the commit behaviour of the sub-surface to synchronized
-	mode, also described as the parent dependant mode.
+	mode, also described as the parent dependent mode.
 
 	In synchronized mode, wl_surface.commit on a sub-surface will
 	accumulate the committed state in a cache, but the state will
