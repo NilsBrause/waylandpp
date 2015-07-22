@@ -67,6 +67,7 @@ private:
   keyboard_t keyboard;
   callback_t frame_cb;
   cursor_theme_t cursor_theme;
+  cursor_image_t cursor_image;
   buffer_t cursor_buffer;
   surface_t cursor_surface;
 
@@ -219,7 +220,7 @@ public:
     // load cursor theme
     cursor_theme = cursor_theme_t("default", 16, shm);
     cursor_t cursor = cursor_theme.get_cursor("cross");
-    cursor_image_t cursor_image = cursor.image(0);
+    cursor_image = cursor.image(0);
     cursor_buffer = cursor_image.get_buffer();
 
     // create cursor surface
