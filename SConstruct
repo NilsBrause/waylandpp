@@ -44,9 +44,3 @@ env.Install(os.path.join(prefix, "include"), ["include/wayland-client-protocol.h
 
 env.Alias("install", os.path.join(prefix, "lib"))
 env.Alias("install", os.path.join(prefix, "include"))
-
-env.Program("example/test",
-            "example/test.cpp",
-            CPPPATH = ["include", "example"],
-            LIBS =  ["wayland-client++", "wayland-egl++", "wayland-cursor++", "EGL", "GL"],
-            LIBPATH = "src")

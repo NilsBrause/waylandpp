@@ -1,0 +1,17 @@
+# -*- python -*-
+
+import os;
+
+env = Environment()
+
+env["CXX"] = os.environ.get("CXX", "g++")
+env["CXXFLAGS"] = "-std=c++11 -Wall -Werror -ggdb -O2"
+env["CPPPATH"] = "../include"
+env["LIBPATH"] = "../src"
+
+env.Program("opengles", "opengles.cpp",
+            LIBS = ["wayland-client++", "wayland-cursor++",
+                    "wayland-egl++", "EGL", "GL"])
+env.Program("shm", "shm.cpp",
+            LIBS = ["wayland-client++", "wayland-cursor++",
+                    "rt"])

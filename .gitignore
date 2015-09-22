@@ -6,5 +6,6 @@
 scanner/scanner
 wayland-client-protocol.cpp
 wayland-client-protocol.hpp
-example/test
+example/opengles
+example/shm
 doc

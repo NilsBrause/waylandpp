@@ -3,7 +3,7 @@
 
 Wayland is an object oriented display protocol, which features request
 and events. Requests can be seen as method calls on certain objects,
-whereas events can be seen as signals of an object. This make the
+whereas events can be seen as signals of an object. This makes the
 Wayland protocol a perfect candidate for a C++ binding.
 
 The goal of this library is to create such a C++ binding for Wayland
@@ -23,14 +23,18 @@ well as graphviz is required.
 # Building
 
 To build the library, execute scons in the root directory of the
-repository. The example program is build automatically afterwards. To
-run the example program, use the following command:
+repository. You can install it with "scons install".
 
-    $ LD_LIBRARY_PATH=src example/test
+To build the example programs, execute scons in the example directory.
+If you did not install the library earlier, use the following commands
+to run the example programs from the root directory of the repository:
+
+    $ LD_LIBRARY_PATH=src example/opengles
+    $ LD_LIBRARY_PATH=src example/shm
 
 Make sure you have a Wayland compositor running.
 
-To build the documentation, execute doxygen in thr root directory of
+To build the documentation, execute doxygen in the root directory of
 the repository. The resulting documentation can then be found in the
 "doc" directory.
 
@@ -72,4 +76,5 @@ lambda expression, one could write:
                                uint32_t version)
       { std::cout << interface << " v" << version << std::endl; };
 
-An example for using menber functions can be found under example/test.cpp.
+An example for using member functions can be found under
+example/opengles.cpp or example/shm.cpp.

@@ -23,8 +23,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \example test.cpp
- * This is an example of how to use the Wayland C++ bindings.
+/** \example opengles.cpp
+ * This is an example of how to use the Wayland C++ bindings with OpenGL ES.
  */
 
 #include <stdexcept>
@@ -174,7 +174,7 @@ private:
     if(eglSwapBuffers(egldisplay, eglsurface) == EGL_FALSE)
       throw std::runtime_error("eglSwapBuffers");
   }
-  
+
 public:
   example()
   {
