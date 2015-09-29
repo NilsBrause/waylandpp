@@ -349,7 +349,15 @@ int display_t::roundtrip()
   if(c_ptr())
     return wl_display_roundtrip(reinterpret_cast<wl_display*>(c_ptr()));
   return 0;
-}    
+}
+
+int display_t::roundtrip_queue(event_queue_t queue)
+{
+  if(c_ptr())
+    return wl_display_roundtrip_queue(reinterpret_cast<wl_display*>(c_ptr()),
+                                      queue.c_ptr());
+  return 0;
+}
 
 int display_t::read_events()
 {

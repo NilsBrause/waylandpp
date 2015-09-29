@@ -355,6 +355,19 @@ namespace wayland
     */
     int roundtrip();
 
+    /** \brief Block until all pending request are processed by the server.
+        \return The number of dispatched events on success or -1 on failure
+
+         Blocks until the server processes all currently issued requests
+         and sends out pending events on the event queue.
+
+         Note: This function uses dispatch_queue() internally. If you are using
+         read_events() from more threads, don't use this function (or make sure
+         that calling roundtrip_queue() doesn't interfere with calling
+         prepare_read() and read_events())
+    */
+    int roundtrip_queue(event_queue_t queue);
+
     /** \brief Read events from display file descriptor.
         \return 0 on success or -1 on error. In case of error errno will
         be set accordingly
