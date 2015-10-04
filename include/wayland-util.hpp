@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Nils Christopher Brause
+ * Copyright (c) 2014-2015, Nils Christopher Brause
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,14 @@
 #ifndef WAYLAND_UTIL_HPP
 #define WAYLAND_UTIL_HPP
 
+#include <algorithm>
 #include <typeinfo>
 #include <utility>
 
 namespace wayland
 {
+  class proxy_t;
+
   namespace detail
   {
     class any
@@ -193,6 +196,42 @@ namespace wayland
       {
         operator=(*this ^ b);
         return *this;
+      }
+    };
+
+    class argument_t
+    {
+    private:
+      bool is_array;
+
+    public:
+      wl_argument argument;
+
+      argument_t();
+      argument_t(const argument_t &arg);
+      argument_t &operator=(const argument_t &arg);
+      ~argument_t();
+
+      // handles integers, file descriptors and fixed point numbers
+      // (this works, because wl_argument is an union)
+      argument_t(uint32_t i);
+
+      // handles strings
+      argument_t(std::string s);
+
+      // handles objects
+      argument_t(proxy_t p);
+
+      // handles arrays
+      template <typename T>
+      argument_t(std::vector<T> a)
+      {
+        argument.a = new wl_array;
+        wl_array_init(argument.a);
+        if(!wl_array_add(argument.a, a.size()*sizeof(T)))
+          throw std::runtime_error("wl_array_add failed.");
+        std::copy_n(a.begin(), a.end(), static_cast<T*>(argument.a->data));
+        is_array = true;
       }
     };
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Nils Christopher Brause
+ * Copyright (c) 2014-2015, Nils Christopher Brause
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -118,8 +118,11 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
   return dispatcher(opcode, vargs, p.get_events());
 }
 
-proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<wl_argument> v)
+proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<argument_t> args)
 {
+  std::vector<wl_argument> v;
+  for(auto &arg : args)
+    v.push_back(arg.argument);
   if(interface)
     {
       wl_proxy *p = wl_proxy_marshal_array_constructor(proxy, opcode, v.data(), interface);
@@ -130,35 +133,6 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
     }
   wl_proxy_marshal_array(proxy, opcode, v.data());
   return proxy_t();
-}
-
-wl_argument proxy_t::conv(uint32_t i)
-{
-  wl_argument arg;
-  arg.u = i;
-  return arg;
-}
-
-wl_argument proxy_t::conv(std::string s)
-{
-  wl_argument arg;
-  arg.s = s.c_str();
-  return arg;
-}
-
-wl_argument proxy_t::conv(proxy_t p)
-{
-  wl_argument arg;
-  arg.o = reinterpret_cast<wl_object*>(p.proxy);
-  return arg;
-}
-
-wl_argument proxy_t::conv(std::vector<char> a)
-{
-  wl_argument arg;
-  wl_array arr = { a.size(), a.size(), a.data() };
-  arg.a = &arr;
-  return arg;
 }
 
 void proxy_t::set_destroy_opcode(int destroy_opcode)

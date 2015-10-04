@@ -19,7 +19,9 @@ env.Command(["src/wayland-client-protocol.cpp",
             src/wayland-client-protocol.cpp")
 
 wayland_client = env.SharedLibrary("src/wayland-client++",
-                                   ["src/wayland-client.cpp", "src/wayland-client-protocol.cpp"],
+                                   ["src/wayland-client.cpp",
+                                    "src/wayland-client-protocol.cpp",
+                                    "src/wayland-util.cpp"],
                                    CPPPATH = "include",
                                    LIBS = ["wayland-client"])
 

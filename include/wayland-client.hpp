@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Nils Christopher Brause
+ * Copyright (c) 2014-2015, Nils Christopher Brause
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -99,6 +99,7 @@ namespace wayland
 
     wl_proxy *proxy;
     bool display;
+    friend class detail::argument_t;
 
     // universal dispatcher
     static int c_dispatcher(const void *implementation, void *target,
@@ -107,17 +108,7 @@ namespace wayland
 
     // marshal request
     proxy_t marshal_single(uint32_t opcode, const wl_interface *interface,
-                           std::vector<wl_argument> v);
-
-    // handles integers, file descriptors and fixed point numbers
-    // (this works, because wl_argument is an union)
-    wl_argument conv(uint32_t i);
-    // handles strings
-    wl_argument conv(std::string s);
-    // handles objects
-    wl_argument conv(proxy_t p);
-    // handles arrays
-    wl_argument conv(std::vector<char> a);
+                           std::vector<detail::argument_t> v);
 
   protected:
     // Interface desctiption filled in by the each interface class
@@ -138,7 +129,7 @@ namespace wayland
     template <typename...T>
     void marshal(uint32_t opcode, T...args)
     {
-      std::vector<wl_argument> v = { conv(args)... };
+      std::vector<detail::argument_t> v = { detail::argument_t(args)... };
       if(c_ptr())
         marshal_single(opcode, NULL, v);
     }
@@ -148,7 +139,7 @@ namespace wayland
     proxy_t marshal_constructor(uint32_t opcode, const wl_interface *interface,
                                 T...args)
     {
-      std::vector<wl_argument> v = { conv(args)... };
+      std::vector<detail::argument_t> v = { detail::argument_t(args)... };
       if(c_ptr())
         return marshal_single(opcode, interface, v);
       return proxy_t();
