@@ -73,7 +73,7 @@ namespace wayland
         : val(nullptr) { }
 
       any(const any &a)
-        : val(a.val->clone()) { }
+        : val(a.val ? a.val->clone() : nullptr) { }
 
       template <typename T>
       any(const T &t)
@@ -86,8 +86,8 @@ namespace wayland
 
       any &operator=(const any &a)
       {
-        if(val) delete val;
-        val = a.val->clone();
+        delete val;
+        val = a.val ? a.val->clone() : nullptr;
         return *this;
       }
 
