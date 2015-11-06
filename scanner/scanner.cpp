@@ -323,14 +323,14 @@ struct enumeration_t : public element_t
 {
   std::string name;
   std::list<enum_entry_t> entries;
-  bool is_bitfield;
+  bool bitfield;
   int id;
   uint32_t width;
 
   std::string print_forward(std::string iface_name)
   {
     std::stringstream ss;
-    if(!is_bitfield)
+    if(!bitfield)
       ss << "enum class " << iface_name << "_" << name << " : uint32_t;" << std::endl;
     else
       ss << "struct " << iface_name << "_" << name << ";" << std::endl;
@@ -347,7 +347,7 @@ struct enumeration_t : public element_t
            << "  */" << std::endl;
       }
 
-    if(!is_bitfield)
+    if(!bitfield)
       ss << "enum class " << iface_name << "_" << name << " : uint32_t" << std::endl
          << "  {" << std::endl;
     else
@@ -367,13 +367,13 @@ struct enumeration_t : public element_t
                << "    */" << std::endl;
           }
 
-        if(!is_bitfield)
+        if(!bitfield)
           ss << "  " << entry.name << " = " << entry.value << "," << std::endl;
         else
           ss << "  static const detail::bitfield<" << width << ", " << id << "> " << entry.name << ";" << std::endl;
       }
 
-    if(!is_bitfield)
+    if(!bitfield)
       {
         ss.str(ss.str().substr(0, ss.str().size()-2));
         ss.seekp(0, std::ios_base::end);
@@ -387,7 +387,7 @@ struct enumeration_t : public element_t
   std::string print_body(std::string iface_name)
   {
     std::stringstream ss;
-    if(is_bitfield)
+    if(bitfield)
       for(auto &entry : entries)
         {
           ss << "const detail::bitfield<" << width << ", " << id << "> " << iface_name << "_" << name
@@ -581,13 +581,19 @@ int main(int argc, char *argv[])
                   arg.interface = arg.interface.substr(3, arg.interface.size());
                 }
 
-              if(argument.attribute("enum") || argument.attribute("bitfield"))
+              if(argument.attribute("enum"))
               {
-                std::string tmp = argument.attribute("enum") ?
-                  argument.attribute("enum").value() :
-                  argument.attribute("bitfield").value();
-                arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
-                arg.enum_name = tmp.substr(tmp.find('.')+1);
+                std::string tmp = argument.attribute("enum").value();
+                if(tmp.find('.') == std::string::npos)
+                  {
+                    arg.enum_iface = iface.name;
+                    arg.enum_name = tmp;
+                  }
+                else
+                  {
+                    arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
+                    arg.enum_name = tmp.substr(tmp.find('.')+1);
+                  }
               }
 
               if(arg.type == "new_id")
@@ -626,13 +632,19 @@ int main(int argc, char *argv[])
                   arg.interface = arg.interface.substr(3, arg.interface.size());
                 }
 
-              if(argument.attribute("enum") || argument.attribute("bitfield"))
+              if(argument.attribute("enum"))
               {
-                std::string tmp = argument.attribute("enum") ?
-                  argument.attribute("enum").value() :
-                  argument.attribute("bitfield").value();
-                arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
-                arg.enum_name = tmp.substr(tmp.find('.')+1);
+                std::string tmp = argument.attribute("enum").value();
+                if(tmp.find('.') == std::string::npos)
+                  {
+                    arg.enum_iface = iface.name;
+                    arg.enum_name = tmp;
+                  }
+                else
+                  {
+                    arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
+                    arg.enum_name = tmp.substr(tmp.find('.')+1);
+                  }
               }
 
               if(argument.attribute("allow_null"))
@@ -655,13 +667,13 @@ int main(int argc, char *argv[])
               enu.description = description.text().get();
             }
 
-          if(enumeration.attribute("is_bitfield"))
+          if(enumeration.attribute("bitfield"))
             {
-              std::string tmp = enumeration.attribute("is_bitfield").value();
-              enu.is_bitfield = (tmp == "true");
+              std::string tmp = enumeration.attribute("bitfield").value();
+              enu.bitfield = (tmp == "true");
             }
           else
-            enu.is_bitfield = false;
+            enu.bitfield = false;
           enu.id = enum_id++;
           enu.width = 0;
 
