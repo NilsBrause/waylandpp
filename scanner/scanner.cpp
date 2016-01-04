@@ -297,12 +297,7 @@ struct request_t : public event_t
       {
         if(new_id_arg)
           {
-            ss << "  if(false);" << std::endl;
-            for(auto &iface : interface_names)
-              ss << "  else if(interface.interface == &wl_" << iface << "_interface)" << std::endl
-                 << "    interface = " << iface << "_t(p);" << std::endl;
-            ss << "  else" << std::endl
-               << "    interface = p;" << std::endl
+            ss << "  interface = interface.copy_constructor(p);" << std::endl
                << "  return interface;" << std::endl;
           }
         else
@@ -467,11 +462,15 @@ struct interface_t : public element_t
        << "  set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl
        << "  set_destroy_opcode(" << destroy_opcode << ");" << std::endl
        << "  interface = &wl_" << name << "_interface;" << std::endl
+       << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
+       << "    { return " << name << "_t(p); };" << std::endl
        << "}" << std::endl
        << std::endl
        << name << "_t::" << name << "_t()" << std::endl
        << "{" << std::endl
        << "  interface = &wl_" << name << "_interface;" << std::endl
+       << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
+       << "    { return " << name << "_t(p); };" << std::endl
        << "}" << std::endl
        << std::endl;
 

@@ -113,6 +113,8 @@ namespace wayland
   protected:
     // Interface desctiption filled in by the each interface class
     const wl_interface *interface;
+    // constructor filled in by the each interface class
+    std::function<proxy_t(proxy_t)> copy_constructor;
 
     friend class registry_t;
     friend class egl_window_t;

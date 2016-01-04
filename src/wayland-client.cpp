@@ -201,6 +201,7 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
 {
   proxy = p.proxy;
   interface = p.interface;
+  copy_constructor = p.copy_constructor;
   display = p.display;
   if(proxy && !display)
     {
@@ -227,6 +228,7 @@ proxy_t &proxy_t::operator=(proxy_t &&p)
   std::swap(proxy, p.proxy);
   std::swap(display, p.display);
   std::swap(interface, p.interface);
+  std::swap(copy_constructor, p.copy_constructor);
   return *this;
 }
 
