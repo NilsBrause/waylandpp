@@ -102,6 +102,7 @@ struct event_t : public element_t
 {
   std::string name;
   std::list<argument_t> args;
+  int since;
 
   std::string print_functional()
   {
@@ -271,7 +272,7 @@ struct request_t : public event_t
         if(ret.interface == "")
           ss << "interface.interface";
         else
-          ss << "&wl_" << ret.interface << "_interface";
+          ss << "&" << ret.interface << "_interface";
         ss << ", ";
       }
 
@@ -385,7 +386,7 @@ struct enumeration_t : public element_t
     if(bitfield)
       for(auto &entry : entries)
         {
-          ss << "const detail::bitfield<" << width << ", " << id << "> " << iface_name << "_" << name
+          ss << "const bitfield<" << width << ", " << id << "> " << iface_name << "_" << name
              << "::" << entry.name << "{" << entry.value << "};" << std::endl;
         }
     return ss.str();
@@ -394,7 +395,7 @@ struct enumeration_t : public element_t
 
 struct interface_t : public element_t
 {
-  std::string version;
+  int version;
   std::string name;
   int destroy_opcode;
   std::list<request_t> requests;
@@ -410,7 +411,7 @@ struct interface_t : public element_t
     return ss.str();
   }
 
-  std::string print_header(std::list<interface_t> &interfaces)
+  std::string print_header()
   {
     std::stringstream ss;
     if(description != "")
@@ -439,7 +440,8 @@ struct interface_t : public element_t
        << std::endl;
 
     for(auto &request : requests)
-      ss << request.print_header() << std::endl;
+      if(request.name != "destroy")
+        ss << request.print_header() << std::endl;
 
     for(auto &event : events)
       ss << event.print_signal_header() << std::endl;
@@ -453,6 +455,13 @@ struct interface_t : public element_t
     return ss.str();
   }
 
+  std::string print_interface_header()
+  {
+    std::stringstream ss;
+    ss << "  extern const wl_interface " << name << "_interface;" << std::endl;
+    return ss.str();
+  }
+
   std::string print_body()
   {
     std::stringstream ss;
@@ -461,27 +470,28 @@ struct interface_t : public element_t
        << "{" << std::endl
        << "  set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl
        << "  set_destroy_opcode(" << destroy_opcode << ");" << std::endl
-       << "  interface = &wl_" << name << "_interface;" << std::endl
+       << "  interface = &" << name << "_interface;" << std::endl
        << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
        << "    { return " << name << "_t(p); };" << std::endl
        << "}" << std::endl
        << std::endl
        << name << "_t::" << name << "_t()" << std::endl
        << "{" << std::endl
-       << "  interface = &wl_" << name << "_interface;" << std::endl
+       << "  interface = &" << name << "_interface;" << std::endl
        << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
        << "    { return " << name << "_t(p); };" << std::endl
        << "}" << std::endl
        << std::endl;
 
     for(auto &request : requests)
-      ss << request.print_body(name) << std::endl
-         << std::endl;
+      if(request.name != "destroy")
+        ss << request.print_body(name) << std::endl
+           << std::endl;
 
     for(auto &event : events)
       ss << event.print_signal_body(name) << std::endl;
 
-    ss << "int " << name << "_t::dispatcher(int opcode, std::vector<detail::any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
+    ss << "int " << name << "_t::dispatcher(int opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
        << "{" << std::endl;
 
     if(events.size())
@@ -502,6 +512,75 @@ struct interface_t : public element_t
 
     for(auto &enumeration : enums)
       ss << enumeration.print_body(name) << std::endl;
+
+    return ss.str();
+  }
+
+  std::string print_interface_body()
+  {
+    std::stringstream ss;
+    ss << "const wl_interface wayland::detail::" << name << "_interface =" << std::endl
+       << "  {" << std::endl
+       << "    \"wl_" << name << "\"," << std::endl
+       << "    " << version << "," << std::endl
+       << "    " << requests.size() << "," << std::endl
+       << "    (const wl_message[]) {" << std::endl;
+    for(auto &request : requests)
+      {
+        ss << "      {" << std::endl
+           << "        \"" << request.name << "\"," << std::endl
+           << "        \"";
+        if(request.since > 1)
+          ss << request.since;
+        for(auto &arg : request.args)
+          {
+            if(arg.allow_null)
+              ss << "?";
+            if(arg.type == "new_id" && arg.interface == "")
+              ss << "su";
+            ss << arg.print_short();
+          }
+        ss << "\"," << std::endl
+           << "        (const wl_interface*[]) {" << std::endl;
+        for(auto &arg : request.args)
+          if(arg.interface != "")
+            ss  << "          &" << arg.interface << "_interface," << std::endl;
+          else
+            ss  << "          NULL," << std::endl;
+        ss << "        }," << std::endl
+           << "      }," << std::endl;
+      }
+    ss << "    }," << std::endl
+       << "    " << events.size() << "," << std::endl
+       << "    (const wl_message[]) {" << std::endl;
+    for(auto &event : events)
+      {
+        ss << "      {" << std::endl
+           << "        \"" << event.name << "\"," << std::endl
+           << "        \"";
+        if(event.since > 1)
+          ss << event.since;
+        for(auto &arg : event.args)
+          {
+            if(arg.allow_null)
+              ss << "?";
+            if(arg.type == "new_id" && arg.interface == "")
+              ss << "su";
+            ss << arg.print_short();
+          }
+        ss << "\"," << std::endl
+           << "        (const wl_interface*[]) {" << std::endl;
+        for(auto &arg : event.args)
+          if(arg.interface != "")
+            ss  << "          &" << arg.interface << "_interface," << std::endl;
+          else
+            ss  << "          NULL," << std::endl;
+        ss << "        }," << std::endl
+           << "      }," << std::endl;
+      }
+    ss << "    }" << std::endl
+       << "  };" << std::endl
+       << std::endl;
 
     return ss.str();
   }
@@ -530,10 +609,10 @@ int main(int argc, char *argv[])
       iface.name = interface.attribute("name").value();
       iface.name = iface.name.substr(3, iface.name.size());
 
-      if(iface.name == "display")
-        continue; // skip in favor of hand written version
-
-      iface.version = interface.attribute("version").value();
+      if(interface.attribute("version"))
+        iface.version = std::stoi(std::string(interface.attribute("version").value()));
+      else
+        iface.version = 1;
       if(interface.child("description"))
         {
           xml_node description = interface.child("description");
@@ -549,6 +628,12 @@ int main(int argc, char *argv[])
           request_t req;
           req.opcode = opcode++;
           req.name = request.attribute("name").value();
+
+          if(request.attribute("since"))
+            req.since = std::stoi(std::string(request.attribute("since").value()));
+          else
+            req.since = 1;
+
           if(request.child("description"))
             {
               xml_node description = request.child("description");
@@ -558,10 +643,7 @@ int main(int argc, char *argv[])
 
           // destruction takes place through the class destuctor
           if(req.name == "destroy")
-            {
-              iface.destroy_opcode = req.opcode;
-              continue;
-            }
+            iface.destroy_opcode = req.opcode;
           for(xml_node &argument : request.children("arg"))
             {
               argument_t arg;
@@ -581,19 +663,24 @@ int main(int argc, char *argv[])
                 }
 
               if(argument.attribute("enum"))
-              {
-                std::string tmp = argument.attribute("enum").value();
-                if(tmp.find('.') == std::string::npos)
-                  {
-                    arg.enum_iface = iface.name;
-                    arg.enum_name = tmp;
-                  }
-                else
-                  {
-                    arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
-                    arg.enum_name = tmp.substr(tmp.find('.')+1);
-                  }
-              }
+                {
+                  std::string tmp = argument.attribute("enum").value();
+                  if(tmp.find('.') == std::string::npos)
+                    {
+                      arg.enum_iface = iface.name;
+                      arg.enum_name = tmp;
+                    }
+                  else
+                    {
+                      arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
+                      arg.enum_name = tmp.substr(tmp.find('.')+1);
+                    }
+                }
+
+              if(argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true")
+                arg.allow_null = true;
+              else
+                arg.allow_null = false;
 
               if(arg.type == "new_id")
                 req.ret = arg;
@@ -606,6 +693,12 @@ int main(int argc, char *argv[])
         {
           event_t ev;
           ev.name = event.attribute("name").value();
+
+          if(event.attribute("since"))
+            ev.since = std::stoi(std::string(event.attribute("since").value()));
+          else
+            ev.since = 1;
+
           if(event.child("description"))
             {
               xml_node description = event.child("description");
@@ -632,24 +725,25 @@ int main(int argc, char *argv[])
                 }
 
               if(argument.attribute("enum"))
-              {
-                std::string tmp = argument.attribute("enum").value();
-                if(tmp.find('.') == std::string::npos)
-                  {
-                    arg.enum_iface = iface.name;
-                    arg.enum_name = tmp;
-                  }
-                else
-                  {
-                    arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
-                    arg.enum_name = tmp.substr(tmp.find('.')+1);
-                  }
-              }
+                {
+                  std::string tmp = argument.attribute("enum").value();
+                  if(tmp.find('.') == std::string::npos)
+                    {
+                      arg.enum_iface = iface.name;
+                      arg.enum_name = tmp;
+                    }
+                  else
+                    {
+                      arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
+                      arg.enum_name = tmp.substr(tmp.find('.')+1);
+                    }
+                }
 
-              if(argument.attribute("allow_null"))
-                arg.allow_null = std::string(argument.attribute("allow_null").value()) == "true";
+              if(argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true")
+                arg.allow_null = true;
               else
                 arg.allow_null = false;
+
               ev.args.push_back(arg);
             }
           iface.events.push_back(ev);
@@ -693,8 +787,8 @@ int main(int argc, char *argv[])
                 }
 
               uint32_t tmp = std::floor(std::log2(stol(enum_entry.value)))+1;
-                if(tmp > enu.width)
-                  enu.width = tmp;
+              if(tmp > enu.width)
+                enu.width = tmp;
 
               enu.entries.push_back(enum_entry);
             }
@@ -725,12 +819,22 @@ int main(int argc, char *argv[])
 
   // forward declarations
   for(auto &iface : interfaces)
-    wayland_hpp << iface.print_forward();
+    if(iface.name != "display")
+      wayland_hpp << iface.print_forward();
   wayland_hpp << std::endl;
+
+  // interface headers
+  wayland_hpp << "namespace detail" << std::endl
+              << "{" << std::endl;
+  for(auto &iface : interfaces)
+    wayland_hpp << iface.print_interface_header();
+  wayland_hpp  << "}" << std::endl
+  << std::endl;
 
   // class declarations
   for(auto &iface : interfaces)
-    wayland_hpp << iface.print_header(interfaces) << std::endl;
+    if(iface.name != "display")
+      wayland_hpp << iface.print_header() << std::endl;
   wayland_hpp << std::endl
               << "}" << std::endl
               << std::endl
@@ -740,11 +844,17 @@ int main(int argc, char *argv[])
   wayland_cpp << "#include <wayland-client-protocol.hpp>" << std::endl
               << std::endl
               << "using namespace wayland;" << std::endl
+              << "using namespace detail;" << std::endl
               << std::endl;
   
+  // interface bodys
+  for(auto &iface : interfaces)
+    wayland_cpp << iface.print_interface_body();
+
   // class member definitions
   for(auto &iface : interfaces)
-    wayland_cpp << iface.print_body() << std::endl;
+    if(iface.name != "display")
+      wayland_cpp << iface.print_body() << std::endl;
   wayland_cpp << std::endl;
 
   // clean up

@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <wayland-client.hpp>
+#include <wayland-client-protocol.hpp>
 
 using namespace wayland;
 using namespace wayland::detail;
@@ -278,7 +279,7 @@ display_t::display_t(int fd)
 {
   if(!c_ptr())
     throw std::runtime_error("wl_display_connect_to_fd");
-  interface = &wl_display_interface;
+  interface = &display_interface;
 }
 
 display_t::display_t(std::string name)
@@ -286,7 +287,7 @@ display_t::display_t(std::string name)
 {
   if(!c_ptr())
     throw std::runtime_error("wl_display_connect");
-  interface = &wl_display_interface;
+  interface = &display_interface;
 }
 
 display_t::display_t(display_t &&d)
@@ -406,10 +407,10 @@ int display_t::flush()
 
 callback_t display_t::sync()
 {
-  return callback_t(marshal_constructor(0, &wl_callback_interface, NULL));
+  return callback_t(marshal_constructor(0, &callback_interface, NULL));
 }
 
 registry_t display_t::get_registry()
 {
-  return registry_t(marshal_constructor(1, &wl_registry_interface, NULL));
+  return registry_t(marshal_constructor(1, &registry_interface, NULL));
 }

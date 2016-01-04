@@ -26,7 +26,7 @@
 #ifndef WAYLAND_EGL_HPP
 #define WAYLAND_EGL_HPP
 
-#include <wayland-egl.h>
+#include <wayland-egl-core.h>
 #include <EGL/egl.h>
 
 namespace wayland

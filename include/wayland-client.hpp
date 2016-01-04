@@ -31,7 +31,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <wayland-client.h>
+#include <wayland-client-core.h>
 #include <EGL/egl.h>
 #include <wayland-egl.hpp>
 #include <wayland-util.hpp>
