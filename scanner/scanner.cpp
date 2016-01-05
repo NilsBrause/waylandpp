@@ -397,6 +397,7 @@ struct interface_t : public element_t
 {
   int version;
   std::string name;
+  std::string orig_name;
   int destroy_opcode;
   std::list<request_t> requests;
   std::list<event_t> events;
@@ -521,7 +522,7 @@ struct interface_t : public element_t
     std::stringstream ss;
     ss << "const wl_interface wayland::detail::" << name << "_interface =" << std::endl
        << "  {" << std::endl
-       << "    \"wl_" << name << "\"," << std::endl
+       << "    \"" << orig_name << "\"," << std::endl
        << "    " << version << "," << std::endl
        << "    " << requests.size() << "," << std::endl
        << "    (const wl_message[]) {" << std::endl;
@@ -606,8 +607,11 @@ int main(int argc, char *argv[])
     {
       interface_t iface;
       iface.destroy_opcode = -1;
-      iface.name = interface.attribute("name").value();
-      iface.name = iface.name.substr(3, iface.name.size());
+      iface.orig_name = interface.attribute("name").value();
+      if(iface.orig_name.substr(0, 3) == "wl_")
+        iface.name = iface.orig_name.substr(3, iface.orig_name.size());
+      else
+        iface.name = iface.orig_name;
 
       if(interface.attribute("version"))
         iface.version = std::stoi(std::string(interface.attribute("version").value()));
@@ -659,7 +663,8 @@ int main(int argc, char *argv[])
               if(argument.attribute("interface"))
                 {
                   arg.interface = argument.attribute("interface").value();
-                  arg.interface = arg.interface.substr(3, arg.interface.size());
+                  if(arg.interface.substr(0, 3) == "wl_")
+                    arg.interface = arg.interface.substr(3, arg.interface.size());
                 }
 
               if(argument.attribute("enum"))
@@ -672,7 +677,9 @@ int main(int argc, char *argv[])
                     }
                   else
                     {
-                      arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
+                      arg.enum_iface = tmp.substr(0, tmp.find('.'));
+                      if(arg.enum_iface.substr(0, 3) == "wl_")
+                        arg.enum_iface = arg.enum_iface.substr(3, arg.enum_iface.size());
                       arg.enum_name = tmp.substr(tmp.find('.')+1);
                     }
                 }
@@ -721,7 +728,8 @@ int main(int argc, char *argv[])
               if(argument.attribute("interface"))
                 {
                   arg.interface = argument.attribute("interface").value();
-                  arg.interface = arg.interface.substr(3, arg.interface.size());
+                  if(arg.interface.substr(0, 3) == "wl_")
+                    arg.interface = arg.interface.substr(3, arg.interface.size());
                 }
 
               if(argument.attribute("enum"))
@@ -734,7 +742,9 @@ int main(int argc, char *argv[])
                     }
                   else
                     {
-                      arg.enum_iface = tmp.substr(3, tmp.find('.')-3);
+                      arg.enum_iface = tmp.substr(0, tmp.find('.'));
+                      if(arg.enum_iface.substr(0, 3) == "wl_")
+                        arg.enum_iface = arg.enum_iface.substr(3, arg.enum_iface.size());
                       arg.enum_name = tmp.substr(tmp.find('.')+1);
                     }
                 }
