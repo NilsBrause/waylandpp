@@ -44,12 +44,21 @@ event_queue_t::event_queue_t(wl_event_queue *q)
 wl_event_queue *event_queue_t::c_ptr()
 {
   if(!queue)
-    return NULL;
+    throw std::invalid_argument("event_queue is NULL");
   return queue->queue;
 };
 
 int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args)
 {
+  if(!implementation)
+    throw std::invalid_argument("proxy dispatcher: implementation is NULL.");
+  if(!target)
+    throw std::invalid_argument("proxy dispatcher: target is NULL.");
+  if(!message)
+    throw std::invalid_argument("proxy dispatcher: message is NULL.");
+  if(!args)
+    throw std::invalid_argument("proxy dispatcher: args is NULL.");
+
   std::string signature(message->signature);
   std::vector<any> vargs;
   unsigned int c = 0;
@@ -95,7 +104,10 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
                 a = proxy_t(proxy);
               }
             else
-              a = proxy_t();
+              {
+                a = proxy_t();
+                std::cerr << "New id is empty." << std::endl;
+              }
           }
           break;
           // array
@@ -138,34 +150,37 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
 
 void proxy_t::set_destroy_opcode(int destroy_opcode)
 {
-  if(proxy && !display)
+  if(!display)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       data->opcode = destroy_opcode;
     }
+  else
+    std::cerr << "Not setting destroy opcode on display.";
 }
 
 void proxy_t::set_events(std::shared_ptr<events_base_t> events,
                          int(*dispatcher)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
 {
-  if(proxy && !display)
+  if(!display)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       // set only one time
       if(!data->events)
         {
           data->events = events;
           // the dispatcher gets 'implemetation'
-          wl_proxy_add_dispatcher(proxy, c_dispatcher, reinterpret_cast<void*>(dispatcher), data);
+          if(wl_proxy_add_dispatcher(proxy, c_dispatcher, reinterpret_cast<void*>(dispatcher), data) < 0)
+            throw std::runtime_error("wl_proxy_add_dispatcher failed.");
         }
     }
 }
 
 std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
 {
-  if(proxy && !display)
+  if(!display)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       return data->events;
     }
   return std::shared_ptr<events_base_t>();
@@ -179,9 +194,9 @@ proxy_t::proxy_t()
 proxy_t::proxy_t(wl_proxy *p, bool is_display, bool eternal)
   : proxy(p), display(is_display), interface(NULL)
 {
-  if(proxy && !display)
+  if(!display)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       if(!data)
         {
           data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, 0};
@@ -204,12 +219,12 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
   interface = p.interface;
   copy_constructor = p.copy_constructor;
   display = p.display;
-  if(proxy && !display)
+  if(!display)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       if(!data)
         {
-          std::cout << "Found proxy_t without meta data." << std::endl;
+          std::cerr << "Found proxy_t without meta data." << std::endl;
           data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, 0};
           wl_proxy_set_user_data(proxy, data);
         }
@@ -237,7 +252,7 @@ proxy_t::~proxy_t()
 {
   if(proxy && !display)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(proxy));
+      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       data->counter--;
       if(data->counter == 0)
         {
@@ -251,42 +266,37 @@ proxy_t::~proxy_t()
 
 uint32_t proxy_t::get_id()
 {
-  if(proxy)
-    return wl_proxy_get_id(proxy);
-  return 0;
+  return wl_proxy_get_id(c_ptr());
 }
 
 std::string proxy_t::get_class()
 {
-  if(proxy)
-    return wl_proxy_get_class(proxy);
-  return "";
+  return wl_proxy_get_class(c_ptr());
 }
 
 void proxy_t::set_queue(event_queue_t queue)
 {
-  if(proxy && queue.c_ptr())
-    wl_proxy_set_queue(proxy, queue.c_ptr());
+  wl_proxy_set_queue(c_ptr(), queue.c_ptr());
 }
 
 wl_proxy *proxy_t::c_ptr()
 {
+  if(!proxy)
+    throw std::invalid_argument("proxy is NULL");
   return proxy;
 }
 
 display_t::display_t(int fd)
   : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect_to_fd(fd)), true)
 {
-  if(!c_ptr())
-    throw std::runtime_error("wl_display_connect_to_fd");
+  c_ptr(); // throws if NULL
   interface = &display_interface;
 }
 
 display_t::display_t(std::string name)
   : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect(name == "" ? NULL : name.c_str())), true)
 {
-  if(!c_ptr())
-    throw std::runtime_error("wl_display_connect");
+  c_ptr(); // throws if NULL
   interface = &display_interface;
 }
 
@@ -316,93 +326,68 @@ event_queue_t display_t::create_queue()
 
 int display_t::get_fd()
 {
-  if(c_ptr())
-    return wl_display_get_fd(reinterpret_cast<wl_display*>(c_ptr()));
-  return 0;
+  return wl_display_get_fd(reinterpret_cast<wl_display*>(c_ptr()));
 }
 
 int display_t::roundtrip()
 {
-  if(c_ptr())
-    return wl_display_roundtrip(reinterpret_cast<wl_display*>(c_ptr()));
-  return 0;
+  return wl_display_roundtrip(reinterpret_cast<wl_display*>(c_ptr()));
 }
 
 int display_t::roundtrip_queue(event_queue_t queue)
 {
-  if(c_ptr())
-    return wl_display_roundtrip_queue(reinterpret_cast<wl_display*>(c_ptr()),
-                                      queue.c_ptr());
-  return 0;
+  return wl_display_roundtrip_queue(reinterpret_cast<wl_display*>(c_ptr()),
+                                    queue.c_ptr());
 }
 
 int display_t::read_events()
 {
-  if(c_ptr())
-    return wl_display_read_events(reinterpret_cast<wl_display*>(c_ptr()));
-  return 0;
+  return wl_display_read_events(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::prepare_read()
 {
-  if(c_ptr())
-    return wl_display_prepare_read(reinterpret_cast<wl_display*>(c_ptr()));
-  return 0;
+  return wl_display_prepare_read(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::prepare_read_queue(event_queue_t queue)
 {
-  if(c_ptr())
-    return wl_display_prepare_read_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
-  return 0;
+  return wl_display_prepare_read_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
 }    
 
 void display_t::cancel_read()
 {
-  if(c_ptr())
-    wl_display_cancel_read(reinterpret_cast<wl_display*>(c_ptr()));
+  wl_display_cancel_read(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::dispatch_queue(event_queue_t queue)
 {
-  if(c_ptr())
-    return wl_display_dispatch_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
-  return 0;
+  return wl_display_dispatch_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
 }    
 
 int display_t::dispatch_queue_pending(event_queue_t queue)
 {
-  if(c_ptr())
-    return wl_display_dispatch_queue_pending(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
-  return 0;
+  return wl_display_dispatch_queue_pending(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
 }    
 
 int display_t::dispatch()
 {
-  if(c_ptr())
-    return wl_display_dispatch(reinterpret_cast<wl_display*>(c_ptr()));
-  return 0;
+  return wl_display_dispatch(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::dispatch_pending()
 {
-  if(c_ptr())
-    return wl_display_dispatch_pending(reinterpret_cast<wl_display*>(c_ptr()));
-  return 0;
+  return wl_display_dispatch_pending(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::get_error()
 {
-  if(c_ptr())
-    return wl_display_get_error(reinterpret_cast<wl_display*>(c_ptr()));
-  return 0;
+  return wl_display_get_error(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 int display_t::flush()
 {
-  if(c_ptr())
-    return wl_display_flush(reinterpret_cast<wl_display*>(c_ptr()));
-  return 0;
+  return wl_display_flush(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
 callback_t display_t::sync()
