@@ -592,224 +592,227 @@ int main(int argc, char *argv[])
   if(argc < 4)
     {
       std::cerr << "Usage:" << std::endl
-                << "  " << argv[0] << " /path/to/wayland.xml /path/to/wayland.hpp /path/to/wayland.cpp" << std::endl;
+                << "  " << argv[0] << " protocol1.xml [protocol2.xml ...] protocol.hpp protocol.cpp" << std::endl;
       return 1;
     }
-  
-  xml_document doc;
-  doc.load_file(argv[1]);
-  xml_node protocol = doc.child("protocol");
 
   std::list<interface_t> interfaces;
   int enum_id = 0;
 
-  for(xml_node &interface : protocol.children("interface"))
+  for(int c = 1; c < argc-2; c++)
     {
-      interface_t iface;
-      iface.destroy_opcode = -1;
-      iface.orig_name = interface.attribute("name").value();
-      if(iface.orig_name.substr(0, 3) == "wl_")
-        iface.name = iface.orig_name.substr(3, iface.orig_name.size());
-      else
-        iface.name = iface.orig_name;
+      xml_document doc;
+      doc.load_file(argv[c]);
+      xml_node protocol = doc.child("protocol");
 
-      if(interface.attribute("version"))
-        iface.version = std::stoi(std::string(interface.attribute("version").value()));
-      else
-        iface.version = 1;
-      if(interface.child("description"))
+      for(xml_node &interface : protocol.children("interface"))
         {
-          xml_node description = interface.child("description");
-          iface.summary = description.attribute("summary").value();
-          iface.description = description.text().get();
-        }
-
-      interface_names.push_back(iface.name);
-
-      int opcode = 0; // Opcodes are in order of the XML. (Sadly undocumented)
-      for(xml_node &request : interface.children("request"))
-        {
-          request_t req;
-          req.opcode = opcode++;
-          req.name = request.attribute("name").value();
-
-          if(request.attribute("since"))
-            req.since = std::stoi(std::string(request.attribute("since").value()));
+          interface_t iface;
+          iface.destroy_opcode = -1;
+          iface.orig_name = interface.attribute("name").value();
+          if(iface.orig_name.substr(0, 3) == "wl_")
+            iface.name = iface.orig_name.substr(3, iface.orig_name.size());
           else
-            req.since = 1;
+            iface.name = iface.orig_name;
 
-          if(request.child("description"))
+          if(interface.attribute("version"))
+            iface.version = std::stoi(std::string(interface.attribute("version").value()));
+          else
+            iface.version = 1;
+          if(interface.child("description"))
             {
-              xml_node description = request.child("description");
-              req.summary = description.attribute("summary").value();
-              req.description = description.text().get();
+              xml_node description = interface.child("description");
+              iface.summary = description.attribute("summary").value();
+              iface.description = description.text().get();
             }
 
-          // destruction takes place through the class destuctor
-          if(req.name == "destroy")
-            iface.destroy_opcode = req.opcode;
-          for(xml_node &argument : request.children("arg"))
+          interface_names.push_back(iface.name);
+
+          int opcode = 0; // Opcodes are in order of the XML. (Sadly undocumented)
+          for(xml_node &request : interface.children("request"))
             {
-              argument_t arg;
-              arg.type = argument.attribute("type").value();
-              arg.name = argument.attribute("name").value();
-              if(argument.child("description"))
-                {
-                  xml_node description = argument.child("description");
-                  arg.summary = description.attribute("summary").value();
-                  arg.description = description.text().get();
-                }
+              request_t req;
+              req.opcode = opcode++;
+              req.name = request.attribute("name").value();
 
-              if(argument.attribute("interface"))
-                {
-                  arg.interface = argument.attribute("interface").value();
-                  if(arg.interface.substr(0, 3) == "wl_")
-                    arg.interface = arg.interface.substr(3, arg.interface.size());
-                }
-
-              if(argument.attribute("enum"))
-                {
-                  std::string tmp = argument.attribute("enum").value();
-                  if(tmp.find('.') == std::string::npos)
-                    {
-                      arg.enum_iface = iface.name;
-                      arg.enum_name = tmp;
-                    }
-                  else
-                    {
-                      arg.enum_iface = tmp.substr(0, tmp.find('.'));
-                      if(arg.enum_iface.substr(0, 3) == "wl_")
-                        arg.enum_iface = arg.enum_iface.substr(3, arg.enum_iface.size());
-                      arg.enum_name = tmp.substr(tmp.find('.')+1);
-                    }
-                }
-
-              if(argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true")
-                arg.allow_null = true;
+              if(request.attribute("since"))
+                req.since = std::stoi(std::string(request.attribute("since").value()));
               else
-                arg.allow_null = false;
+                req.since = 1;
 
-              if(arg.type == "new_id")
-                req.ret = arg;
-              req.args.push_back(arg);
-            }
-          iface.requests.push_back(req);
-        }
-
-      for(xml_node &event : interface.children("event"))
-        {
-          event_t ev;
-          ev.name = event.attribute("name").value();
-
-          if(event.attribute("since"))
-            ev.since = std::stoi(std::string(event.attribute("since").value()));
-          else
-            ev.since = 1;
-
-          if(event.child("description"))
-            {
-              xml_node description = event.child("description");
-              ev.summary = description.attribute("summary").value();
-              ev.description = description.text().get();
-            }
-
-          for(xml_node &argument : event.children("arg"))
-            {
-              argument_t arg;
-              arg.type = argument.attribute("type").value();
-              arg.name = argument.attribute("name").value();
-              if(argument.child("description"))
+              if(request.child("description"))
                 {
-                  xml_node description = argument.child("description");
-                  arg.summary = description.attribute("summary").value();
-                  arg.description = description.text().get();
+                  xml_node description = request.child("description");
+                  req.summary = description.attribute("summary").value();
+                  req.description = description.text().get();
                 }
 
-              if(argument.attribute("interface"))
+              // destruction takes place through the class destuctor
+              if(req.name == "destroy")
+                iface.destroy_opcode = req.opcode;
+              for(xml_node &argument : request.children("arg"))
                 {
-                  arg.interface = argument.attribute("interface").value();
-                  if(arg.interface.substr(0, 3) == "wl_")
-                    arg.interface = arg.interface.substr(3, arg.interface.size());
-                }
-
-              if(argument.attribute("enum"))
-                {
-                  std::string tmp = argument.attribute("enum").value();
-                  if(tmp.find('.') == std::string::npos)
+                  argument_t arg;
+                  arg.type = argument.attribute("type").value();
+                  arg.name = argument.attribute("name").value();
+                  if(argument.child("description"))
                     {
-                      arg.enum_iface = iface.name;
-                      arg.enum_name = tmp;
+                      xml_node description = argument.child("description");
+                      arg.summary = description.attribute("summary").value();
+                      arg.description = description.text().get();
                     }
+
+                  if(argument.attribute("interface"))
+                    {
+                      arg.interface = argument.attribute("interface").value();
+                      if(arg.interface.substr(0, 3) == "wl_")
+                        arg.interface = arg.interface.substr(3, arg.interface.size());
+                    }
+
+                  if(argument.attribute("enum"))
+                    {
+                      std::string tmp = argument.attribute("enum").value();
+                      if(tmp.find('.') == std::string::npos)
+                        {
+                          arg.enum_iface = iface.name;
+                          arg.enum_name = tmp;
+                        }
+                      else
+                        {
+                          arg.enum_iface = tmp.substr(0, tmp.find('.'));
+                          if(arg.enum_iface.substr(0, 3) == "wl_")
+                            arg.enum_iface = arg.enum_iface.substr(3, arg.enum_iface.size());
+                          arg.enum_name = tmp.substr(tmp.find('.')+1);
+                        }
+                    }
+
+                  if(argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true")
+                    arg.allow_null = true;
                   else
-                    {
-                      arg.enum_iface = tmp.substr(0, tmp.find('.'));
-                      if(arg.enum_iface.substr(0, 3) == "wl_")
-                        arg.enum_iface = arg.enum_iface.substr(3, arg.enum_iface.size());
-                      arg.enum_name = tmp.substr(tmp.find('.')+1);
-                    }
-                }
+                    arg.allow_null = false;
 
-              if(argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true")
-                arg.allow_null = true;
+                  if(arg.type == "new_id")
+                    req.ret = arg;
+                  req.args.push_back(arg);
+                }
+              iface.requests.push_back(req);
+            }
+
+          for(xml_node &event : interface.children("event"))
+            {
+              event_t ev;
+              ev.name = event.attribute("name").value();
+
+              if(event.attribute("since"))
+                ev.since = std::stoi(std::string(event.attribute("since").value()));
               else
-                arg.allow_null = false;
+                ev.since = 1;
 
-              ev.args.push_back(arg);
-            }
-          iface.events.push_back(ev);
-        }
-
-      for(xml_node &enumeration : interface.children("enum"))
-        {
-          enumeration_t enu;
-          enu.name = enumeration.attribute("name").value();
-          if(enumeration.child("description"))
-            {
-              xml_node description = enumeration.child("description");
-              enu.summary = description.attribute("summary").value();
-              enu.description = description.text().get();
-            }
-
-          if(enumeration.attribute("bitfield"))
-            {
-              std::string tmp = enumeration.attribute("bitfield").value();
-              enu.bitfield = (tmp == "true");
-            }
-          else
-            enu.bitfield = false;
-          enu.id = enum_id++;
-          enu.width = 0;
-
-          for(xml_node entry = enumeration.child("entry"); entry;
-              entry = entry.next_sibling("entry"))
-            {
-              enum_entry_t enum_entry;
-              enum_entry.name = entry.attribute("name").value();
-              if(enum_entry.name == "default"
-                 || isdigit(enum_entry.name.at(0)))
-                enum_entry.name.insert(0, 1, '_');
-              enum_entry.value = entry.attribute("value").value();
-              if(entry.child("description"))
+              if(event.child("description"))
                 {
-                  xml_node description = entry.child("description");
-                  enum_entry.summary = description.attribute("summary").value();
-                  enum_entry.description = description.text().get();
+                  xml_node description = event.child("description");
+                  ev.summary = description.attribute("summary").value();
+                  ev.description = description.text().get();
                 }
 
-              uint32_t tmp = std::floor(std::log2(stol(enum_entry.value)))+1;
-              if(tmp > enu.width)
-                enu.width = tmp;
+              for(xml_node &argument : event.children("arg"))
+                {
+                  argument_t arg;
+                  arg.type = argument.attribute("type").value();
+                  arg.name = argument.attribute("name").value();
+                  if(argument.child("description"))
+                    {
+                      xml_node description = argument.child("description");
+                      arg.summary = description.attribute("summary").value();
+                      arg.description = description.text().get();
+                    }
 
-              enu.entries.push_back(enum_entry);
+                  if(argument.attribute("interface"))
+                    {
+                      arg.interface = argument.attribute("interface").value();
+                      if(arg.interface.substr(0, 3) == "wl_")
+                        arg.interface = arg.interface.substr(3, arg.interface.size());
+                    }
+
+                  if(argument.attribute("enum"))
+                    {
+                      std::string tmp = argument.attribute("enum").value();
+                      if(tmp.find('.') == std::string::npos)
+                        {
+                          arg.enum_iface = iface.name;
+                          arg.enum_name = tmp;
+                        }
+                      else
+                        {
+                          arg.enum_iface = tmp.substr(0, tmp.find('.'));
+                          if(arg.enum_iface.substr(0, 3) == "wl_")
+                            arg.enum_iface = arg.enum_iface.substr(3, arg.enum_iface.size());
+                          arg.enum_name = tmp.substr(tmp.find('.')+1);
+                        }
+                    }
+
+                  if(argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true")
+                    arg.allow_null = true;
+                  else
+                    arg.allow_null = false;
+
+                  ev.args.push_back(arg);
+                }
+              iface.events.push_back(ev);
             }
-          iface.enums.push_back(enu);
-        }
+
+          for(xml_node &enumeration : interface.children("enum"))
+            {
+              enumeration_t enu;
+              enu.name = enumeration.attribute("name").value();
+              if(enumeration.child("description"))
+                {
+                  xml_node description = enumeration.child("description");
+                  enu.summary = description.attribute("summary").value();
+                  enu.description = description.text().get();
+                }
+
+              if(enumeration.attribute("bitfield"))
+                {
+                  std::string tmp = enumeration.attribute("bitfield").value();
+                  enu.bitfield = (tmp == "true");
+                }
+              else
+                enu.bitfield = false;
+              enu.id = enum_id++;
+              enu.width = 0;
+
+              for(xml_node entry = enumeration.child("entry"); entry;
+                  entry = entry.next_sibling("entry"))
+                {
+                  enum_entry_t enum_entry;
+                  enum_entry.name = entry.attribute("name").value();
+                  if(enum_entry.name == "default"
+                     || isdigit(enum_entry.name.at(0)))
+                    enum_entry.name.insert(0, 1, '_');
+                  enum_entry.value = entry.attribute("value").value();
+                  if(entry.child("description"))
+                    {
+                      xml_node description = entry.child("description");
+                      enum_entry.summary = description.attribute("summary").value();
+                      enum_entry.description = description.text().get();
+                    }
+
+                  uint32_t tmp = std::floor(std::log2(stol(enum_entry.value)))+1;
+                  if(tmp > enu.width)
+                    enu.width = tmp;
+
+                  enu.entries.push_back(enum_entry);
+                }
+              iface.enums.push_back(enu);
+            }
           
-      interfaces.push_back(iface);
+          interfaces.push_back(iface);
+        }
     }
 
-  std::fstream wayland_hpp(argv[2], std::ios_base::out | std::ios_base::trunc);
-  std::fstream wayland_cpp(argv[3], std::ios_base::out | std::ios_base::trunc);
+  std::fstream wayland_hpp(argv[argc-2], std::ios_base::out | std::ios_base::trunc);
+  std::fstream wayland_cpp(argv[argc-1], std::ios_base::out | std::ios_base::trunc);
 
   // header intro
   wayland_hpp << "#ifndef WAYLAND_HPP" << std::endl

@@ -13,8 +13,8 @@ env.Program("scanner/scanner",
 
 env.Command(["src/wayland-client-protocol.cpp",
              "include/wayland-client-protocol.hpp"],
-            ["scanner/scanner", "scanner/wayland.xml"],
-            "./scanner/scanner scanner/wayland.xml \
+            ["scanner/scanner", "protocols/wayland.xml"],
+            "./scanner/scanner protocols/wayland.xml \
             include/wayland-client-protocol.hpp \
             src/wayland-client-protocol.cpp")
 
