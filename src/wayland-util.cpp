@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Nils Christopher Brause
+ * Copyright (c) 2015-2016, Nils Christopher Brause
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -92,3 +92,57 @@ argument_t::argument_t(proxy_t p)
   is_array = false;
 }
 
+argument_t::argument_t(array_t a)
+{
+  argument.a = new wl_array;
+  a.get(argument.a);
+  is_array = true;
+}
+
+array_t::array_t(wl_array *arr)
+{
+  wl_array_init(&a);
+  wl_array_copy(&a, arr);
+}
+
+void array_t::get(wl_array *arr)
+{
+  wl_array_init(arr);
+  wl_array_copy(arr, &a);
+}
+
+array_t::array_t()
+{
+  wl_array_init(&a);
+}
+
+array_t::array_t(const array_t &arr)
+{
+  wl_array_init(&a);
+  wl_array_copy(&a, const_cast<wl_array*>(&arr.a));
+}
+
+array_t::array_t(array_t &&arr)
+{
+  wl_array_init(&a);
+  std::swap(a, arr.a);
+}
+
+array_t::~array_t()
+{
+  wl_array_release(&a);
+}
+
+array_t &array_t::operator=(const array_t &arr)
+{
+  wl_array_release(&a);
+  wl_array_init(&a);
+  wl_array_copy(&a, const_cast<wl_array*>(&arr.a));
+  return *this;
+}
+
+array_t &array_t::operator=(array_t &&arr)
+{
+  std::swap(a, arr.a);
+  return *this;
+}

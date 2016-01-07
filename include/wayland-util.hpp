@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015, Nils Christopher Brause
+ * Copyright (c) 2014-2016, Nils Christopher Brause
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,18 @@
 #include <algorithm>
 #include <typeinfo>
 #include <utility>
+#include <vector>
+
+#define wl_array_for_each_cpp(pos, array)                                   \
+  for (pos = (decltype(pos))(array)->data;                                  \
+       (const char *) pos < ((const char *) (array)->data + (array)->size); \
+       (pos)++)
 
 namespace wayland
 {
   class proxy_t;
+
+  class array_t;
 
   namespace detail
   {
@@ -223,18 +231,61 @@ namespace wayland
       argument_t(proxy_t p);
 
       // handles arrays
-      template <typename T>
-      argument_t(std::vector<T> a)
-      {
-        argument.a = new wl_array;
-        wl_array_init(argument.a);
-        if(!wl_array_add(argument.a, a.size()*sizeof(T)))
-          throw std::runtime_error("wl_array_add failed.");
-        std::copy_n(a.begin(), a.end(), static_cast<T*>(argument.a->data));
-        is_array = true;
-      }
+      argument_t(array_t a);
     };
   }
+
+  class array_t
+  {
+  private:
+    wl_array a;
+
+    array_t(wl_array *arr);
+    void get(wl_array *arr);
+
+    friend class proxy_t;
+    friend class detail::argument_t;
+
+  public:
+    array_t();
+    array_t(const array_t &arr);
+    array_t(array_t &&arr);
+
+    template <typename T> array_t(const std::vector<T> &v)
+    {
+      wl_array_init(&a);
+      wl_array_add(&a, v.size()*sizeof(T));
+      T *p;
+      unsigned int c = 0;
+      wl_array_for_each_cpp(p, &a)
+        *p = v.at(c++);
+    }
+
+    ~array_t();
+    array_t &operator=(const array_t &arr);
+    array_t &operator=(array_t &&arr);
+
+    template <typename T> array_t &operator=(const std::vector<T> &v)
+    {
+      wl_array_release(&a);
+      wl_array_init(&a);
+      wl_array_add(&a, v.size()*sizeof(T));
+      T *p;
+      unsigned int c = 0;
+      wl_array_for_each_cpp(p, &a)
+        *p = v.at(c++);
+      return *this;
+    }
+
+    template <typename T> operator std::vector<T>()
+    {
+      std::vector<T> v;
+      T *p;
+      wl_array_for_each_cpp(p, &a)
+        v.push_back(*p);
+      return v;
+    }
+  };
 }
 
 #endif

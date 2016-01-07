@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015, Nils Christopher Brause
+ * Copyright (c) 2014-2016, Nils Christopher Brause
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -113,10 +113,9 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
           // array
         case 'a':
           if(args[c].a)
-            a = std::vector<char>(reinterpret_cast<char*>(args[c].a->data),
-                                  reinterpret_cast<char*>(args[c].a->data) + args[c].a->size);
+            a = array_t(args[c].a);
           else
-            a = std::vector<char>();
+            a = array_t();
           break;
         default:
           a = 0;

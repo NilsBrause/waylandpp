@@ -78,3 +78,14 @@ lambda expression, one could write:
 
 An example for using member functions can be found under
 example/opengles.cpp or example/shm.cpp.
+
+The Wayland protocol uses arrays in some of its events and requests.
+Since these arrays can have arbitrary content, they are not directly
+mapped to a std::vector. Instead there is a new type array_t, which
+can converted to and from a std::vectory with an user specified type.
+For example:
+
+    keyboard.on_enter() = [] (uint32_t serial, surface_t surface,
+                              array_t keys)
+      { std::vector<uint32_t> vec = keys; };
+

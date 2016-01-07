@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2014 Nils Brause
+ * (C) Copyright 2014-2016 Nils Brause
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ struct argument_t : public element_t
     else if(type == "fd")
       return "int";
     else if(type == "array")
-      return "std::vector<char>";
+      return "array_t";
     else
       return type;
   }
