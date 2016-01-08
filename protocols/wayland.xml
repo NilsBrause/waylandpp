@@ -176,7 +176,7 @@
     </event>
   </interface>
 
-  <interface name="wl_compositor" version="3">
+  <interface name="wl_compositor" version="4">
     <description summary="the compositor singleton">
       A compositor.  This object is a singleton global.  The
       compositor is in charge of combining the contents of multiple
@@ -986,7 +986,7 @@
     </event>
   </interface>
 
-  <interface name="wl_surface" version="3">
+  <interface name="wl_surface" version="4">
     <description summary="an onscreen surface">
       A surface is a rectangular area that is displayed on the screen.
       It has a location, size and pixel contents.
@@ -1095,10 +1095,8 @@
       <description summary="mark part of the surface damaged">
 	This request is used to describe the regions where the pending
 	buffer is different from the current surface contents, and where
-	the surface therefore needs to be repainted. The pending buffer
-	must be set by wl_surface.attach before sending damage. The
-	compositor ignores the parts of the damage that fall outside of
-	the surface.
+	the surface therefore needs to be repainted. The compositor
+	ignores the parts of the damage that fall outside of the surface.
 
 	Damage is double-buffered state, see wl_surface.commit.
 
@@ -1111,6 +1109,10 @@
 	wl_surface.commit assigns pending damage as the current damage,
 	and clears pending damage. The server will clear the current
 	damage as it repaints the surface.
+
+	Alternatively, damage can be posted with wl_surface.damage_buffer
+	which uses buffer co-ordinates instead of surface co-ordinates,
+	and is probably the preferred and intuitive way of doing this.
       </description>
 
       <arg name="x" type="int"/>
@@ -1294,7 +1296,7 @@
 	wl_output.transform enum the invalid_transform protocol error
 	is raised.
       </description>
-      <arg name="transform" type="int" enum="wl_output.transform"/>
+      <arg name="transform" type="uint" enum="wl_output.transform"/>
     </request>
 
     <!-- Version 3 additions -->
@@ -1327,6 +1329,48 @@
       </description>
       <arg name="scale" type="int"/>
     </request>
+
+    <!-- Version 4 additions -->
+    <request name="damage_buffer" since="4">
+      <description summary="mark part of the surface damaged using buffer co-ordinates">
+	This request is used to describe the regions where the pending
+	buffer is different from the current surface contents, and where
+	the surface therefore needs to be repainted. The compositor
+	ignores the parts of the damage that fall outside of the surface.
+
+	Damage is double-buffered state, see wl_surface.commit.
+
+	The damage rectangle is specified in buffer coordinates.
+
+	The initial value for pending damage is empty: no damage.
+	wl_surface.damage_buffer adds pending damage: the new pending
+	damage is the union of old pending damage and the given rectangle.
+
+	wl_surface.commit assigns pending damage as the current damage,
+	and clears pending damage. The server will clear the current
+	damage as it repaints the surface.
+
+	This request differs from wl_surface.damage in only one way - it
+	takes damage in buffer co-ordinates instead of surface local
+	co-ordinates. While this generally is more intuitive than surface
+	co-ordinates, it is especially desirable when using wp_viewport
+	or when a drawing library (like EGL) is unaware of buffer scale
+	and buffer transform.
+
+	Note: Because buffer transformation changes and damage requests may
+	be interleaved in the protocol stream, It is impossible to determine
+	the actual mapping between surface and buffer damage until
+	wl_surface.commit time. Therefore, compositors wishing to take both
+	kinds of damage into account will have to accumulate damage from the
+	two requests separately and only transform from one to the other
+	after receiving the wl_surface.commit.
+      </description>
+
+      <arg name="x" type="int"/>
+      <arg name="y" type="int"/>
+      <arg name="width" type="int"/>
+      <arg name="height" type="int"/>
+    </request>
    </interface>
 
   <interface name="wl_seat" version="5">
@@ -1349,42 +1393,69 @@
 
     <event name="capabilities">
       <description summary="seat capabilities changed">
-        This is emitted whenever a seat gains or loses the pointer,
+	This is emitted whenever a seat gains or loses the pointer,
 	keyboard or touch capabilities.  The argument is a capability
 	enum containing the complete set of capabilities this seat has.
+
+	When the pointer capability is added, a client may create a
+	wl_pointer object using the wl_seat.get_pointer request. This object
+	will receive pointer events until the capability is removed in the
+	future.
+
+	When the pointer capability is removed, a client should destroy the
+	wl_pointer objects associated with the seat where the capability was
+	removed, using the wl_pointer.release request. No further pointer
+	events will be received on these objects.
+
+	In some compositors, if a seat regains the pointer capability and a
+	client has a previously obtained wl_pointer object of version 4 or
+	less, that object may start sending pointer events again. This
+	behavior is considered a misinterpretation of the intended behavior
+	and must not be relied upon by the client. wl_pointer objects of
+	version 5 or later must not send events if created before the most
+	recent event notifying the client of an added pointer capability.
+
+	The above behavior also applies to wl_keyboard and wl_touch with the
+	keyboard and touch capabilities, respectively.
       </description>
       <arg name="capabilities" type="uint" enum="capability"/>
     </event>
 
     <request name="get_pointer">
       <description summary="return pointer object">
-        The ID provided will be initialized to the wl_pointer interface
+	The ID provided will be initialized to the wl_pointer interface
 	for this seat.
 
-        This request only takes effect if the seat has the pointer
-        capability.
+	This request only takes effect if the seat has the pointer
+	capability, or has had the pointer capability in the past.
+	It is a protocol violation to issue this request on a seat that has
+	never had the pointer capability.
       </description>
       <arg name="id" type="new_id" interface="wl_pointer"/>
     </request>
 
     <request name="get_keyboard">
       <description summary="return keyboard object">
-        The ID provided will be initialized to the wl_keyboard interface
+	The ID provided will be initialized to the wl_keyboard interface
 	for this seat.
 
-        This request only takes effect if the seat has the keyboard
-        capability.
+	This request only takes effect if the seat has the keyboard
+	capability, or has had the keyboard capability in the past.
+	It is a protocol violation to issue this request on a seat that has
+	never had the keyboard capability.
       </description>
       <arg name="id" type="new_id" interface="wl_keyboard"/>
     </request>
 
     <request name="get_touch">
       <description summary="return touch object">
-        The ID provided will be initialized to the wl_touch interface
+	The ID provided will be initialized to the wl_touch interface
 	for this seat.
 
-        This request only takes effect if the seat has the touch
-        capability.
+	This request only takes effect if the seat has the touch
+	capability, or has had the touch capability in the past.
+	It is a protocol violation to issue this request on a seat that has
+	never had the touch capability.
       </description>
       <arg name="id" type="new_id" interface="wl_touch"/>
     </request>
@@ -1570,7 +1641,7 @@
 
     <request name="release" type="destructor" since="3">
       <description summary="release the pointer object">
-        Using this request client can tell the server that it is not going to
+	Using this request client can tell the server that it is not going to
 	use the pointer object anymore.
 
 	This request destroys the pointer proxy object, so user must not call
@@ -1834,7 +1905,7 @@
 	   summary="textual description of the manufacturer"/>
       <arg name="model" type="string"
 	   summary="textual description of the model"/>
-      <arg name="transform" type="int" enum="transform"
+      <arg name="transform" type="uint" enum="transform"
 	   summary="transform that maps framebuffer to output"/>
     </event>
 
