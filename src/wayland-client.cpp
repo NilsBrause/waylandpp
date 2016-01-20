@@ -150,10 +150,7 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
 void proxy_t::set_destroy_opcode(int destroy_opcode)
 {
   if(!display)
-    {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
-      data->opcode = destroy_opcode;
-    }
+    data->opcode = destroy_opcode;
   else
     std::cerr << "Not setting destroy opcode on display.";
 }
@@ -161,50 +158,41 @@ void proxy_t::set_destroy_opcode(int destroy_opcode)
 void proxy_t::set_events(std::shared_ptr<events_base_t> events,
                          int(*dispatcher)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
 {
-  if(!display)
+  // set only one time
+  if(!display && !data->events)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
-      // set only one time
-      if(!data->events)
-        {
-          data->events = events;
-          // the dispatcher gets 'implemetation'
-          if(wl_proxy_add_dispatcher(proxy, c_dispatcher, reinterpret_cast<void*>(dispatcher), data) < 0)
-            throw std::runtime_error("wl_proxy_add_dispatcher failed.");
-        }
+      data->events = events;
+      // the dispatcher gets 'implemetation'
+      if(wl_proxy_add_dispatcher(proxy, c_dispatcher, reinterpret_cast<void*>(dispatcher), data) < 0)
+        throw std::runtime_error("wl_proxy_add_dispatcher failed.");
     }
 }
 
 std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
 {
   if(!display)
-    {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
-      return data->events;
-    }
+    return data->events;
   return std::shared_ptr<events_base_t>();
 }
 
 proxy_t::proxy_t()
-  : proxy(NULL), display(false), interface(NULL)
+  : proxy(NULL), data(NULL), display(false), interface(NULL)
 {
 }
 
-proxy_t::proxy_t(wl_proxy *p, bool is_display, bool eternal)
-  : proxy(p), display(is_display), interface(NULL)
+proxy_t::proxy_t(wl_proxy *p, bool is_display, bool donotdestroy)
+  : proxy(p), data(NULL), display(is_display), dontdestroy(donotdestroy), interface(NULL)
 {
   if(!display)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
+      data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       if(!data)
         {
           data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, 0};
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
-      if(eternal)
-        data->counter++;
-    } 
+    }
 }
   
 proxy_t::proxy_t(const proxy_t &p)
@@ -215,25 +203,25 @@ proxy_t::proxy_t(const proxy_t &p)
 proxy_t &proxy_t::operator=(const proxy_t& p)
 {
   proxy = p.proxy;
+  data = p.data;
   interface = p.interface;
   copy_constructor = p.copy_constructor;
   display = p.display;
-  if(!display)
+  dontdestroy = p.dontdestroy;
+
+  if(!data)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
-      if(!data)
-        {
-          std::cerr << "Found proxy_t without meta data." << std::endl;
-          data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, 0};
-          wl_proxy_set_user_data(proxy, data);
-        }
-      data->counter++;
+      std::cerr << "Found proxy_t without meta data." << std::endl;
+      data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, 0};
+      wl_proxy_set_user_data(proxy, data);
     }
+  data->counter++;
+
   return *this;
 }
 
 proxy_t::proxy_t(proxy_t &&p)
-  : proxy(NULL), display(false), interface(NULL)
+  : proxy(NULL), data(NULL), display(false), dontdestroy(NULL), interface(NULL)
 {
   operator=(std::move(p));
 }
@@ -241,7 +229,9 @@ proxy_t::proxy_t(proxy_t &&p)
 proxy_t &proxy_t::operator=(proxy_t &&p)
 {
   std::swap(proxy, p.proxy);
+  std::swap(data, p.data);
   std::swap(display, p.display);
+  std::swap(dontdestroy, p.dontdestroy);
   std::swap(interface, p.interface);
   std::swap(copy_constructor, p.copy_constructor);
   return *this;
@@ -251,13 +241,15 @@ proxy_t::~proxy_t()
 {
   if(proxy && !display)
     {
-      proxy_data_t *data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       data->counter--;
       if(data->counter == 0)
         {
-          if(data->opcode >= 0)
-            wl_proxy_marshal(proxy, data->opcode);
-          wl_proxy_destroy(proxy);
+          if(!dontdestroy)
+            {
+              if(data->opcode >= 0)
+                wl_proxy_marshal(proxy, data->opcode);
+              wl_proxy_destroy(proxy);
+            }
           delete data;
         }
     }

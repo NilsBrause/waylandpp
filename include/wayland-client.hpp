@@ -98,7 +98,9 @@ namespace wayland
     };
 
     wl_proxy *proxy;
+    proxy_data_t *data;
     bool display;
+    bool dontdestroy;
     friend class detail::argument_t;
 
     // universal dispatcher
@@ -172,7 +174,7 @@ namespace wayland
         \param p Pointer to a wl_proxy
         \param is_display True, if p is a wl_display pointer
     */
-    proxy_t(wl_proxy *p, bool is_display = false, bool eternal = false);
+    proxy_t(wl_proxy *p, bool is_display = false, bool donotdestroy = false);
 
     /** \brief Copy Constructior
         \param p A proxy_t object
