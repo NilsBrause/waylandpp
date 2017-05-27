@@ -239,6 +239,11 @@ proxy_t &proxy_t::operator=(proxy_t &&p)
 
 proxy_t::~proxy_t()
 {
+  proxy_release();
+}
+
+void proxy_t::proxy_release()
+{
   if(proxy && !display)
     {
       data->counter--;
@@ -252,8 +257,12 @@ proxy_t::~proxy_t()
             }
           delete data;
         }
+  
+      proxy = NULL;
+      data = NULL;
     }
 }
+
 
 uint32_t proxy_t::get_id()
 {
@@ -275,6 +284,16 @@ wl_proxy *proxy_t::c_ptr()
   if(!proxy)
     throw std::invalid_argument("proxy is NULL");
   return proxy;
+}
+
+bool proxy_t::proxy_has_object()
+{
+  return proxy;
+}
+
+proxy_t::operator bool()
+{
+  return proxy_has_object();
 }
 
 display_t::display_t(int fd)

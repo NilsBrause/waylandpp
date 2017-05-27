@@ -166,9 +166,6 @@ namespace wayland
     // Constructs NULL proxies.
     proxy_t();
 
-    // Get a pointer to the underlying C struct.
-    wl_proxy *c_ptr();
-
   public:
     /** \brief Cronstruct a proxy_t from a wl_proxy pointer
         \param p Pointer to a wl_proxy
@@ -228,6 +225,31 @@ namespace wayland
         See also: display_t::dispatch_queue().
     */
     void set_queue(event_queue_t queue);
+    
+    /** \brief Get a pointer to the underlying C struct.
+     *  \return The underlying wl_proxy wrapped by this proxy_t if it exists,
+     *          otherwise an exception is thrown
+     */
+    wl_proxy *c_ptr();
+    
+    /** \brief Check whether this wrapper actually wraps an object
+     *  \return true if there is an underlying object, false if this wrapper is
+     *          empty
+     */
+    bool proxy_has_object();
+    
+    /** \brief Check whether this wrapper actually wraps an object
+     *  \return true if there is an underlying object, false if this wrapper is
+     *          empty
+     */
+    operator bool();
+    
+    /** \brief Release the wrapped object (if any), making this an empty wrapper
+     * 
+     * Note that display_t instances cannot be released this way. Attempts to
+     * do so are ignored.
+     */
+    void proxy_release();
   };
 
   class callback_t;
