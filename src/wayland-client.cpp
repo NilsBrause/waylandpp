@@ -23,6 +23,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cassert>
 #include <iostream>
 #include <wayland-client.hpp>
 #include <wayland-client-protocol.hpp>
@@ -209,13 +210,13 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
   display = p.display;
   dontdestroy = p.dontdestroy;
 
-  if(!data)
+  if(data)
     {
-      std::cerr << "Found proxy_t without meta data." << std::endl;
-      data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, 0};
-      wl_proxy_set_user_data(proxy, data);
+      data->counter++;
     }
-  data->counter++;
+  
+  // Allowed: nothing set, proxy set & data unset (for wl_display), proxy & data set (for generic wl_proxy)
+  assert((!display && !data && !proxy) || (!display && data && proxy) || (display && !data && proxy));
 
   return *this;
 }
