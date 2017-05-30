@@ -257,7 +257,7 @@ public:
     draw();
   }
 
-  ~example()
+  ~example() noexcept(false)
   {
     // finialize EGL
     if(eglDestroyContext(egldisplay, eglcontext) == EGL_FALSE)

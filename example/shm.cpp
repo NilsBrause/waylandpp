@@ -94,7 +94,7 @@ public:
       throw std::runtime_error("mmap failed.");
   }
 
-  ~shared_mem_t()
+  ~shared_mem_t() noexcept(false)
   {
     if(fd)
       {
