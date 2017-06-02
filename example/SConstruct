@@ -15,3 +15,5 @@ env.Program("opengles", "opengles.cpp",
 env.Program("shm", "shm.cpp",
             LIBS = ["wayland-client++", "wayland-cursor++",
                     "rt"])
+env.Program("dump", "dump.cpp",
+            LIBS = ["wayland-client++"])
