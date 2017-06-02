@@ -44,6 +44,17 @@ struct argument_t : public element_t
   std::string enum_name;
   bool allow_null;
 
+  std::string print_enum_wire_type()
+  {
+    // Enums can be int or uint on the wire, except for bitfields
+    if(type == "int")
+      return "int32_t";
+    else if(type == "uint")
+      return "uint32_t";
+    else
+      throw std::runtime_error("Enum type must be int or uint");
+  }
+
   std::string print_type()
   {
     if(interface != "")
@@ -126,7 +137,7 @@ struct event_t : public element_t
     int c = 0;
     for(auto &arg : args)
       if(arg.enum_name != "")
-        ss << arg.print_type() << "(args[" << c++ << "].get<uint32_t>()), ";
+        ss << arg.print_type() << "(args[" << c++ << "].get<" << arg.print_enum_wire_type() << ">()), ";
       else if(arg.interface != "")
         ss << arg.print_type() << "(args[" << c++ << "].get<proxy_t>()), ";
       else
@@ -285,7 +296,7 @@ struct request_t : public event_t
             ss << "NULL, ";
           }
         else if(arg.enum_name != "")
-          ss << "static_cast<uint32_t>(" << arg.name + "), ";
+          ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << arg.name + "), ";
         else
           ss << arg.name + ", ";
       }
