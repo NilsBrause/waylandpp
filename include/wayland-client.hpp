@@ -237,13 +237,13 @@ namespace wayland
      *  \return true if there is an underlying object, false if this wrapper is
      *          empty
      */
-    bool proxy_has_object();
+    bool proxy_has_object() const;
     
     /** \brief Check whether this wrapper actually wraps an object
      *  \return true if there is an underlying object, false if this wrapper is
      *          empty
      */
-    operator bool();
+    operator bool() const;
     
     /** \brief Release the wrapped object (if any), making this an empty wrapper
      * 

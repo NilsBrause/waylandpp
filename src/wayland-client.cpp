@@ -287,12 +287,12 @@ wl_proxy *proxy_t::c_ptr()
   return proxy;
 }
 
-bool proxy_t::proxy_has_object()
+bool proxy_t::proxy_has_object() const
 {
   return proxy;
 }
 
-proxy_t::operator bool()
+proxy_t::operator bool() const
 {
   return proxy_has_object();
 }
