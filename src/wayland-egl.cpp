@@ -56,6 +56,16 @@ egl_window_t &egl_window_t::operator=(egl_window_t &&w)
   return *this;
 }
 
+wl_egl_window *egl_window_t::c_ptr() const
+{
+  return window;
+}
+
+egl_window_t::operator wl_egl_window*() const
+{
+  return c_ptr();
+}
+
 void egl_window_t::resize(int width, int height, int dx, int dy)
 {
   if(window)
@@ -78,11 +88,4 @@ void egl_window_t::get_attached_size(int &width, int &height)
 EGLDisplay eglGetDisplay(display_t &display)
 {
   return eglGetDisplay(reinterpret_cast<EGLNativeDisplayType>(display.c_ptr()));
-}
-
-EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
-				  egl_window_t &win,
-				  const EGLint *attrib_list)
-{
-  return eglCreateWindowSurface(dpy, config, reinterpret_cast<EGLNativeWindowType>(win.window), attrib_list);
 }
