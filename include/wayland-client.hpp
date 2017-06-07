@@ -231,6 +231,20 @@ namespace wayland
         \return The interface name of the object associated with the proxy 
     */
     std::string get_class();
+    
+    /** \brief Get the protocol object version of a proxy object.
+     * 
+     * Gets the protocol object version of a proxy object, or 0 if the proxy was
+     * created with unversioned API.
+     * 
+     * A returned value of 0 means that no version information is available,
+     * so the caller must make safe assumptions about the object's real version.
+     * 
+     * \ref display_t will always return version 0.
+     * 
+     * \return The protocol object version of the proxy or 0
+     */
+    uint32_t get_version();
 
     /** \brief Assign a proxy to an event queue.
         \param queue The event queue that will handle this proxy 

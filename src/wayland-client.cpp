@@ -309,6 +309,11 @@ std::string proxy_t::get_class()
   return wl_proxy_get_class(c_ptr());
 }
 
+uint32_t proxy_t::get_version()
+{
+  return wl_proxy_get_version(c_ptr());
+}
+
 void proxy_t::set_queue(event_queue_t queue)
 {
   wl_proxy_set_queue(c_ptr(), queue.c_ptr());
