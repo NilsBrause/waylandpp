@@ -39,6 +39,21 @@
 
 namespace wayland
 {
+  /** \brief Type for functions that handle log messages
+   *
+   * Log message is the first argument
+   */
+  typedef std::function<void(std::string)> log_handler;
+  /** \brief Set C library log handler
+   *
+   * The C library sometimes logs important information such as protocol
+   * error messages, by default to the standard output. This can be used
+   * to set an alternate function that will receive those messages.
+   *
+   * \param handler function that should be called for C library log messages
+   */
+  void set_log_handler(log_handler handler);
+
   /** \brief A queue for proxy_t object events. 
     
       Event queues allows the events on a display to be handled in a

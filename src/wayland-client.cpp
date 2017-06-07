@@ -24,7 +24,10 @@
  */
 
 #include <cassert>
+#include <cstdarg>
+#include <cstdio>
 #include <cerrno>
+
 #include <iostream>
 #include <system_error>
 #include <wayland-client.hpp>
@@ -32,6 +35,35 @@
 
 using namespace wayland;
 using namespace wayland::detail;
+
+namespace
+{
+
+log_handler g_log_handler;
+
+extern "C"
+void _c_log_handler(const char *format, va_list args)
+{
+  if(!g_log_handler)
+    return;
+  
+  // Format string
+  va_list args_copy;
+  // vsnprintf consumes args, so copy beforehand
+  va_copy(args_copy, args);
+  std::vector<char> buf(1 + std::vsnprintf(nullptr, 0, format, args));
+  std::vsnprintf(buf.data(), buf.size(), format, args_copy);
+  
+  g_log_handler(buf.data());
+}
+
+}
+
+void wayland::set_log_handler(log_handler handler)
+{
+  g_log_handler = handler;
+  wl_log_set_handler_client(_c_log_handler);
+}
 
 event_queue_t::queue_ptr::~queue_ptr()
 {
