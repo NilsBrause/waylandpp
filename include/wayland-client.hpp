@@ -268,6 +268,67 @@ namespace wayland
     void proxy_release();
   };
 
+  /** \brief Represents an intention to read from the display file
+   *  descriptor
+   * 
+   * When not using the convenience method \ref display_t::dispatch that takes care
+   * of this automatically, threads that want to read events from a Wayland
+   * display file descriptor must announce their intention to do so beforehand - in the C API,
+   * this is done using wl_display_prepare_read. This intention must then be
+   * resolved either by actually invoking a read from the file descriptor or cancelling.
+   * 
+   * This RAII class makes sure that when it goes out of scope, the intent
+   * is cancelled automatically if it was not finalized by manually cancelling
+   * or reading before. Otherwise, it would be easy to forget resolving the
+   * intent e.g. when handling errors, potentially leading to a deadlock.
+   * 
+   * Read intents can only be created by a \ref display_t with
+   * \ref display_t::obtain_read_intent and \ref display_t::obtain_queue_read_intent.
+   * 
+   * Undefined behavior occurs when the associated \ref display_t or
+   * \ref event_queue_t is destroyed when a read_intent has not been finalized yet.
+   */
+  class read_intent
+  {
+  public:
+    read_intent(read_intent &&other) = default;
+    ~read_intent();
+    
+    /** \brief Check whether this intent was already finalized with \ref cancel
+     * or \ref read
+     */
+    bool is_finalized();
+    /** \brief Cancel read intent
+     * 
+     * An exception is thrown when the read intent was already finalized.
+     */
+    void cancel();
+    /** \brief Read events from display file descriptor
+     * 
+     * This will read events from the file descriptor for the
+     * display. This function does not dispatch events, it only reads
+     * and queues events into their corresponding event queues. If no
+     * data is avilable on the file descriptor, read() returns immediately.
+     * To dispatch events that may have been queued, call
+     * \ref display_t::dispatch_pending or \ref display_t::dispatch_queue_pending.
+     * 
+     * An exception is thrown when the read intent was already finalized.
+     * Each read intent can only be used for reading once. A new one must be
+     * obtained for any further read requests.
+     */
+    void read();
+    
+  private:
+    read_intent(wl_display *display, wl_event_queue *event_queue = nullptr);
+    friend class display_t;
+    read_intent(read_intent const &other) = delete;
+    read_intent& operator=(read_intent const &other) = delete;
+    
+    wl_display *display;
+    wl_event_queue *event_queue = nullptr;
+    bool finalized = false;
+  };
+  
   class callback_t;
   class registry_t;
 
@@ -400,103 +461,49 @@ namespace wayland
          prepare_read() and read_events())
     */
     int roundtrip_queue(event_queue_t queue);
-
-    /** \brief Read events from display file descriptor.
-        \return 0 on success or -1 on error. In case of error errno will
-        be set accordingly
-      
-        This will read events from the file descriptor for the
-        display. This function does not dispatch events, it only reads
-        and queues events into their corresponding event queues. If no
-        data is avilable on the file descriptor,
-        display_t::read_events() returns immediately. To dispatch events
-        that may have been queued, call display_t::dispatch_pending() or
-        display_t::dispatch_queue_pending(). Before calling this
-        function, display_t::prepare_read() must be called first.
-    */
-    int read_events();
-
-    /** \brief Prepare to read events after polling file descriptor. 
-        \return 0 on success or -1 if event queue was not empty 
-      
-        This function must be called before reading from the file
-        descriptor using display_t::read_events(). Calling
-        display_t::prepare_read() announces the calling threads
-        intention to read and ensures that until the thread is ready to
-        read and calls display_t::read_events(), no other thread will
-        read from the file descriptor. This only succeeds if the event
-        queue is empty though, and if there are undispatched events in
-        the queue, -1 is returned and errno set to EAGAIN.
-
-        If a thread successfully calls display_t::prepare_read(), it
-        must either call display_t::read_events() when it's ready or
-        cancel the read intention by calling display_t::cancel_read().
-
-        Use this function before polling on the display fd or to
-        integrate the fd into a toolkit event loop in a race-free
-        way. Typically, a toolkit will call
-        display_t::dispatch_pending() before sleeping, to make sure it
-        doesn't block with unhandled events. Upon waking up, it will
-        assume the file descriptor is readable and read events from the
-        fd by calling display_t::dispatch(). Simplified, we have:
-
-      
-        \code{.cpp}
-        display.dispatch_pending();
-        display.flush();
-        poll(fds, nfds, -1);
-        display.dispatch();
-        \endcode
-
-        There are two races here: first, before blocking in poll(), the
-        fd could become readable and another thread reads the
-        events. Some of these events may be for the main queue and the
-        other thread will queue them there and then the main thread will
-        go to sleep in poll(). This will stall the application, which
-        could be waiting for a event to kick of the next animation
-        frame, for example.
-
-        The other race is immediately after poll(), where another thread
-        could preempt and read events before the main thread calls
-        display_t::dispatch(). This call now blocks and starves the
-        other fds in the event loop.
-
-        A correct sequence would be:
-
-        \code{.cpp}
-        while(display.prepare_read() != 0)
-        display.dispatch_pending();
-        display.flush();
-        poll(fds, nfds, -1);
-        display.read_events();
-        display.dispatch_pending();
-        \endcode
-      
-        Here we call display_t::prepare_read(), which ensures that
-        between returning from that call and eventually calling
-        display_t::read_events(), no other thread will read from the fd
-        and queue events in our queue. If the call to
-        display_t::prepare_read() fails, we dispatch the pending events
-        and try again until we're successful.
-    */
-    int prepare_read();
-  
-    /** \brief Prepare to read events after polling file descriptor. 
-        \param queue The event queue to prepare read from
-        \return 0 on success or -1 if event queue was not empty
-
-        See display_t::prepare_read() for details.
-    */      
-
-    int prepare_read_queue(event_queue_t queue);
-
-    /** \brief Release exclusive access to display file descriptor.
-  
-        This releases the exclusive access. Useful for canceling the
-        lock when a timed out poll returns fd not readable and we're not
-        going to read from the fd anytime soon.
-    */
-    void cancel_read();
+    
+    /** \brief Announce calling thread's intention to read events from the
+     * Wayland display file descriptor
+     * 
+     * This ensures that until the thread is ready to read and calls \ref
+     * read_intent::read, no other thread will read from the file descriptor.
+     * During preparation, all undispatched events in the event queue
+     * are dispatched until the queue is empty.
+     * 
+     * Use this function before polling on the display fd or to integrate the
+     * fd into a toolkit event loop in a race-free way.
+     * 
+     * Typical usage is:
+     * 
+     * \code
+     * auto read_intent = display.obtain_read_intent();
+     * display.flush();
+     * poll(fds, nfds, -1); // Custom poll() handling is possible here
+     * if (fd.revents & POLLIN)
+     *   read_intent.read();
+     * display.dispatch_pending();
+     * \endcode
+     * 
+     * The \ref read_intent ensures that if the above code e.g. throws an
+     * exception before actually reading from the file descriptor or times out
+     * in poll(), the read intent is always cancelled so other threads can proceed.
+     * 
+     * In one thread, do not hold more than one read intent for the same
+     * display at the same time, irrespective of the event queue.
+     * 
+     * \return New \ref read_intent for this display and the default event queue
+     */
+    read_intent obtain_read_intent();
+    
+    /** \brief Announce calling thread's intention to read events from the
+     * Wayland display file descriptor
+     * 
+     * \param queue event queue for which the read event will be valid
+     * \return New \ref read_intent for this display and the specified event queue
+     * 
+     * See \ref obtain_read_intent for details.
+     */
+    read_intent obtain_queue_read_intent(event_queue_t queue);
 
     /** \brief Dispatch events in an event queue. 
         \param queue The event queue to dispatch
