@@ -33,7 +33,6 @@
 #include <string>
 #include <vector>
 #include <wayland-client-core.h>
-#include <EGL/egl.h>
 #include <wayland-egl.hpp>
 #include <wayland-util.hpp>
 
