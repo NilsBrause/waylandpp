@@ -24,7 +24,9 @@
  */
 
 #include <cassert>
+#include <cerrno>
 #include <iostream>
+#include <system_error>
 #include <wayland-client.hpp>
 #include <wayland-client-protocol.hpp>
 
@@ -297,6 +299,42 @@ proxy_t::operator bool() const
   return proxy_has_object();
 }
 
+
+read_intent::read_intent(wl_display *display, wl_event_queue *event_queue)
+: display(display), event_queue(event_queue)
+{
+  assert(display);
+}
+
+read_intent::~read_intent()
+{
+  if(!finalized)
+    cancel();
+}
+
+bool read_intent::is_finalized()
+{
+  return finalized;
+}
+
+void read_intent::cancel()
+{
+  if(finalized)
+    throw std::logic_error("Trying to cancel read_intent that was already finalized");
+  wl_display_cancel_read(display);
+  finalized = true;
+}
+
+void read_intent::read()
+{
+  if(finalized)
+    throw std::logic_error("Trying to read with read_intent that was already finalized");
+  if (wl_display_read_events(display) != 0)
+    throw std::system_error(errno, std::generic_category(), "wl_display_read_events");
+  finalized = true;
+}
+
+
 display_t::display_t(int fd)
   : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect_to_fd(fd)), true)
 {
@@ -351,25 +389,29 @@ int display_t::roundtrip_queue(event_queue_t queue)
                                     queue.c_ptr());
 }
 
-int display_t::read_events()
+read_intent display_t::obtain_read_intent()
 {
-  return wl_display_read_events(reinterpret_cast<wl_display*>(c_ptr()));
-}    
+  while (wl_display_prepare_read(reinterpret_cast<wl_display*>(c_ptr())) != 0)
+  {
+    if (errno != EAGAIN)
+      throw std::system_error(errno, std::generic_category(), "wl_display_prepare_read");
+    
+    dispatch_pending();
+  }
+  return read_intent(reinterpret_cast<wl_display*>(c_ptr()));
+}
 
-int display_t::prepare_read()
+read_intent display_t::obtain_queue_read_intent(event_queue_t queue)
 {
-  return wl_display_prepare_read(reinterpret_cast<wl_display*>(c_ptr()));
-}    
-
-int display_t::prepare_read_queue(event_queue_t queue)
-{
-  return wl_display_prepare_read_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
-}    
-
-void display_t::cancel_read()
-{
-  wl_display_cancel_read(reinterpret_cast<wl_display*>(c_ptr()));
-}    
+  while (wl_display_prepare_read_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr()) != 0)
+  {
+    if (errno != EAGAIN)
+      throw std::system_error(errno, std::generic_category(), "wl_display_prepare_read_queue");
+    
+    dispatch_queue_pending(queue);
+  }
+  return read_intent(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
+}
 
 int display_t::dispatch_queue(event_queue_t queue)
 {
