@@ -31,13 +31,9 @@
 
 namespace wayland
 {
-  class display_t;
   class surface_t;
 }
 
-// C++ Overrides for EGL functions that depend on native types
-
-EGLDisplay eglGetDisplay(wayland::display_t &display);
 namespace wayland
 {
   /** \brief Native EGL window

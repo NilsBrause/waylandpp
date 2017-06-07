@@ -119,9 +119,7 @@ namespace wayland
     std::function<proxy_t(proxy_t)> copy_constructor;
 
     friend class registry_t;
-    friend class egl_window_t;
     friend class cursor_theme_t;
-    friend EGLDisplay (::eglGetDisplay)(wayland::display_t &display);
 
     // marshal a request, that doesn't lead a new proxy
     // Valid types for args are:
@@ -230,7 +228,7 @@ namespace wayland
      *  \return The underlying wl_proxy wrapped by this proxy_t if it exists,
      *          otherwise an exception is thrown
      */
-    wl_proxy *c_ptr();
+    wl_proxy *c_ptr() const;
     
     /** \brief Check whether this wrapper actually wraps an object
      *  \return true if there is an underlying object, false if this wrapper is
@@ -613,6 +611,8 @@ namespace wayland
         list and bind the global objects available from the compositor.
     */
     registry_t get_registry();
+    
+    operator wl_display*() const;
   };
 }
 

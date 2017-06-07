@@ -280,7 +280,7 @@ void proxy_t::set_queue(event_queue_t queue)
   wl_proxy_set_queue(c_ptr(), queue.c_ptr());
 }
 
-wl_proxy *proxy_t::c_ptr()
+wl_proxy *proxy_t::c_ptr() const
 {
   if(!proxy)
     throw std::invalid_argument("proxy is NULL");
@@ -409,4 +409,9 @@ callback_t display_t::sync()
 registry_t display_t::get_registry()
 {
   return registry_t(marshal_constructor(1, &registry_interface, NULL));
+}
+
+display_t::operator wl_display*() const
+{
+  return reinterpret_cast<wl_display*>(c_ptr());
 }
