@@ -153,19 +153,12 @@ struct event_t : public element_t
   std::string print_signal_header()
   {
     std::stringstream ss;
-    if(description != "")
-      {
-        ss << "  /** \\brief " << summary << std::endl;
-        for(auto &arg : args)
-          {
-            ss << "      \\param " << arg.name << " ";
-            if(arg.summary != "")
-              ss << arg.summary;
-            ss << std::endl;
-          }
-        ss << description << std::endl
-           << "    */" << std::endl;
-      }
+    ss << "  /** \\brief " << summary << std::endl;
+    for(auto &arg : args)
+      ss << "      \\param " << arg.name << " " << arg.summary << std::endl;
+    ss << description << std::endl
+       << "  */" << std::endl;
+
     ss << "  std::function<void(";
     for(auto &arg : args)
       ss << arg.print_type() + ", ";
@@ -201,30 +194,22 @@ struct request_t : public event_t
   std::string print_header()
   {
     std::stringstream ss;
-    if(description != "")
+    ss << "  /** \\brief " << summary << std::endl;
+    if(ret.summary != "")
+      ss << "      \\return " << ret.summary << std::endl;
+    for(auto &arg : args)
       {
-        ss << "  /** \\brief " << summary << std::endl;
-        if(ret.summary != "")
-          ss << "      \return " << ret.summary << std::endl;
-        for(auto &arg : args)
+        if(arg.type == "new_id")
           {
-            if(arg.type == "new_id")
-              {
-                if(arg.interface == "")
-                  ss << "      \\param interface Interface to bind" << std::endl
-                     << "      \\param version Interface version" << std::endl;
-              }
-            else
-              {
-                ss << "      \\param " << arg.name << " ";
-                if(arg.summary != "")
-                  ss << arg.summary;
-                ss << std::endl;
-              }
+            if(arg.interface == "")
+              ss << "      \\param interface Interface to bind" << std::endl
+                 << "      \\param version Interface version" << std::endl;
           }
-        ss << description << std::endl
-           << "    */" << std::endl;
+        else
+          ss << "      \\param " << arg.name << " " << arg.summary << std::endl;
       }
+    ss << description << std::endl
+       << "  */" << std::endl;
 
     if(ret.name == "")
       ss << "  void ";
@@ -347,12 +332,9 @@ struct enumeration_t : public element_t
   std::string print_header(std::string iface_name)
   {
     std::stringstream ss;
-    if(description != "")
-      {
-        ss << "/** \\brief " << summary << std::endl
-           << description << std::endl
-           << "  */" << std::endl;
-      }
+    ss << "/** \\brief " << summary << std::endl
+       << description << std::endl
+       << "  */" << std::endl;
 
     if(!bitfield)
       ss << "enum class " << iface_name << "_" << name << " : uint32_t" << std::endl
@@ -367,12 +349,8 @@ struct enumeration_t : public element_t
 
     for(auto &entry : entries)
       {
-        if(entry.description != "")
-          {
-            ss << "  /** \\brief " << entry.summary << std::endl
-               << entry.description << std::endl
-               << "    */" << std::endl;
-          }
+        if(entry.summary != "")
+          ss << "  /** \\brief " << entry.summary << " */" << std::endl;
 
         if(!bitfield)
           ss << "  " << entry.name << " = " << entry.value << "," << std::endl;
@@ -426,12 +404,10 @@ struct interface_t : public element_t
   std::string print_header()
   {
     std::stringstream ss;
-    if(description != "")
-      {
-        ss << "/** \\brief " << summary << std::endl
-           << description << std::endl
-           << "  */" << std::endl;
-      }
+    ss << "/** \\brief " << summary << std::endl
+       << description << std::endl
+       << "*/" << std::endl;
+
     ss << "class " << name << "_t : public proxy_t" << std::endl
        << "{" << std::endl
        << "private:" << std::endl
@@ -666,12 +642,9 @@ int main(int argc, char *argv[])
                   argument_t arg;
                   arg.type = argument.attribute("type").value();
                   arg.name = argument.attribute("name").value();
-                  if(argument.child("description"))
-                    {
-                      xml_node description = argument.child("description");
-                      arg.summary = description.attribute("summary").value();
-                      arg.description = description.text().get();
-                    }
+
+                  if(argument.attribute("summary"))
+                    arg.summary = argument.attribute("summary").value();
 
                   if(argument.attribute("interface"))
                     {
@@ -731,12 +704,9 @@ int main(int argc, char *argv[])
                   argument_t arg;
                   arg.type = argument.attribute("type").value();
                   arg.name = argument.attribute("name").value();
-                  if(argument.child("description"))
-                    {
-                      xml_node description = argument.child("description");
-                      arg.summary = description.attribute("summary").value();
-                      arg.description = description.text().get();
-                    }
+
+                  if(argument.attribute("summary"))
+                    arg.summary = argument.attribute("summary").value();
 
                   if(argument.attribute("interface"))
                     {
@@ -802,12 +772,9 @@ int main(int argc, char *argv[])
                      || isdigit(enum_entry.name.at(0)))
                     enum_entry.name.insert(0, 1, '_');
                   enum_entry.value = entry.attribute("value").value();
-                  if(entry.child("description"))
-                    {
-                      xml_node description = entry.child("description");
-                      enum_entry.summary = description.attribute("summary").value();
-                      enum_entry.description = description.text().get();
-                    }
+
+                  if(entry.attribute("summary"))
+                    enum_entry.summary = entry.attribute("summary").value();
 
                   uint32_t tmp = std::floor(std::log2(stol(enum_entry.value)))+1;
                   if(tmp > enu.width)
@@ -838,8 +805,7 @@ int main(int argc, char *argv[])
               << "#include <wayland-client.hpp>" << std::endl
               << std::endl
               << "namespace wayland" << std::endl
-              << "{" << std::endl
-              << std::endl;
+              << "{" << std::endl;
 
   // forward declarations
   for(auto &iface : interfaces)
