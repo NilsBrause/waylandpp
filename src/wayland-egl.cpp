@@ -23,6 +23,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdexcept>
 #include <utility>
 #include <wayland-egl.hpp>
 #include <wayland-client-protocol.hpp>
@@ -32,10 +33,12 @@ using namespace wayland;
 egl_window_t::egl_window_t(surface_t &surface, int width, int height)
 {
   window = wl_egl_window_create(reinterpret_cast<wl_surface*>(surface.c_ptr()), width, height);
+  if(!window)
+    throw std::runtime_error("Failed to create native wl_egl_window");
 }
 
 egl_window_t::egl_window_t()
-  : window(NULL)
+  : window(nullptr)
 {
 }
 
