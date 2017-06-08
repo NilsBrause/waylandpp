@@ -31,6 +31,46 @@
 
 namespace wayland
 {
+  /** \brief Bind a global object to a provided protocol wrapper if the interface
+   * matches the provided one
+   * 
+   * This is useful for \ref registry_t::on_global handlers since they
+   * do not need to do error-prone name-based matching, but can instead
+   * just pass the protocol wrapper they would like to be bound and have
+   * the name-check done here automatically.
+   * 
+   * The version that is bound is the minimum of the version parameter given
+   * here (the version that the compositor has) and the version that the
+   * client-side interface supports to avoid getting an unsupported version
+   * error on either side. You can check the version that was actually bound
+   * afterwards with \ref proxy_t::get_version
+   * 
+   * An exception will be thrown if target is a raw \ref proxy_t without associated
+   * interface.
+   * 
+   * \param registry registry to use for binding
+   * \param target proxy object that should be bound if the type matches
+   * \param name global interface name as received by \ref registry_t::on_global
+   * \param interface string interface name as received by \ref registry_t::on_global
+   * \param version announced interface version as received by \ref registry_t::on_global
+   * \return whether the requested interface was bound to the target
+   */
+  bool registry_try_bind(registry_t registry, proxy_t &target, uint32_t name, std::string interface, uint32_t version);
+  /** \brief Bind a global object to a provided protocol wrapper if the interface
+   * matches one of the provided ones
+   * 
+   * This is identical to the single-target registry_try_bind except that a list
+   * of multiple protocol wrappers can be passed of which each one is tried
+   * in order.
+   * 
+   * \param registry registry to use for binding
+   * \param targest proxy objects of which one should be bound if the type matches
+   * \param name global interface name as received by \ref registry_t::on_global
+   * \param interface string interface name as received by \ref registry_t::on_global
+   * \param version announced interface version as received by \ref registry_t::on_global
+   * \return whether any target protocol wrapper was bound
+   */
+  bool registry_try_bind(registry_t registry, std::initializer_list<std::reference_wrapper<proxy_t>> targets, uint32_t name, std::string interface, uint32_t version);
 }
 
 #endif

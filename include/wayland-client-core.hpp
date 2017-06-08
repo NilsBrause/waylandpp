@@ -232,17 +232,6 @@ namespace wayland
     */
     std::string get_class();
     
-    /** \brief Get the name of the interface associated with this C++ wrapper
-     * 
-     * This also works with unbound (empty) instances of wrapper classes. It
-     * does not work on pure proxy_t instances without associated interface,
-     * for which it will throw an exception. You can use \ref get_class to
-     * get the class name that was bound using the C API in this case.
-     * 
-     * \return The name of the interface associated with this C++ wrapper
-     */
-    std::string get_interface_name() const;
-    
     /** \brief Get the protocol object version of a proxy object.
      * 
      * Gets the protocol object version of a proxy object, or 0 if the proxy was
@@ -256,6 +245,28 @@ namespace wayland
      * \return The protocol object version of the proxy or 0
      */
     uint32_t get_version();
+    
+    /** \brief Get the name of the interface associated with this C++ wrapper
+     * 
+     * This also works with unbound (empty) instances of wrapper classes. It
+     * does not work on pure proxy_t instances without associated interface,
+     * for which it will throw an exception. You can use \ref get_class to
+     * get the class name that was bound using the C API in this case.
+     * 
+     * \return The name of the interface associated with this C++ wrapper
+     */
+    std::string get_interface_name() const;
+
+    /** \brief Get the version of the interface associated with this C++ wrapper
+     * 
+     * This also works with unbound (empty) instances of wrapper classes. It
+     * does not work on pure proxy_t instances without associated interface,
+     * for which it will throw an exception. You can use \ref get_version to
+     * get the version that was bound using the C API in this case.
+     * 
+     * \return The version of the interface associated with this C++ wrapper
+     */
+    int get_interface_version() const;
 
     /** \brief Assign a proxy to an event queue.
         \param queue The event queue that will handle this proxy 

@@ -323,6 +323,14 @@ std::string proxy_t::get_interface_name() const
   return interface->name;
 }
 
+int proxy_t::get_interface_version() const
+{
+  if(!interface)
+    throw std::runtime_error("Tried to get interface version of proxy_t without associated interface");
+  
+  return interface->version;
+}
+
 void proxy_t::set_queue(event_queue_t queue)
 {
   wl_proxy_set_queue(c_ptr(), queue.c_ptr());
@@ -497,4 +505,31 @@ callback_t display_t::sync()
 registry_t display_t::get_registry()
 {
   return registry_t(marshal_constructor(1, &registry_interface, NULL));
+}
+
+bool wayland::registry_try_bind(registry_t registry, proxy_t &target, uint32_t name, std::string interface, uint32_t version)
+{
+  if(interface == target.get_interface_name())
+  {
+    // Bind to lower one of version we support and version server supports:
+    // - Don't bind an interface version that is higher than what we can support
+    //   client-side
+    // - Don't bind an interface version that is higher than what the server offered
+    registry.bind(name, target, std::min(static_cast<uint32_t> (target.get_interface_version()), version));
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+bool wayland::registry_try_bind(registry_t registry, std::initializer_list<std::reference_wrapper<proxy_t>> targets, uint32_t name, std::string interface, uint32_t version)
+{
+  for(auto &target : targets)
+  {
+    if (registry_try_bind(registry, target, name, interface, version))
+      return true;
+  }
+  return false;
 }
