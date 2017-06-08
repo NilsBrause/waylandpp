@@ -59,7 +59,7 @@ public:
     registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
       {
         std::cout << "* Global interface " << interface << " (name " << name << " version " << version << ")" << std::endl;
-        if(interface == "wl_output")
+        if(interface == output_t::interface_name)
         {
           outputs.emplace_back();
           auto& output = outputs.back();
