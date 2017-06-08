@@ -309,9 +309,18 @@ std::string proxy_t::get_class()
   return wl_proxy_get_class(c_ptr());
 }
 
+
 uint32_t proxy_t::get_version()
 {
   return wl_proxy_get_version(c_ptr());
+}
+
+std::string proxy_t::get_interface_name() const
+{
+  if(!interface)
+    throw std::runtime_error("Tried to get interface name of proxy_t without associated interface");
+  
+  return interface->name;
 }
 
 void proxy_t::set_queue(event_queue_t queue)
