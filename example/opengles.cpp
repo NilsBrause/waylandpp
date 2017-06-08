@@ -191,14 +191,14 @@ public:
         else if(interface == "wl_shm")
           registry.bind(name, shm, version);
       };
-    display.dispatch();
+    display.roundtrip();
 
     seat.on_capabilities() = [&] (seat_capability capability)
       {
         has_keyboard = capability & seat_capability::keyboard;
         has_pointer = capability & seat_capability::pointer;
       };
-    display.dispatch();
+    display.roundtrip();
 
     if(!has_keyboard)
       throw std::runtime_error("No keyboard found.");
