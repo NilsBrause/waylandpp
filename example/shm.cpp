@@ -61,18 +61,24 @@ class shared_mem_t
 {
 private:
   std::string name;
-  int fd;
-  size_t len;
-  void *mem;
+  int fd = 0;
+  size_t len = 0;
+  void *mem = nullptr;
 
 public:
   shared_mem_t()
-    : name(""), fd(0), len(0), mem(nullptr)
   {
   }
 
   shared_mem_t(size_t size)
+  : len(size)
   {
+    // Very simple shared memory wrapper - do not use this in production code!
+    // The generated memory regions are visible in the file system and can be
+    // stolen by other running processes.
+    // Linux code should use memfd_create when possible (ommited here for
+    // simplicity).
+    
     // create random filename
     std::stringstream ss;
     std::srand(std::time(0));
@@ -80,7 +86,7 @@ public:
     name = ss.str();
 
     // open shared memory file
-    fd = shm_open(name.c_str(), O_RDWR | O_CREAT, 0600);
+    fd = shm_open(name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
     if(fd < 0)
       throw std::runtime_error("shm_open failed.");
 
@@ -210,23 +216,16 @@ public:
     registry = display.get_registry();
     registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
       {
-        if(interface == "wl_compositor")
-          registry.bind(name, compositor, version);
-        else if(interface == "wl_shell")
-          registry.bind(name, shell, version);
-        else if(interface == "wl_seat")
-          registry.bind(name, seat, version);
-        else if(interface == "wl_shm")
-          registry.bind(name, shm, version);
+        registry_try_bind(registry, { compositor, shell, seat, shm }, name, interface, version);
       };
-    display.dispatch();
+    display.roundtrip();
 
     seat.on_capabilities() = [&] (seat_capability capability)
       {
         has_keyboard = capability & seat_capability::keyboard;
         has_pointer = capability & seat_capability::pointer;
       };
-    display.dispatch();
+    display.roundtrip();
 
     if(!has_keyboard)
       throw std::runtime_error("No keyboard found.");

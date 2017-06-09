@@ -182,23 +182,16 @@ public:
     registry = display.get_registry();
     registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
       {
-        if(interface == "wl_compositor")
-          registry.bind(name, compositor, version);
-        else if(interface == "wl_shell")
-          registry.bind(name, shell, version);
-        else if(interface == "wl_seat")
-          registry.bind(name, seat, version);
-        else if(interface == "wl_shm")
-          registry.bind(name, shm, version);
+        registry_try_bind(registry, { compositor, shell, seat, shm }, name, interface, version);
       };
-    display.dispatch();
+    display.roundtrip();
 
     seat.on_capabilities() = [&] (seat_capability capability)
       {
         has_keyboard = capability & seat_capability::keyboard;
         has_pointer = capability & seat_capability::pointer;
       };
-    display.dispatch();
+    display.roundtrip();
 
     if(!has_keyboard)
       throw std::runtime_error("No keyboard found.");

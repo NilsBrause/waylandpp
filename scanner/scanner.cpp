@@ -425,6 +425,8 @@ struct interface_t : public element_t
     ss << "public:" << std::endl
        << "  " << name << "_t();" << std::endl
        << "  explicit " << name << "_t(const proxy_t &proxy);" << std::endl
+       << std::endl
+       << "  static const std::string interface_name;" << std::endl
        << std::endl;
 
     for(auto &request : requests)
@@ -469,6 +471,8 @@ struct interface_t : public element_t
        << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
        << "    { return " << name << "_t(p); };" << std::endl
        << "}" << std::endl
+       << std::endl
+       << "const std::string " << name << "_t::interface_name = \"" << orig_name << "\";" << std::endl
        << std::endl;
 
     for(auto &request : requests)

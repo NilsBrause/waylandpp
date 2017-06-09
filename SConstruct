@@ -38,7 +38,8 @@ wayland_cursor = env.SharedLibrary("src/wayland-cursor++",
 prefix = os.environ.get("PREFIX", "/usr/local")
 
 env.Install(os.path.join(prefix, "lib"), [wayland_client, wayland_egl, wayland_cursor])
-env.Install(os.path.join(prefix, "include"), ["include/wayland-client-protocol.hpp",
+env.Install(os.path.join(prefix, "include"), ["include/wayland-client-core.hpp",
+                                              "include/wayland-client-protocol.hpp",
                                               "include/wayland-client.hpp",
                                               "include/wayland-cursor.hpp",
                                               "include/wayland-egl.hpp",
