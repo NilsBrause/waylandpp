@@ -3,7 +3,7 @@
 *.os
 *.so
 .sconsign.dblite
-scanner/scanner
+scanner/wayland-scanner++
 wayland-client-protocol.cpp
 wayland-client-protocol.hpp
 example/opengles
