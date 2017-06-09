@@ -793,8 +793,7 @@ int main(int argc, char *argv[])
   std::fstream wayland_cpp(argv[argc-1], std::ios_base::out | std::ios_base::trunc);
 
   // header intro
-  wayland_hpp << "#ifndef WAYLAND_HPP" << std::endl
-              << "#define WAYLAND_HPP" << std::endl
+  wayland_hpp << "#pragma once" << std::endl
               << std::endl
               << "#include <array>" << std::endl
               << "#include <functional>" << std::endl
@@ -826,9 +825,7 @@ int main(int argc, char *argv[])
     if(iface.name != "display")
       wayland_hpp << iface.print_header() << std::endl;
   wayland_hpp << std::endl
-              << "}" << std::endl
-              << std::endl
-              << "#endif" << std::endl;
+              << "}" << std::endl;
 
   // body intro
   wayland_cpp << "#include <wayland-client-protocol.hpp>" << std::endl
