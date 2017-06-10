@@ -182,13 +182,13 @@ public:
     registry = display.get_registry();
     registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
       {
-        if(interface == "wl_compositor")
+        if(interface == compositor_t::interface_name)
           registry.bind(name, compositor, version);
-        else if(interface == "wl_shell")
+        else if(interface == shell_t::interface_name)
           registry.bind(name, shell, version);
-        else if(interface == "wl_seat")
+        else if(interface == seat_t::interface_name)
           registry.bind(name, seat, version);
-        else if(interface == "wl_shm")
+        else if(interface == shm_t::interface_name)
           registry.bind(name, shm, version);
       };
     display.roundtrip();
