@@ -31,17 +31,8 @@
 
 namespace wayland
 {
-  class egl_window_t;
-  class display_t;
   class surface_t;
 }
-
-// C++ Overrides for EGL functions that depend on native types
-
-EGLDisplay eglGetDisplay(wayland::display_t &display);
-EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
-				  wayland::egl_window_t &win,
-				  const EGLint *attrib_list);
 
 namespace wayland
 {
@@ -54,10 +45,6 @@ namespace wayland
 
     egl_window_t(const egl_window_t &);
 
-    friend EGLSurface (::eglCreateWindowSurface)(EGLDisplay dpy, EGLConfig config,
-                                               wayland::egl_window_t &win,
-                                               const EGLint *attrib_list);
-
   public:
     /** \brief Create a native egl window for use with eglCreateWindowSurface
         \param surface The Wayland surface to use
@@ -66,6 +53,10 @@ namespace wayland
     */
     egl_window_t(surface_t &surface, int width, int height);
     ~egl_window_t();
+    
+    wl_egl_window *c_ptr() const;
+    // This enables support for passing a egl_window_t to eglCreateWindowSurface
+    operator wl_egl_window*() const;
 
     egl_window_t();
     egl_window_t(egl_window_t &&w);

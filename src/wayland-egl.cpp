@@ -23,6 +23,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdexcept>
 #include <utility>
 #include <wayland-egl.hpp>
 #include <wayland-client-protocol.hpp>
@@ -32,10 +33,12 @@ using namespace wayland;
 egl_window_t::egl_window_t(surface_t &surface, int width, int height)
 {
   window = wl_egl_window_create(reinterpret_cast<wl_surface*>(surface.c_ptr()), width, height);
+  if(!window)
+    throw std::runtime_error("Failed to create native wl_egl_window");
 }
 
 egl_window_t::egl_window_t()
-  : window(NULL)
+  : window(nullptr)
 {
 }
 
@@ -56,6 +59,16 @@ egl_window_t &egl_window_t::operator=(egl_window_t &&w)
   return *this;
 }
 
+wl_egl_window *egl_window_t::c_ptr() const
+{
+  return window;
+}
+
+egl_window_t::operator wl_egl_window*() const
+{
+  return c_ptr();
+}
+
 void egl_window_t::resize(int width, int height, int dx, int dy)
 {
   if(window)
@@ -71,18 +84,4 @@ void egl_window_t::get_attached_size(int &width, int &height)
       width = 0;
       height = 0;
     }
-}
-
-// C++ Overrides
-
-EGLDisplay eglGetDisplay(display_t &display)
-{
-  return eglGetDisplay(reinterpret_cast<EGLNativeDisplayType>(display.c_ptr()));
-}
-
-EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
-				  egl_window_t &win,
-				  const EGLint *attrib_list)
-{
-  return eglCreateWindowSurface(dpy, config, reinterpret_cast<EGLNativeWindowType>(win.window), attrib_list);
 }
