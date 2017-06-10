@@ -112,10 +112,10 @@ namespace wayland
       unsigned int counter;
     };
 
-    wl_proxy *proxy;
-    proxy_data_t *data;
-    bool display;
-    bool dontdestroy;
+    wl_proxy *proxy = nullptr;
+    proxy_data_t *data = nullptr;
+    bool display = false;
+    bool dontdestroy = false;
     friend class detail::argument_t;
 
     // universal dispatcher
@@ -129,7 +129,7 @@ namespace wayland
 
   protected:
     // Interface desctiption filled in by the each interface class
-    const wl_interface *interface;
+    const wl_interface *interface = nullptr;
     // constructor filled in by the each interface class
     std::function<proxy_t(proxy_t)> copy_constructor;
 

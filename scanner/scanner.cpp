@@ -458,8 +458,11 @@ struct interface_t : public element_t
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
        << "  : proxy_t(p)" << std::endl
        << "{" << std::endl
-       << "  set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl
-       << "  set_destroy_opcode(" << destroy_opcode << ");" << std::endl
+       << "  if(proxy_has_object())" << std::endl
+       << "    {" << std::endl
+       << "      set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl
+       << "      set_destroy_opcode(" << destroy_opcode << ");" << std::endl
+       << "    }" << std::endl
        << "  interface = &" << name << "_interface;" << std::endl
        << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
        << "    { return " << name << "_t(p); };" << std::endl
