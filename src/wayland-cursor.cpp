@@ -27,103 +27,99 @@
 
 using namespace wayland;
 
-cursor_theme_t::cursor_theme_ptr::~cursor_theme_ptr()
-{
-  wl_cursor_theme_destroy(cursor_theme);
-}
-
 cursor_theme_t::cursor_theme_t()
 {
 }
 
 cursor_theme_t::cursor_theme_t(std::string name, int size, shm_t shm)
-  : cursor_theme(new cursor_theme_ptr({wl_cursor_theme_load(name == "" ? NULL : name.c_str(),
-                                                            size, reinterpret_cast<wl_shm*>(shm.c_ptr()))}))
+  : detail::refcounted_wrapper<wl_cursor_theme>({wl_cursor_theme_load(name == "" ? NULL : name.c_str(),
+                                                                     size, reinterpret_cast<wl_shm*>(shm.c_ptr())),
+                                                 wl_cursor_theme_destroy})
 {
-  if(!cursor_theme->cursor_theme)
+  if(!c_ptr())
     throw std::runtime_error("wl_cursor_theme_load failed.");
 }
 
 cursor_t cursor_theme_t::get_cursor(std::string name)
 {
-  wl_cursor *cursor = wl_cursor_theme_get_cursor(cursor_theme->cursor_theme, name.c_str());
+  wl_cursor *cursor = wl_cursor_theme_get_cursor(c_ptr(), name.c_str());
   if(!cursor)
     throw std::runtime_error("wl_cursor_theme_cursor failed.");
-  return cursor_t(cursor);
+  return cursor_t(cursor, ref_ptr());
 }
 
-cursor_t::cursor_t(wl_cursor *c)
-  : cursor(c)
+
+cursor_t::cursor_t(wl_cursor *c, std::shared_ptr<wl_cursor_theme> const& t)
+  : detail::basic_wrapper<wl_cursor>(c), cursor_theme(t)
 {
 }
 
 cursor_t::cursor_t()
-  : cursor(NULL)
 {
 }
 
 unsigned int cursor_t::image_count()
 {
-  return cursor->image_count;
+  return c_ptr()->image_count;
 }
 
 std::string cursor_t::name()
 {
-  return cursor->name;
+  return c_ptr()->name;
 }
 
 cursor_image_t cursor_t::image(unsigned int n)
 {
   if(n >= image_count())
     throw std::runtime_error("n >= image count");
-  return cursor_image_t(cursor->images[n]);
+  return cursor_image_t(c_ptr()->images[n], cursor_theme);
 }
 
 int cursor_t::frame(uint32_t time)
 {
-  return wl_cursor_frame(cursor, time);
+  return wl_cursor_frame(c_ptr(), time);
 }
 
-cursor_image_t::cursor_image_t(wl_cursor_image *image)
-  : cursor_image(image)
+
+cursor_image_t::cursor_image_t(wl_cursor_image *image, std::shared_ptr<wl_cursor_theme> const& t)
+  : detail::basic_wrapper<wl_cursor_image>(image), cursor_theme(t)
 {
 }
 
 cursor_image_t::cursor_image_t()
-  : cursor_image(NULL)
 {
 }
 
 uint32_t cursor_image_t::width()
 {
-  return cursor_image->width;
+  return c_ptr()->width;
 }
 
 uint32_t cursor_image_t::height()
 {
-  return cursor_image->height;
+  return c_ptr()->height;
 }
 
 uint32_t cursor_image_t::hotspot_x()
 {
-  return cursor_image->hotspot_x;
+  return c_ptr()->hotspot_x;
 }
 
 uint32_t cursor_image_t::hotspot_y()
 {
-  return cursor_image->hotspot_y;
+  return c_ptr()->hotspot_y;
 }
 
 uint32_t cursor_image_t::delay()
 {
-  return cursor_image->delay;
+  return c_ptr()->delay;
 }
 
 buffer_t cursor_image_t::get_buffer()
 {
-  wl_buffer *buffer = wl_cursor_image_get_buffer(cursor_image);
+  wl_buffer *buffer = wl_cursor_image_get_buffer(c_ptr());
   wl_proxy *proxy = reinterpret_cast<wl_proxy*>(buffer);
-  wl_proxy_set_user_data(proxy, NULL);
+  wl_proxy_set_user_data(proxy, nullptr);
   // buffer will be destroyed when cursor_theme is destroyed
   return buffer_t(proxy_t(proxy, false, true));
 }

@@ -31,57 +31,23 @@
 using namespace wayland;
 
 egl_window_t::egl_window_t(surface_t &surface, int width, int height)
+  : refcounted_wrapper<wl_egl_window>({wl_egl_window_create(surface, width, height),
+                                       wl_egl_window_destroy})
 {
-  window = wl_egl_window_create(reinterpret_cast<wl_surface*>(surface.c_ptr()), width, height);
-  if(!window)
+  if(!has_object())
     throw std::runtime_error("Failed to create native wl_egl_window");
 }
 
 egl_window_t::egl_window_t()
-  : window(nullptr)
 {
-}
-
-egl_window_t::~egl_window_t()
-{
-  if(window)
-    wl_egl_window_destroy(window);
-}
-
-egl_window_t::egl_window_t(egl_window_t &&w)
-{
-  operator=(std::move(w));
-}
-
-egl_window_t &egl_window_t::operator=(egl_window_t &&w)
-{
-  std::swap(window, w.window);
-  return *this;
-}
-
-wl_egl_window *egl_window_t::c_ptr() const
-{
-  return window;
-}
-
-egl_window_t::operator wl_egl_window*() const
-{
-  return c_ptr();
 }
 
 void egl_window_t::resize(int width, int height, int dx, int dy)
 {
-  if(window)
-    wl_egl_window_resize(window, width, height, dx, dy);
+  wl_egl_window_resize(c_ptr(), width, height, dx, dy);
 }
 
 void egl_window_t::get_attached_size(int &width, int &height)
 {
-  if(window)
-    wl_egl_window_get_attached_size(window, &width, &height);
-  else
-    {
-      width = 0;
-      height = 0;
-    }
+  wl_egl_window_get_attached_size(c_ptr(), &width, &height);
 }

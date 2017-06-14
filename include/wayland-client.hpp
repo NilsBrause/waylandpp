@@ -58,23 +58,11 @@ namespace wayland
       Event queues allows the events on a display to be handled in a
       thread-safe manner. See display_t for details.
   */
-  class event_queue_t
+  class event_queue_t : public detail::refcounted_wrapper<wl_event_queue>
   {
   private:
-    struct queue_ptr
-    {
-      wl_event_queue *queue;
-      ~queue_ptr();
-    };
-
-    std::shared_ptr<queue_ptr> queue;
     event_queue_t(wl_event_queue *q);
-
-    friend class proxy_t;
     friend class display_t;
-
-    // Get a pointer to the underlying C struct.
-    wl_event_queue *c_ptr();
   };
 
   class display_t;
@@ -134,8 +122,6 @@ namespace wayland
     std::function<proxy_t(proxy_t)> copy_constructor;
 
     friend class registry_t;
-    friend class cursor_theme_t;
-
     // marshal a request, that doesn't lead a new proxy
     // Valid types for args are:
     // - uint32_t
