@@ -271,6 +271,13 @@ namespace wayland
      */
     operator bool() const;
     
+    /** \brief Check whether two wrappers refer to the same object
+     */
+    bool operator==(const proxy_t &right) const;
+    /** \brief Check whether two wrappers refer to different objects
+     */    
+    bool operator!=(const proxy_t &right) const;
+    
     /** \brief Release the wrapped object (if any), making this an empty wrapper
      * 
      * Note that display_t instances cannot be released this way. Attempts to
