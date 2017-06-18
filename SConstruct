@@ -7,14 +7,14 @@ env = Environment()
 env["CXX"] = os.environ.get("CXX", "g++")
 env["CXXFLAGS"] = "-std=c++11 -Wall -Werror -O2 -ggdb"
 
-env.Program("scanner/scanner",
-            ["scanner/scanner.cpp", "scanner/pugixml.cpp"],
-            CPPPATH = "scanner")
+wayland_scanner = env.Program("scanner/wayland-scanner++",
+                             ["scanner/scanner.cpp", "scanner/pugixml.cpp"],
+                              CPPPATH = "scanner")
 
 env.Command(["src/wayland-client-protocol.cpp",
              "include/wayland-client-protocol.hpp"],
-            ["scanner/scanner", "protocols/wayland.xml"],
-            "./scanner/scanner protocols/wayland.xml \
+            ["scanner/wayland-scanner++", "protocols/wayland.xml"],
+            "./scanner/wayland-scanner++ protocols/wayland.xml \
             include/wayland-client-protocol.hpp \
             src/wayland-client-protocol.cpp")
 
@@ -43,6 +43,8 @@ env.Install(os.path.join(prefix, "include"), ["include/wayland-client-protocol.h
                                               "include/wayland-cursor.hpp",
                                               "include/wayland-egl.hpp",
                                               "include/wayland-util.hpp"])
+env.Install(os.path.join(prefix, "bin"), [wayland_scanner])
 
 env.Alias("install", os.path.join(prefix, "lib"))
 env.Alias("install", os.path.join(prefix, "include"))
+env.Alias("install", os.path.join(prefix, "bin"))

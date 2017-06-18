@@ -796,12 +796,12 @@ int main(int argc, char *argv[])
         }
     }
 
-  std::fstream wayland_hpp(argv[argc-2], std::ios_base::out | std::ios_base::trunc);
-  std::fstream wayland_cpp(argv[argc-1], std::ios_base::out | std::ios_base::trunc);
+  std::string hpp_file(argv[argc-2]), cpp_file(argv[argc-1]);
+  std::fstream wayland_hpp(hpp_file, std::ios_base::out | std::ios_base::trunc);
+  std::fstream wayland_cpp(cpp_file, std::ios_base::out | std::ios_base::trunc);
 
   // header intro
-  wayland_hpp << "#ifndef WAYLAND_HPP" << std::endl
-              << "#define WAYLAND_HPP" << std::endl
+  wayland_hpp << "#pragma once" << std::endl
               << std::endl
               << "#include <array>" << std::endl
               << "#include <functional>" << std::endl
@@ -833,12 +833,12 @@ int main(int argc, char *argv[])
     if(iface.name != "display")
       wayland_hpp << iface.print_header() << std::endl;
   wayland_hpp << std::endl
-              << "}" << std::endl
-              << std::endl
-              << "#endif" << std::endl;
+              << "}" << std::endl;
 
   // body intro
-  wayland_cpp << "#include <wayland-client-protocol.hpp>" << std::endl
+  auto hpp_slash_pos = hpp_file.find_last_of('/');
+  auto hpp_basename = (hpp_slash_pos == std::string::npos ? hpp_file : hpp_file.substr(hpp_slash_pos + 1));
+  wayland_cpp << "#include <" << hpp_basename << ">" << std::endl
               << std::endl
               << "using namespace wayland;" << std::endl
               << "using namespace detail;" << std::endl
