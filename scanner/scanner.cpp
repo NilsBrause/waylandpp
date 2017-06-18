@@ -400,6 +400,13 @@ struct interface_t : public element_t
       ss << e.print_forward(name);
     return ss.str();
   }
+  
+  std::string print_c_forward()
+  {
+    std::stringstream ss;
+    ss << "struct " << orig_name << ";" << std::endl;
+    return ss.str();
+  }
 
   std::string print_header()
   {
@@ -427,6 +434,8 @@ struct interface_t : public element_t
        << "  explicit " << name << "_t(const proxy_t &proxy);" << std::endl
        << std::endl
        << "  static const std::string interface_name;" << std::endl
+       << std::endl
+       << "  operator " << orig_name << "*() const;" << std::endl
        << std::endl;
 
     for(auto &request : requests)
@@ -476,6 +485,11 @@ struct interface_t : public element_t
        << "}" << std::endl
        << std::endl
        << "const std::string " << name << "_t::interface_name = \"" << orig_name << "\";" << std::endl
+       << std::endl
+       << name << "_t::operator " << orig_name << "*() const" << std::endl
+       << "{" << std::endl
+       << "  return reinterpret_cast<" << orig_name << "*> (c_ptr());" << std::endl
+       << "}" << std::endl
        << std::endl;
 
     for(auto &request : requests)
@@ -810,11 +824,18 @@ int main(int argc, char *argv[])
               << "#include <vector>" << std::endl
               << std::endl
               << "#include <wayland-client.hpp>" << std::endl
-              << std::endl
-              << "namespace wayland" << std::endl
+              << std::endl;
+
+  // C forward declarations
+  for(auto &iface : interfaces)
+    if(iface.name != "display")
+      wayland_hpp << iface.print_c_forward();
+  wayland_hpp << std::endl;
+  
+  wayland_hpp << "namespace wayland" << std::endl
               << "{" << std::endl;
 
-  // forward declarations
+  // C++ forward declarations
   for(auto &iface : interfaces)
     if(iface.name != "display")
       wayland_hpp << iface.print_forward();

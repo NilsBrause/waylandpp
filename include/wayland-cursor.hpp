@@ -30,15 +30,17 @@
 #include <string>
 #include <wayland-cursor.h>
 #include <wayland-client-protocol.hpp>
+#include <wayland-util.hpp>
 
 namespace wayland
 {
-  class cursor_image_t
+  class cursor_image_t : public detail::basic_wrapper<wl_cursor_image>
   {
   private:
-    wl_cursor_image *cursor_image;
-    cursor_image_t(wl_cursor_image *image);
+    cursor_image_t(wl_cursor_image *image, std::shared_ptr<wl_cursor_theme> const& t);
     friend class cursor_t;
+    // Extend lifetime of wl_cursor_theme
+    std::shared_ptr<wl_cursor_theme> cursor_theme;
 
   public:
     cursor_image_t();
@@ -47,15 +49,17 @@ namespace wayland
     uint32_t hotspot_x();
     uint32_t hotspot_y();
     uint32_t delay();
+    // buffer will be destroyed when cursor_theme is destroyed
     buffer_t get_buffer();
   };
 
-  class cursor_t
+  class cursor_t : public detail::basic_wrapper<wl_cursor>
   {
   private:
-    wl_cursor *cursor;
-    cursor_t(wl_cursor *c);
+    cursor_t(wl_cursor *c, std::shared_ptr<wl_cursor_theme> const& t);
     friend class cursor_theme_t;
+    // Extend lifetime of wl_cursor_theme
+    std::shared_ptr<wl_cursor_theme> cursor_theme;
 
   public:
     cursor_t();
@@ -65,17 +69,8 @@ namespace wayland
     int frame(uint32_t time);
   };
 
-  class cursor_theme_t
+  class cursor_theme_t : public detail::refcounted_wrapper<wl_cursor_theme>
   {
-  private:
-    struct cursor_theme_ptr
-    {
-      wl_cursor_theme *cursor_theme;
-      ~cursor_theme_ptr();
-    };
-
-    std::shared_ptr<cursor_theme_ptr> cursor_theme;
-
   public:
     cursor_theme_t();
     cursor_theme_t(std::string name, int size, shm_t shm);

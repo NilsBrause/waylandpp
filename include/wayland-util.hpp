@@ -27,9 +27,12 @@
 #define WAYLAND_UTIL_HPP
 
 #include <algorithm>
+#include <memory>
 #include <typeinfo>
 #include <utility>
 #include <vector>
+
+#include <wayland-client-core.h>
 
 #define wl_array_for_each_cpp(pos, array)                                   \
   for (pos = (decltype(pos))(array)->data;                                  \
@@ -44,6 +47,143 @@ namespace wayland
 
   namespace detail
   {
+    /** \brief Non-refcounted wrapper for C objects
+     * 
+     * This is by default copyable. If this is not desired, delete the
+     * copy constructor and copy assignment operator in derived classes.
+     */
+    template<typename NativeType>
+    class basic_wrapper
+    {
+      NativeType *object = nullptr;
+    protected:
+      basic_wrapper(NativeType *object)
+      : object{object}
+      {
+      }
+    public:
+      basic_wrapper()
+      {
+      }
+      basic_wrapper(basic_wrapper const &other)
+      {
+        *this = other;
+      }
+      basic_wrapper(basic_wrapper &&other) noexcept
+      {
+        *this = std::move(other);
+      }
+      NativeType *c_ptr() const
+      {
+        if (!object)
+          throw std::runtime_error("Tried to access empty object");
+        return object;
+      }
+      bool has_object() const
+      {
+        return object;
+      }
+      operator bool() const
+      {
+        return has_object();
+      }
+      operator NativeType*() const
+      {
+        return c_ptr();
+      }
+      basic_wrapper& operator=(const basic_wrapper &right)
+      {
+        // Check for self-assignment
+        if (this == &right)
+          return *this;
+        object = right.object;
+        return *this;
+      }
+      basic_wrapper& operator=(basic_wrapper &&right) noexcept
+      {
+        std::swap(object, right.object);
+        return *this;
+      }
+      bool operator==(const basic_wrapper &right) const
+      {
+        return (object == right.object);
+      }
+      bool operator!=(const basic_wrapper &right) const
+      {
+        return !(*this == right); // Reuse equals operator
+      }
+    };
+    /** \brief Refcounted wrapper for C objects
+     * 
+     * This is by default copyable. If this is not desired, delete the
+     * copy constructor and copy assignment operator in derived classes.
+     */
+    template<typename NativeType>
+    class refcounted_wrapper
+    {
+      std::shared_ptr<NativeType> object;
+    protected:
+      refcounted_wrapper(std::shared_ptr<NativeType> const &object)
+      : object{object}
+      {
+      }
+      std::shared_ptr<NativeType> ref_ptr()
+      {
+        return object;
+      }
+    public:
+      refcounted_wrapper()
+      {
+      }
+      refcounted_wrapper(refcounted_wrapper const &other)
+      {
+        *this = other;
+      }
+      refcounted_wrapper(refcounted_wrapper &&other) noexcept
+      {
+        *this = std::move(other);
+      }
+      NativeType *c_ptr() const
+      {
+        if (!object)
+          throw std::runtime_error("Tried to access empty object");
+        return object.get();
+      }
+      bool has_object() const
+      {
+        return (!!object);
+      }
+      operator bool() const
+      {
+        return has_object();
+      }
+      operator NativeType*() const
+      {
+        return c_ptr();
+      }
+      refcounted_wrapper& operator=(const refcounted_wrapper &right)
+      {
+        // Check for self-assignment
+        if (this == &right)
+          return *this;
+        object = right.object;
+        return *this;
+      }
+      refcounted_wrapper& operator=(refcounted_wrapper &&right) noexcept
+      {
+        std::swap(object, right.object);
+        return *this;
+      }
+      bool operator==(const refcounted_wrapper &right) const
+      {
+        return (object == right.object);
+      }
+      bool operator!=(const refcounted_wrapper &right) const
+      {
+        return !(*this == right); // Reuse equals operator
+      }
+    };
+  
     class any
     {
     private:
