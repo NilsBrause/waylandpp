@@ -632,7 +632,7 @@ int main(int argc, char *argv[])
           iface.orig_name = interface.attribute("name").value();
           iface.name = unprefix(iface.orig_name);
           if(interface.attribute("version"))
-            iface.version = std::stoi(std::string(interface.attribute("version").value()));
+            iface.version = std::stoi(std::string(interface.attribute("version").value()), nullptr, 0);
           else
             iface.version = 1;
           if(interface.child("description"))
@@ -652,7 +652,7 @@ int main(int argc, char *argv[])
               req.name = request.attribute("name").value();
 
               if(request.attribute("since"))
-                req.since = std::stoi(std::string(request.attribute("since").value()));
+                req.since = std::stoi(std::string(request.attribute("since").value()), nullptr, 0);
               else
                 req.since = 1;
 
@@ -711,7 +711,7 @@ int main(int argc, char *argv[])
               ev.name = event.attribute("name").value();
 
               if(event.attribute("since"))
-                ev.since = std::stoi(std::string(event.attribute("since").value()));
+                ev.since = std::stoi(std::string(event.attribute("since").value()), nullptr, 0);
               else
                 ev.since = 1;
 
@@ -793,7 +793,7 @@ int main(int argc, char *argv[])
                   if(entry.attribute("summary"))
                     enum_entry.summary = entry.attribute("summary").value();
 
-                  uint32_t tmp = std::floor(std::log2(stol(enum_entry.value)))+1;
+                  uint32_t tmp = std::floor(std::log2(stol(enum_entry.value, nullptr, 0)))+1;
                   if(tmp > enu.width)
                     enu.width = tmp;
 
