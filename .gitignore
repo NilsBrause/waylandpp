@@ -8,4 +8,5 @@ wayland-client-protocol.cpp
 wayland-client-protocol.hpp
 example/opengles
 example/shm
+example/dump
 doc
