@@ -44,7 +44,9 @@ env.Install(os.path.join(prefix, "include"), ["include/wayland-client-protocol.h
                                               "include/wayland-egl.hpp",
                                               "include/wayland-util.hpp"])
 env.Install(os.path.join(prefix, "bin"), [wayland_scanner])
+env.Install(os.path.join(prefix, "share/waylandpp"), ["protocols/wayland.xml"])
 
 env.Alias("install", os.path.join(prefix, "lib"))
 env.Alias("install", os.path.join(prefix, "include"))
 env.Alias("install", os.path.join(prefix, "bin"))
+env.Alias("install", os.path.join(prefix, "share/waylandpp"))
