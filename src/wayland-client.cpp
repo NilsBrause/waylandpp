@@ -65,23 +65,10 @@ void wayland::set_log_handler(log_handler handler)
   wl_log_set_handler_client(_c_log_handler);
 }
 
-event_queue_t::queue_ptr::~queue_ptr()
-{
-  if(queue)
-    wl_event_queue_destroy(queue);
-}
-
 event_queue_t::event_queue_t(wl_event_queue *q)
-  : queue(new queue_ptr({q}))
+  : detail::refcounted_wrapper<wl_event_queue>({q, wl_event_queue_destroy})
 {
 }
-
-wl_event_queue *event_queue_t::c_ptr()
-{
-  if(!queue)
-    throw std::invalid_argument("event_queue is NULL");
-  return queue->queue;
-};
 
 int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opcode, const wl_message *message, wl_argument *args)
 {
@@ -335,6 +322,15 @@ proxy_t::operator bool() const
   return proxy_has_object();
 }
 
+bool proxy_t::operator==(const proxy_t &right) const
+{
+  return proxy == right.proxy;
+}
+
+bool proxy_t::operator!=(const proxy_t &right) const
+{
+  return !(*this == right); // Reuse equals operator
+}
 
 read_intent::read_intent(wl_display *display, wl_event_queue *event_queue)
 : display(display), event_queue(event_queue)

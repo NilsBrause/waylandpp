@@ -27,6 +27,7 @@
 #define WAYLAND_EGL_HPP
 
 #include <wayland-egl-core.h>
+#include <wayland-util.hpp>
 #include <EGL/egl.h>
 
 namespace wayland
@@ -38,30 +39,17 @@ namespace wayland
 {
   /** \brief Native EGL window
    */
-  class egl_window_t
+  class egl_window_t : public detail::refcounted_wrapper<wl_egl_window>
   {
-  private:
-    wl_egl_window *window;
-
-    egl_window_t(const egl_window_t &);
-
   public:
+    egl_window_t();
     /** \brief Create a native egl window for use with eglCreateWindowSurface
         \param surface The Wayland surface to use
         \param width Width of the EGL buffer
         \param height height of the EGL buffer
     */
     egl_window_t(surface_t &surface, int width, int height);
-    ~egl_window_t();
     
-    wl_egl_window *c_ptr() const;
-    // This enables support for passing a egl_window_t to eglCreateWindowSurface
-    operator wl_egl_window*() const;
-
-    egl_window_t();
-    egl_window_t(egl_window_t &&w);
-    egl_window_t &operator=(egl_window_t &&w);
-
     void resize(int width, int height, int dx = 0, int dy = 0);
     void get_attached_size(int &width, int &height);
   };
