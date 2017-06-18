@@ -361,7 +361,7 @@ void read_intent::read()
 {
   if(finalized)
     throw std::logic_error("Trying to read with read_intent that was already finalized");
-  if (wl_display_read_events(display) != 0)
+  if(wl_display_read_events(display) != 0)
     throw std::system_error(errno, std::generic_category(), "wl_display_read_events");
   finalized = true;
 }
@@ -425,7 +425,7 @@ read_intent display_t::obtain_read_intent()
 {
   while (wl_display_prepare_read(reinterpret_cast<wl_display*>(c_ptr())) != 0)
   {
-    if (errno != EAGAIN)
+    if(errno != EAGAIN)
       throw std::system_error(errno, std::generic_category(), "wl_display_prepare_read");
     
     dispatch_pending();
@@ -437,7 +437,7 @@ read_intent display_t::obtain_queue_read_intent(event_queue_t queue)
 {
   while (wl_display_prepare_read_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr()) != 0)
   {
-    if (errno != EAGAIN)
+    if(errno != EAGAIN)
       throw std::system_error(errno, std::generic_category(), "wl_display_prepare_read_queue");
     
     dispatch_queue_pending(queue);

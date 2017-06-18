@@ -52,132 +52,160 @@ namespace wayland
      * This is by default copyable. If this is not desired, delete the
      * copy constructor and copy assignment operator in derived classes.
      */
-    template<typename NativeType>
+    template<typename native_t>
     class basic_wrapper
     {
-      NativeType *object = nullptr;
+    private:
+      native_t *object = nullptr;
+
     protected:
-      basic_wrapper(NativeType *object)
+      basic_wrapper(native_t *object)
       : object{object}
       {
       }
+
     public:
       basic_wrapper()
       {
       }
+
       basic_wrapper(basic_wrapper const &other)
       {
         *this = other;
       }
+
       basic_wrapper(basic_wrapper &&other) noexcept
       {
         *this = std::move(other);
       }
-      NativeType *c_ptr() const
+
+      native_t *c_ptr() const
       {
-        if (!object)
+        if(!object)
           throw std::runtime_error("Tried to access empty object");
         return object;
       }
+
       bool has_object() const
       {
         return object;
       }
+
       operator bool() const
       {
         return has_object();
       }
-      operator NativeType*() const
+
+      operator native_t*() const
       {
         return c_ptr();
       }
+
       basic_wrapper& operator=(const basic_wrapper &right)
       {
         // Check for self-assignment
-        if (this == &right)
+        if(this == &right)
           return *this;
         object = right.object;
         return *this;
       }
+
       basic_wrapper& operator=(basic_wrapper &&right) noexcept
       {
         std::swap(object, right.object);
         return *this;
       }
+
       bool operator==(const basic_wrapper &right) const
       {
-        return (object == right.object);
+        return object == right.object;
       }
+
       bool operator!=(const basic_wrapper &right) const
       {
         return !(*this == right); // Reuse equals operator
       }
     };
+
     /** \brief Refcounted wrapper for C objects
      * 
      * This is by default copyable. If this is not desired, delete the
      * copy constructor and copy assignment operator in derived classes.
      */
-    template<typename NativeType>
+    template<typename native_t>
     class refcounted_wrapper
     {
-      std::shared_ptr<NativeType> object;
+    private:
+      std::shared_ptr<native_t> object;
+
     protected:
-      refcounted_wrapper(std::shared_ptr<NativeType> const &object)
+      refcounted_wrapper(std::shared_ptr<native_t> const &object)
       : object{object}
       {
       }
-      std::shared_ptr<NativeType> ref_ptr()
+
+      std::shared_ptr<native_t> ref_ptr()
       {
         return object;
       }
+
     public:
       refcounted_wrapper()
       {
       }
+
       refcounted_wrapper(refcounted_wrapper const &other)
       {
         *this = other;
       }
+
       refcounted_wrapper(refcounted_wrapper &&other) noexcept
       {
         *this = std::move(other);
       }
-      NativeType *c_ptr() const
+
+      native_t *c_ptr() const
       {
-        if (!object)
+        if(!object)
           throw std::runtime_error("Tried to access empty object");
         return object.get();
       }
+
       bool has_object() const
       {
-        return (!!object);
+        return !!object;
       }
+
       operator bool() const
       {
         return has_object();
       }
-      operator NativeType*() const
+
+      operator native_t*() const
       {
         return c_ptr();
       }
+
       refcounted_wrapper& operator=(const refcounted_wrapper &right)
       {
         // Check for self-assignment
-        if (this == &right)
+        if(this == &right)
           return *this;
         object = right.object;
         return *this;
       }
+
       refcounted_wrapper& operator=(refcounted_wrapper &&right) noexcept
       {
         std::swap(object, right.object);
         return *this;
       }
+
       bool operator==(const refcounted_wrapper &right) const
       {
-        return (object == right.object);
+        return object == right.object;
       }
+
       bool operator!=(const refcounted_wrapper &right) const
       {
         return !(*this == right); // Reuse equals operator
