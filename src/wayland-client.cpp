@@ -209,7 +209,7 @@ proxy_t::proxy_t(wl_proxy *p, bool is_display, bool donotdestroy)
       data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       if(!data)
         {
-          data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, 0};
+          data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, {0}};
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
@@ -267,8 +267,7 @@ void proxy_t::proxy_release()
 {
   if(proxy && !display)
     {
-      data->counter--;
-      if(data->counter == 0)
+      if(--data->counter == 0)
         {
           if(!dontdestroy)
             {

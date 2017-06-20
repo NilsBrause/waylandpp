@@ -28,6 +28,7 @@
 
 /** \file */
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <string>
@@ -97,7 +98,7 @@ namespace wayland
     {
       std::shared_ptr<events_base_t> events;
       int opcode; 
-      unsigned int counter;
+      std::atomic<unsigned int> counter;
     };
 
     wl_proxy *proxy = nullptr;
