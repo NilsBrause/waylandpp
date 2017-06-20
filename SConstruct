@@ -13,8 +13,14 @@ wayland_scanner = env.Program("scanner/wayland-scanner++",
 
 env.Command(["src/wayland-client-protocol.cpp",
              "include/wayland-client-protocol.hpp"],
-            ["scanner/wayland-scanner++", "protocols/wayland.xml"],
-            "./scanner/wayland-scanner++ protocols/wayland.xml \
+            ["scanner/wayland-scanner++",
+             "protocols/wayland.xml",
+             "protocols/presentation-time.xml",
+             "protocols/viewporter.xml"],
+            "./scanner/wayland-scanner++ \
+            protocols/wayland.xml \
+            protocols/presentation-time.xml \
+            protocols/viewporter.xml \
             include/wayland-client-protocol.hpp \
             src/wayland-client-protocol.cpp")
 
@@ -44,7 +50,9 @@ env.Install(os.path.join(prefix, "include"), ["include/wayland-client-protocol.h
                                               "include/wayland-egl.hpp",
                                               "include/wayland-util.hpp"])
 env.Install(os.path.join(prefix, "bin"), [wayland_scanner])
-env.Install(os.path.join(prefix, "share/waylandpp"), ["protocols/wayland.xml"])
+env.Install(os.path.join(prefix, "share/waylandpp"), ["protocols/wayland.xml",
+                                                      "protocols/presentation-time.xml",
+                                                      "protocols/viewporter.xml"])
 
 env.Alias("install", os.path.join(prefix, "lib"))
 env.Alias("install", os.path.join(prefix, "include"))
