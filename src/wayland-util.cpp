@@ -26,8 +26,29 @@
 #include <wayland-client.hpp>
 #include <wayland-util.hpp>
 
+#include <cerrno>
+#include <system_error>
+
 using namespace wayland;
 using namespace wayland::detail;
+
+namespace wayland
+{
+  namespace detail
+  {
+    int check_return_value(int return_value, const std::string &function_name)
+    {
+      if(return_value < 0)
+      {
+        throw std::system_error(errno, std::generic_category(), function_name);
+      }
+      else
+      {
+        return return_value;
+      }
+    }
+  }
+}
 
 argument_t::argument_t()
 {
