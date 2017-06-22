@@ -134,8 +134,7 @@ namespace wayland
     void marshal(uint32_t opcode, T...args)
     {
       std::vector<detail::argument_t> v = { detail::argument_t(args)... };
-      if(c_ptr())
-        marshal_single(opcode, NULL, v);
+      marshal_single(opcode, NULL, v);
     }
 
     // marshal a request, that leads a new proxy
@@ -144,9 +143,7 @@ namespace wayland
                                 T...args)
     {
       std::vector<detail::argument_t> v = { detail::argument_t(args)... };
-      if(c_ptr())
-        return marshal_single(opcode, interface, v);
-      return proxy_t();
+      return marshal_single(opcode, interface, v);
     }
 
     // Set the opcode for destruction of the proxy (-1 unsets it)
