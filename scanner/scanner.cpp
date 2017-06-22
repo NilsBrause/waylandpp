@@ -191,6 +191,19 @@ struct request_t : public event_t
   argument_t ret;
   int opcode;
 
+  std::string availability_function_name()
+  {
+    if(since > 1)
+      return std::string("can_") + name;
+    else
+      return "";
+  }
+
+  std::string since_version_constant_name()
+  {
+    return name + "_since_version";
+  }
+
   std::string print_header()
   {
     std::stringstream ss;
@@ -230,6 +243,21 @@ struct request_t : public event_t
       ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
     ss << ");" << std::endl;
+
+    ss << std::endl
+       << "  /** \\brief Minimum protocol version required for the \\ref " << name << " function" << std::endl
+       << "  */" << std::endl
+       << "  static constexpr std::uint32_t " << since_version_constant_name() << " = " << since << ";" << std::endl;
+
+    if(!availability_function_name().empty())
+    {
+      ss << std::endl
+         << "  /** \\brief Check whether the \\ref " << name << " function is available with" << std::endl
+         << "      the currently bound version of the protocol" << std::endl
+         << "  */" << std::endl
+         << "  bool " << availability_function_name() << "() const;" << std::endl;
+    }
+
     return ss.str();
   }
 
@@ -300,6 +328,16 @@ struct request_t : public event_t
           ss << "  return " << ret.print_type() << "(p);" << std::endl;
       }
     ss << "}";
+
+    if (!availability_function_name().empty())
+    {
+      ss << std::endl
+         << "bool " << interface_name << "_t::" << availability_function_name() << "() const" << std::endl
+         << "{" << std::endl
+         << "  return (get_version() >= " << since_version_constant_name() << ");" << std::endl
+         << "}";
+    }
+
     return ss.str();
   }
 };
