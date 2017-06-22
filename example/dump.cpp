@@ -64,7 +64,7 @@ public:
           outputs.emplace_back();
           auto& output = outputs.back();
           registry.bind(name, output, version);
-          output.on_geometry() = [&](int32_t x, int32_t y, int32_t physw, int32_t physh, output_subpixel subp, std::string make, std::string model, output_transform transform)
+          output.on_geometry() = [=](int32_t x, int32_t y, int32_t physw, int32_t physh, output_subpixel subp, std::string make, std::string model, output_transform transform)
           {
             std::cout << "* Output geometry for " << output.get_id() << ":" << std::endl
               << "   Maker:   " << make << std::endl
@@ -76,11 +76,11 @@ public:
               << "   Subpix:  " << static_cast<unsigned int>(subp) << std::endl
               << "   Transf:  " << static_cast<unsigned int>(transform) << std::endl;
           };
-          output.on_scale() = [&](int32_t scale)
+          output.on_scale() = [=](int32_t scale)
           {
             std::cout << "* Output scale for " << output.get_id() << ": " << scale << std::endl;
           };
-          output.on_mode() = [&](uint32_t flags, int32_t width, int32_t height, int32_t refresh)
+          output.on_mode() = [=](uint32_t flags, int32_t width, int32_t height, int32_t refresh)
           {
             std::cout << "* Output mode for " << output.get_id() << ":" << std::endl
               << "   Width:   " << width << std::endl
