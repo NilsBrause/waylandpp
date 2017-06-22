@@ -262,14 +262,13 @@ struct request_t : public event_t
 
     if(ret.name == "")
       ss <<  "  marshal(" << opcode << ", ";
+    else if(ret.interface == "")
+      {
+        ss << "  proxy_t p = marshal_constructor_versioned(" << opcode << ", interface.interface, version, ";
+      }
     else
       {
-        ss << "  proxy_t p = marshal_constructor(" << opcode << ", ";
-        if(ret.interface == "")
-          ss << "interface.interface";
-        else
-          ss << "&" << ret.interface << "_interface";
-        ss << ", ";
+        ss << "  proxy_t p = marshal_constructor(" << opcode << ", &" << ret.interface << "_interface, ";
       }
 
     for(auto &arg : args)

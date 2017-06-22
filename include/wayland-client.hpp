@@ -114,7 +114,7 @@ namespace wayland
 
     // marshal request
     proxy_t marshal_single(uint32_t opcode, const wl_interface *interface,
-                           std::vector<detail::argument_t> v);
+                           std::vector<detail::argument_t> v, std::uint32_t version = 0);
 
   protected:
     // Interface desctiption filled in by the each interface class
@@ -137,13 +137,22 @@ namespace wayland
       marshal_single(opcode, NULL, v);
     }
 
-    // marshal a request, that leads a new proxy
+    // marshal a request that leads to a new proxy with inherited version
     template <typename...T>
     proxy_t marshal_constructor(uint32_t opcode, const wl_interface *interface,
                                 T...args)
     {
       std::vector<detail::argument_t> v = { detail::argument_t(args)... };
       return marshal_single(opcode, interface, v);
+    }
+
+    // marshal a request that leads to a new proxy with specific version
+    template <typename...T>
+    proxy_t marshal_constructor_versioned(uint32_t opcode, const wl_interface *interface,
+                                          uint32_t version, T...args)
+    {
+      std::vector<detail::argument_t> v = { detail::argument_t(args)... };
+      return marshal_single(opcode, interface, v, version);
     }
 
     // Set the opcode for destruction of the proxy (-1 unsets it)
