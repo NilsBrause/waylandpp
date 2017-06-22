@@ -284,17 +284,17 @@ void proxy_t::proxy_release()
 }
 
 
-uint32_t proxy_t::get_id()
+uint32_t proxy_t::get_id() const
 {
   return wl_proxy_get_id(c_ptr());
 }
 
-std::string proxy_t::get_class()
+std::string proxy_t::get_class() const
 {
   return wl_proxy_get_class(c_ptr());
 }
 
-uint32_t proxy_t::get_version()
+uint32_t proxy_t::get_version() const
 {
   return wl_proxy_get_version(c_ptr());
 }
@@ -343,7 +343,7 @@ read_intent::~read_intent()
     cancel();
 }
 
-bool read_intent::is_finalized()
+bool read_intent::is_finalized() const
 {
   return finalized;
 }
@@ -464,7 +464,7 @@ int display_t::dispatch_pending()
   return wl_display_dispatch_pending(reinterpret_cast<wl_display*>(c_ptr()));
 }    
 
-int display_t::get_error()
+int display_t::get_error() const
 {
   return wl_display_get_error(reinterpret_cast<wl_display*>(c_ptr()));
 }    
