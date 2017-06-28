@@ -447,7 +447,8 @@ namespace wayland
     int get_fd();
 
     /** \brief Block until all pending request are processed by the server.
-        \return The number of dispatched events on success or -1 on failure
+        \return The number of dispatched events
+        \exception std::system_error on failure
 
         Blocks until the server process all currently issued requests
         and sends out pending events on all event queues.
@@ -455,7 +456,8 @@ namespace wayland
     int roundtrip();
 
     /** \brief Block until all pending request are processed by the server.
-        \return The number of dispatched events on success or -1 on failure
+        \return The number of dispatched events
+        \exception std::system_error on failure
 
          Blocks until the server processes all currently issued requests
          and sends out pending events on the event queue.
@@ -497,6 +499,7 @@ namespace wayland
      * display at the same time, irrespective of the event queue.
      * 
      * \return New \ref read_intent for this display and the default event queue
+     * \exception std::system_error on failure
      */
     read_intent obtain_read_intent();
     
@@ -505,6 +508,7 @@ namespace wayland
      * 
      * \param queue event queue for which the read event will be valid
      * \return New \ref read_intent for this display and the specified event queue
+     * \exception std::system_error on failure
      * 
      * See \ref obtain_read_intent for details.
      */
@@ -512,7 +516,8 @@ namespace wayland
 
     /** \brief Dispatch events in an event queue. 
         \param queue The event queue to dispatch
-        \return The number of dispatched events on success or -1 on failure 
+        \return The number of dispatched events
+        \exception std::system_error on failure
 
         Dispatch all incoming events for objects assigned to the given
         event queue. On failure -1 is returned and errno set
@@ -527,7 +532,8 @@ namespace wayland
 
     /** \brief Dispatch pending events in an event queue.
         \param queue The event queue to dispatch 
-        \return The number of dispatched events on success or -1 on failure
+        \return The number of dispatched events
+        \exception std::system_error on failure
 
         Dispatch all incoming events for objects assigned to the given
         event queue. On failure -1 is returned and errno set
@@ -537,7 +543,8 @@ namespace wayland
     int dispatch_queue_pending(event_queue_t queue);
       
     /** \brief Process incoming events. 
-        \return The number of dispatched events on success or -1 on failure 
+        \return The number of dispatched events
+        \exception std::system_error on failure
 
         Dispatch the display's main event queue.
       
@@ -558,7 +565,8 @@ namespace wayland
     int dispatch();
 
     /** \brief Dispatch main queue events without reading from the display fd.
-        \return The number of dispatched events or -1 on failure
+        \return The number of dispatched events
+        \exception std::system_error on failure
       
         This function dispatches events on the main event queue. It
         does not attempt to read the display fd and simply returns zero
@@ -607,19 +615,20 @@ namespace wayland
     int get_error();
 
     /** \brief Send all buffered requests on the display to the server. 
-        \return The number of bytes sent on success or -1 on failure
+        \return Tuple of the number of bytes sent and whether all data
+                was sent.
+        \exception std::system_error on failure
       
         Send all buffered data on the client side to the server. Clients
         should call this function before blocking. On success, the
-        number of bytes sent to the server is returned. On failure, this
-        function returns -1 and errno is set appropriately.
+        number of bytes sent to the server is returned.
 
         display_t::flush() never blocks. It will write as much data as
-        possible, but if all data could not be written, errno will be
-        set to EAGAIN and -1 returned. In that case, use poll on the
+        possible, but if all data could not be written, the second element
+        in the returned tuple will be set to false. In that case, use poll on the
         display file descriptor to wait for it to become writable again.
     */
-    int flush();
+    std::tuple<int, bool> flush();
 
     /** \brief asynchronous roundtrip
       

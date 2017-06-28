@@ -47,6 +47,16 @@ namespace wayland
 
   namespace detail
   {
+    /** \brief Check the return value of a C function and throw exception on
+     *         failure
+     *
+     * \param return_value return value of the function to check
+     * \param function_name name of the function, for error message
+     * \return return_value if it was >= 0
+     * \exception std::system_error with errno if return_value < 0
+     */
+    int check_return_value(int return_value, std::string const &function_name);
+
     /** \brief Non-refcounted wrapper for C objects
      * 
      * This is by default copyable. If this is not desired, delete the

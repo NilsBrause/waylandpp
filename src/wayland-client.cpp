@@ -369,14 +369,16 @@ void read_intent::read()
 display_t::display_t(int fd)
   : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect_to_fd(fd)), true)
 {
-  c_ptr(); // throws if NULL
+  if(!proxy_has_object())
+    throw std::runtime_error("Could not connect to Wayland display server via file-descriptor");
   interface = &display_interface;
 }
 
 display_t::display_t(std::string name)
   : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect(name == "" ? NULL : name.c_str())), true)
 {
-  c_ptr(); // throws if NULL
+  if(!proxy_has_object())
+    throw std::runtime_error("Could not connect to Wayland display server via name");
   interface = &display_interface;
 }
 
@@ -393,12 +395,12 @@ display_t &display_t::operator=(display_t &&d)
 
 display_t::~display_t()
 {
-  wl_display_disconnect(reinterpret_cast<wl_display*>(c_ptr()));
+  wl_display_disconnect(*this);
 }
 
 event_queue_t display_t::create_queue()
 {
-  wl_event_queue *queue = wl_display_create_queue(reinterpret_cast<wl_display*>(c_ptr()));
+  wl_event_queue *queue = wl_display_create_queue(*this);
   if(!queue)
     throw std::runtime_error("wl_display_create_queue");
   return queue;
@@ -406,72 +408,86 @@ event_queue_t display_t::create_queue()
 
 int display_t::get_fd()
 {
-  return wl_display_get_fd(reinterpret_cast<wl_display*>(c_ptr()));
+  return wl_display_get_fd(*this);
 }
 
 int display_t::roundtrip()
 {
-  return wl_display_roundtrip(reinterpret_cast<wl_display*>(c_ptr()));
+  return check_return_value(wl_display_roundtrip(*this), "wl_display_roundtrip");
 }
 
 int display_t::roundtrip_queue(event_queue_t queue)
 {
-  return wl_display_roundtrip_queue(reinterpret_cast<wl_display*>(c_ptr()),
-                                    queue.c_ptr());
+  return check_return_value(wl_display_roundtrip_queue(*this, queue), "wl_display_roundtrip_queue");
 }
 
 read_intent display_t::obtain_read_intent()
 {
-  while (wl_display_prepare_read(reinterpret_cast<wl_display*>(c_ptr())) != 0)
+  while (wl_display_prepare_read(*this) != 0)
   {
     if(errno != EAGAIN)
       throw std::system_error(errno, std::generic_category(), "wl_display_prepare_read");
     
     dispatch_pending();
   }
-  return read_intent(reinterpret_cast<wl_display*>(c_ptr()));
+  return read_intent(*this);
 }
 
 read_intent display_t::obtain_queue_read_intent(event_queue_t queue)
 {
-  while (wl_display_prepare_read_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr()) != 0)
+  while (wl_display_prepare_read_queue(*this, queue) != 0)
   {
     if(errno != EAGAIN)
       throw std::system_error(errno, std::generic_category(), "wl_display_prepare_read_queue");
     
     dispatch_queue_pending(queue);
   }
-  return read_intent(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
+  return read_intent(*this, queue);
 }
 
 int display_t::dispatch_queue(event_queue_t queue)
 {
-  return wl_display_dispatch_queue(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
+  return check_return_value(wl_display_dispatch_queue(*this, queue), "wl_display_dispatch_queue");
 }    
 
 int display_t::dispatch_queue_pending(event_queue_t queue)
 {
-  return wl_display_dispatch_queue_pending(reinterpret_cast<wl_display*>(c_ptr()), queue.c_ptr());
+  return check_return_value(wl_display_dispatch_queue_pending(*this, queue), "wl_display_dispatch_queue_pending");
 }    
 
 int display_t::dispatch()
 {
-  return wl_display_dispatch(reinterpret_cast<wl_display*>(c_ptr()));
+  return check_return_value(wl_display_dispatch(*this), "wl_display_dispatch");
 }    
 
 int display_t::dispatch_pending()
 {
-  return wl_display_dispatch_pending(reinterpret_cast<wl_display*>(c_ptr()));
+  return check_return_value(wl_display_dispatch_pending(*this), "wl_display_dispatch_pending");
 }    
 
 int display_t::get_error()
 {
-  return wl_display_get_error(reinterpret_cast<wl_display*>(c_ptr()));
+  return wl_display_get_error(*this);
 }    
 
-int display_t::flush()
+std::tuple<int, bool> display_t::flush()
 {
-  return wl_display_flush(reinterpret_cast<wl_display*>(c_ptr()));
+  int bytes_written = wl_display_flush(*this);
+  if(bytes_written < 0)
+  {
+    if(errno == EAGAIN)
+    {
+      return std::make_tuple(bytes_written, false);
+    }
+    else
+    {
+      throw std::system_error(errno, std::generic_category(), "wl_display_flush");
+    }
+  }
+  else
+  {
+    return std::make_tuple(bytes_written, true);
+  }
 }    
 
 callback_t display_t::sync()
