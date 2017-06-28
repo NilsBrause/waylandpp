@@ -152,14 +152,19 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
   return dispatcher(opcode, vargs, p.get_events());
 }
 
-proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<argument_t> args)
+proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<argument_t> args, std::uint32_t version)
 {
   std::vector<wl_argument> v;
   for(auto &arg : args)
     v.push_back(arg.argument);
   if(interface)
     {
-      wl_proxy *p = wl_proxy_marshal_array_constructor(proxy, opcode, v.data(), interface);
+      wl_proxy *p;
+      if(version > 0)
+        p = wl_proxy_marshal_array_constructor_versioned(proxy, opcode, v.data(), interface, version);
+      else
+        p = wl_proxy_marshal_array_constructor(proxy, opcode, v.data(), interface);
+
       if(!p)
         throw std::runtime_error("wl_proxy_marshal_array_constructor");
       wl_proxy_set_user_data(p, NULL); // Wayland leaves the user data uninitialized
