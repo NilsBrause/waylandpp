@@ -209,12 +209,12 @@ namespace wayland
     /** \brief Get the id of a proxy object.
         \return The id the object associated with the proxy
     */
-    uint32_t get_id();
+    uint32_t get_id() const;
 
     /** \brief Get the interface name (class) of a proxy object. 
         \return The interface name of the object associated with the proxy 
     */
-    std::string get_class();
+    std::string get_class() const;
     
     /** \brief Get the protocol object version of a proxy object.
      * 
@@ -228,7 +228,7 @@ namespace wayland
      * 
      * \return The protocol object version of the proxy or 0
      */
-    uint32_t get_version();
+    uint32_t get_version() const;
 
     /** \brief Assign a proxy to an event queue.
         \param queue The event queue that will handle this proxy 
@@ -302,7 +302,7 @@ namespace wayland
     /** \brief Check whether this intent was already finalized with \ref cancel
      * or \ref read
      */
-    bool is_finalized();
+    bool is_finalized() const;
     /** \brief Cancel read intent
      * 
      * An exception is thrown when the read intent was already finalized.
@@ -612,7 +612,7 @@ namespace wayland
         Note: Errors are fatal. If this function returns non-zero the
         display can no longer be used.
     */
-    int get_error();
+    int get_error() const;
 
     /** \brief Send all buffered requests on the display to the server. 
         \return Tuple of the number of bytes sent and whether all data
