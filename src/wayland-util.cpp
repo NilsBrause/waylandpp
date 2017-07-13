@@ -23,7 +23,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <wayland-client.hpp>
 #include <wayland-util.hpp>
 
 #include <cerrno>
@@ -112,9 +111,10 @@ argument_t::argument_t(const std::string &s)
   argument.s = s.c_str();
 }
 
-argument_t::argument_t(const proxy_t& p)
+argument_t::argument_t(wl_object *o)
 {
-  argument.o = reinterpret_cast<wl_object*>(p.proxy);
+  argument.o = o;
+  is_array = false;
 }
 
 argument_t::argument_t(std::nullptr_t)
