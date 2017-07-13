@@ -289,14 +289,14 @@ struct request_t : public event_t
     ss << ")\n{" << std::endl;
 
     if(ret.name == "")
-      ss <<  "  marshal(" << opcode << ", ";
+      ss <<  "  marshal(" << opcode << "u, ";
     else if(ret.interface == "")
       {
-        ss << "  proxy_t p = marshal_constructor_versioned(" << opcode << ", interface.interface, version, ";
+        ss << "  proxy_t p = marshal_constructor_versioned(" << opcode << "u, interface.interface, version, ";
       }
     else
       {
-        ss << "  proxy_t p = marshal_constructor(" << opcode << ", &" << ret.interface << "_interface, ";
+        ss << "  proxy_t p = marshal_constructor(" << opcode << "u, &" << ret.interface << "_interface, ";
       }
 
     for(auto &arg : args)
@@ -463,7 +463,7 @@ struct interface_t : public element_t
 
     ss << "  };" << std::endl
        << std::endl
-       << "  static int dispatcher(int opcode, std::vector<detail::any> args, std::shared_ptr<proxy_t::events_base_t> e);" << std::endl
+       << "  static int dispatcher(uint32_t opcode, std::vector<detail::any> args, std::shared_ptr<proxy_t::events_base_t> e);" << std::endl
        << std::endl;
 
     ss << "public:" << std::endl
@@ -538,7 +538,7 @@ struct interface_t : public element_t
     for(auto &event : events)
       ss << event.print_signal_body(name) << std::endl;
 
-    ss << "int " << name << "_t::dispatcher(int opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
+    ss << "int " << name << "_t::dispatcher(uint32_t opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
        << "{" << std::endl;
 
     if(events.size())

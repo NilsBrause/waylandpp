@@ -154,7 +154,7 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
       c++;
     }
   proxy_t p(reinterpret_cast<wl_proxy*>(target), false);
-  typedef int(*dispatcher_func)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>);
+  typedef int(*dispatcher_func)(std::uint32_t, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>);
   dispatcher_func dispatcher = reinterpret_cast<dispatcher_func>(const_cast<void*>(implementation));
   return dispatcher(opcode, vargs, p.get_events());
 }
@@ -189,7 +189,7 @@ void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 }
 
 void proxy_t::set_events(std::shared_ptr<events_base_t> events,
-                         int(*dispatcher)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
+                         int(*dispatcher)(uint32_t, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
 {
   // set only one time
   if(!display && !data->events)

@@ -166,7 +166,7 @@ namespace wayland
       new. Will automatically be deleted upon destruction.
     */
     void set_events(std::shared_ptr<events_base_t> events,
-                    int(*dispatcher)(int, std::vector<detail::any>, std::shared_ptr<proxy_t::events_base_t>));
+                    int(*dispatcher)(uint32_t, std::vector<detail::any>, std::shared_ptr<proxy_t::events_base_t>));
 
     // Retrieve the perviously set user data
     std::shared_ptr<events_base_t> get_events();
