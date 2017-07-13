@@ -98,8 +98,9 @@ namespace wayland
     struct proxy_data_t
     {
       std::shared_ptr<events_base_t> events;
-      int opcode; 
-      std::atomic<unsigned int> counter;
+      bool has_destroy_opcode{false};
+      std::uint32_t destroy_opcode{};
+      std::atomic<unsigned int> counter{0};
     };
 
     wl_proxy *proxy = nullptr;
@@ -156,8 +157,8 @@ namespace wayland
       return marshal_single(opcode, interface, v, version);
     }
 
-    // Set the opcode for destruction of the proxy (-1 unsets it)
-    void set_destroy_opcode(int destroy_opcode);
+    // Set the opcode for destruction of the proxy
+    void set_destroy_opcode(uint32_t destroy_opcode);
 
     /*
       Sets the dispatcher and its user data. User data must be an
