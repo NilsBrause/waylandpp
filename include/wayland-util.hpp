@@ -398,10 +398,7 @@ namespace wayland
       argument_t &operator=(const argument_t &arg);
       ~argument_t();
 
-      // handles integers and file descriptors
-      // (this works, because wl_argument is an union)
       argument_t(uint32_t i);
-
       argument_t(int32_t i);
 
       // handles wl_fixed_t
@@ -412,6 +409,8 @@ namespace wayland
       argument_t(array_t a);
       // handles null objects, for example for new-id arguments
       argument_t(std::nullptr_t);
+      // handles file descriptors (have same type as signed integers, so extra function)
+      static argument_t fd(int fileno);
     };
   }
 
