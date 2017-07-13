@@ -331,7 +331,7 @@ struct request_t : public event_t
       }
     ss << "}";
 
-    if (!availability_function_name().empty())
+    if(!availability_function_name().empty())
     {
       ss << std::endl
          << "bool " << interface_name << "_t::" << availability_function_name() << "() const" << std::endl
@@ -508,9 +508,10 @@ struct interface_t : public element_t
        << "{" << std::endl
        << "  if(proxy_has_object())" << std::endl
        << "    {" << std::endl
-       << "      set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl
-       << "      set_destroy_opcode(" << destroy_opcode << ");" << std::endl
-       << "    }" << std::endl
+       << "      set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl;
+    if(destroy_opcode != -1)
+      ss << "     set_destroy_opcode(" << destroy_opcode << "u);" << std::endl;
+    ss << "    }" << std::endl
        << "  interface = &" << name << "_interface;" << std::endl
        << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
        << "    { return " << name << "_t(p); };" << std::endl
