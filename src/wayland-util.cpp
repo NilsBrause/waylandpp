@@ -27,6 +27,7 @@
 #include <wayland-util.hpp>
 
 #include <cerrno>
+#include <limits>
 #include <system_error>
 
 using namespace wayland;
@@ -134,6 +135,15 @@ argument_t::argument_t(array_t a)
   argument.a = new wl_array;
   a.get(argument.a);
   is_array = true;
+}
+
+argument_t argument_t::fd(int fileno)
+{
+  if (fileno > std::numeric_limits<int32_t>::max())
+    throw std::invalid_argument("FD number too big");
+  argument_t arg;
+  arg.argument.h = static_cast<int32_t> (fileno);
+  return arg;
 }
 
 array_t::array_t(wl_array *arr)

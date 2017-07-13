@@ -307,6 +307,8 @@ struct request_t : public event_t
               ss << "std::string(interface.interface->name), version, ";
             ss << "nullptr, ";
           }
+        else if(arg.type == "fd")
+          ss << "argument_t::fd(" << arg.name << "), ";
         else if(arg.enum_name != "")
           ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << arg.name + "), ";
         else
