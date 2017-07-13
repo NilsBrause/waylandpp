@@ -108,12 +108,12 @@ argument_t::argument_t(double f)
   argument.f = wl_fixed_from_double(f);
 }
 
-argument_t::argument_t(std::string s)
+argument_t::argument_t(const std::string &s)
 {
   argument.s = s.c_str();
 }
 
-argument_t::argument_t(proxy_t p)
+argument_t::argument_t(const proxy_t& p)
 {
   argument.o = reinterpret_cast<wl_object*>(p.proxy);
 }

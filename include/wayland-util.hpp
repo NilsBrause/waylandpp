@@ -407,13 +407,8 @@ namespace wayland
       // handles wl_fixed_t
       argument_t(double f);
 
-      // handles strings
-      argument_t(std::string s);
-
-      // handles objects
-      argument_t(proxy_t p);
-
-      // handles arrays
+      argument_t(const std::string &s);
+      argument_t(const proxy_t &p);
       argument_t(array_t a);
       // handles null objects, for example for new-id arguments
       argument_t(std::nullptr_t);
