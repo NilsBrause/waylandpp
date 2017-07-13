@@ -27,7 +27,7 @@
 
 using namespace pugi;
 
-std::list<std::string> interface_names;
+static std::list<std::string> interface_names;
 
 struct element_t
 {
@@ -289,14 +289,14 @@ struct request_t : public event_t
     ss << ")\n{" << std::endl;
 
     if(ret.name == "")
-      ss <<  "  marshal(" << opcode << ", ";
+      ss <<  "  marshal(" << opcode << "u, ";
     else if(ret.interface == "")
       {
-        ss << "  proxy_t p = marshal_constructor_versioned(" << opcode << ", interface.interface, version, ";
+        ss << "  proxy_t p = marshal_constructor_versioned(" << opcode << "u, interface.interface, version, ";
       }
     else
       {
-        ss << "  proxy_t p = marshal_constructor(" << opcode << ", &" << ret.interface << "_interface, ";
+        ss << "  proxy_t p = marshal_constructor(" << opcode << "u, &" << ret.interface << "_interface, ";
       }
 
     for(auto &arg : args)
@@ -307,6 +307,8 @@ struct request_t : public event_t
               ss << "std::string(interface.interface->name), version, ";
             ss << "nullptr, ";
           }
+        else if(arg.type == "fd")
+          ss << "argument_t::fd(" << arg.name << "), ";
         else if(arg.enum_name != "")
           ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << arg.name + "), ";
         else
@@ -463,7 +465,7 @@ struct interface_t : public element_t
 
     ss << "  };" << std::endl
        << std::endl
-       << "  static int dispatcher(int opcode, std::vector<detail::any> args, std::shared_ptr<proxy_t::events_base_t> e);" << std::endl
+       << "  static int dispatcher(uint32_t opcode, std::vector<detail::any> args, std::shared_ptr<proxy_t::events_base_t> e);" << std::endl
        << std::endl;
 
     ss << "public:" << std::endl
@@ -506,19 +508,20 @@ struct interface_t : public element_t
        << "{" << std::endl
        << "  if(proxy_has_object())" << std::endl
        << "    {" << std::endl
-       << "      set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl
-       << "      set_destroy_opcode(" << destroy_opcode << ");" << std::endl
-       << "    }" << std::endl
+       << "      set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl;
+    if (destroy_opcode != -1)
+      ss << "     set_destroy_opcode(" << destroy_opcode << "u);" << std::endl;
+    ss << "    }" << std::endl
        << "  interface = &" << name << "_interface;" << std::endl
-       << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
-       << "    { return " << name << "_t(p); };" << std::endl
+       << "  copy_constructor = [] (const proxy_t &copy_p) -> proxy_t" << std::endl
+       << "    { return " << name << "_t(copy_p); };" << std::endl
        << "}" << std::endl
        << std::endl
        << name << "_t::" << name << "_t()" << std::endl
        << "{" << std::endl
        << "  interface = &" << name << "_interface;" << std::endl
-       << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
-       << "    { return " << name << "_t(p); };" << std::endl
+       << "  copy_constructor = [] (const proxy_t &copy_p) -> proxy_t" << std::endl
+       << "    { return " << name << "_t(copy_p); };" << std::endl
        << "}" << std::endl
        << std::endl
        << "const std::string " << name << "_t::interface_name = \"" << orig_name << "\";" << std::endl
@@ -537,7 +540,7 @@ struct interface_t : public element_t
     for(auto &event : events)
       ss << event.print_signal_body(name) << std::endl;
 
-    ss << "int " << name << "_t::dispatcher(int opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
+    ss << "int " << name << "_t::dispatcher(uint32_t opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
        << "{" << std::endl;
 
     if(events.size())
@@ -830,7 +833,7 @@ int main(int argc, char *argv[])
                   if(entry.attribute("summary"))
                     enum_entry.summary = entry.attribute("summary").value();
 
-                  uint32_t tmp = std::floor(std::log2(stol(enum_entry.value, nullptr, 0)))+1;
+                  uint32_t tmp = static_cast<uint32_t> (std::log2(stol(enum_entry.value, nullptr, 0))) + 1u;
                   if(tmp > enu.width)
                     enu.width = tmp;
 

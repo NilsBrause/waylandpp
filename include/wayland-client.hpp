@@ -61,9 +61,10 @@ namespace wayland
   */
   class event_queue_t : public detail::refcounted_wrapper<wl_event_queue>
   {
-  private:
     event_queue_t(wl_event_queue *q);
     friend class display_t;
+  public:
+    event_queue_t();
   };
 
   class display_t;
@@ -97,8 +98,9 @@ namespace wayland
     struct proxy_data_t
     {
       std::shared_ptr<events_base_t> events;
-      int opcode; 
-      std::atomic<unsigned int> counter;
+      bool has_destroy_opcode{false};
+      std::uint32_t destroy_opcode{};
+      std::atomic<unsigned int> counter{0};
     };
 
     wl_proxy *proxy = nullptr;
@@ -155,8 +157,8 @@ namespace wayland
       return marshal_single(opcode, interface, v, version);
     }
 
-    // Set the opcode for destruction of the proxy (-1 unsets it)
-    void set_destroy_opcode(int destroy_opcode);
+    // Set the opcode for destruction of the proxy
+    void set_destroy_opcode(uint32_t destroy_opcode);
 
     /*
       Sets the dispatcher and its user data. User data must be an
@@ -164,7 +166,7 @@ namespace wayland
       new. Will automatically be deleted upon destruction.
     */
     void set_events(std::shared_ptr<events_base_t> events,
-                    int(*dispatcher)(int, std::vector<detail::any>, std::shared_ptr<proxy_t::events_base_t>));
+                    int(*dispatcher)(uint32_t, std::vector<detail::any>, std::shared_ptr<proxy_t::events_base_t>));
 
     // Retrieve the perviously set user data
     std::shared_ptr<events_base_t> get_events();

@@ -27,6 +27,7 @@
 #include <wayland-util.hpp>
 
 #include <cerrno>
+#include <limits>
 #include <system_error>
 
 using namespace wayland;
@@ -50,16 +51,8 @@ namespace wayland
   }
 }
 
-argument_t::argument_t()
-{
-  argument.a = NULL;
-  is_array = false;
-}
-
 argument_t::argument_t(const argument_t &arg)
 {
-  argument.a = NULL;
-  is_array = false;
   operator=(arg);
 }
 
@@ -71,6 +64,8 @@ argument_t &argument_t::operator=(const argument_t &arg)
       delete argument.a;
     }
 
+  is_array = arg.is_array;
+
   if(arg.is_array)
     {
       argument.a = new wl_array;
@@ -81,9 +76,11 @@ argument_t &argument_t::operator=(const argument_t &arg)
   else
     argument = arg.argument;
 
-  is_array = arg.is_array;
-
   return *this;
+}
+
+argument_t::argument_t()
+{
 }
 
 argument_t::~argument_t()
@@ -98,37 +95,31 @@ argument_t::~argument_t()
 argument_t::argument_t(uint32_t i)
 {
   argument.u = i;
-  is_array = false;
 }
 
 argument_t::argument_t(int32_t i)
 {
   argument.i = i;
-  is_array = false;
 }
 
 argument_t::argument_t(double f)
 {
   argument.f = wl_fixed_from_double(f);
-  is_array = false;
 }
 
-argument_t::argument_t(std::string s)
+argument_t::argument_t(const std::string &s)
 {
   argument.s = s.c_str();
-  is_array = false;
 }
 
-argument_t::argument_t(proxy_t p)
+argument_t::argument_t(const proxy_t& p)
 {
   argument.o = reinterpret_cast<wl_object*>(p.proxy);
-  is_array = false;
 }
 
 argument_t::argument_t(std::nullptr_t)
 {
   argument.n = 0;
-  is_array = false;
 }
 
 argument_t::argument_t(array_t a)
@@ -138,16 +129,25 @@ argument_t::argument_t(array_t a)
   is_array = true;
 }
 
+argument_t argument_t::fd(int fileno)
+{
+  if (fileno > std::numeric_limits<int32_t>::max())
+    throw std::invalid_argument("FD number too big");
+  argument_t arg;
+  arg.argument.h = static_cast<int32_t> (fileno);
+  return arg;
+}
+
 array_t::array_t(wl_array *arr)
 {
   wl_array_init(&a);
   wl_array_copy(&a, arr);
 }
 
-void array_t::get(wl_array *arr)
+void array_t::get(wl_array *arr) const
 {
   wl_array_init(arr);
-  wl_array_copy(arr, &a);
+  wl_array_copy(arr, const_cast<wl_array*>(&a));
 }
 
 array_t::array_t()

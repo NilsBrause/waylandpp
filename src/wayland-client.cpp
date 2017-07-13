@@ -28,7 +28,7 @@
 #include <cstdio>
 #include <cerrno>
 
-#include <iostream>
+#include <limits>
 #include <system_error>
 #include <wayland-client.hpp>
 #include <wayland-client-protocol.hpp>
@@ -51,8 +51,21 @@ void _c_log_handler(const char *format, va_list args)
   va_list args_copy;
   // vsnprintf consumes args, so copy beforehand
   va_copy(args_copy, args);
-  std::vector<char> buf(1 + std::vsnprintf(nullptr, 0, format, args));
-  std::vsnprintf(buf.data(), buf.size(), format, args_copy);
+  int length = std::vsnprintf(nullptr, 0, format, args);
+  if (length < 0)
+  {
+    throw std::runtime_error("Error getting length of formatted wayland-client log message");
+  }
+  // check for possible overflow - could be done at runtime but the following should hold on all usual platforms
+  static_assert(std::numeric_limits<std::vector<char>::size_type>::max() >= std::numeric_limits<int>::max() + 1u /* NUL */, "vector constructor must allow size big enough for vsnprintf return value");
+  // for terminating NUL
+  length++;
+
+  std::vector<char> buf(static_cast<std::vector<char>::size_type>(length));
+  if (std::vsnprintf(buf.data(), buf.size(), format, args_copy) < 0)
+  {
+    throw std::runtime_error("Error formatting wayland-client log message");
+  }
   
   g_log_handler(buf.data());
 }
@@ -63,6 +76,10 @@ void wayland::set_log_handler(log_handler handler)
 {
   g_log_handler = handler;
   wl_log_set_handler_client(_c_log_handler);
+}
+
+event_queue_t::event_queue_t()
+{
 }
 
 event_queue_t::event_queue_t(wl_event_queue *q)
@@ -94,12 +111,15 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
         {
           // int_32_t
         case 'i':
-        case 'h':
           a = args[c].i;
           break;
           // uint32_t
         case 'u':
           a = args[c].u;
+          break;
+          // fd
+        case 'h':
+          a = args[c].h;
           break;
           // fixed
         case 'f':
@@ -131,7 +151,6 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
             else
               {
                 a = proxy_t();
-                std::cerr << "New id is empty." << std::endl;
               }
           }
           break;
@@ -150,7 +169,7 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
       c++;
     }
   proxy_t p(reinterpret_cast<wl_proxy*>(target), false);
-  typedef int(*dispatcher_func)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>);
+  typedef int(*dispatcher_func)(std::uint32_t, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>);
   dispatcher_func dispatcher = reinterpret_cast<dispatcher_func>(const_cast<void*>(implementation));
   return dispatcher(opcode, vargs, p.get_events());
 }
@@ -177,16 +196,15 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
   return proxy_t();
 }
 
-void proxy_t::set_destroy_opcode(int destroy_opcode)
+void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 {
-  if(!display)
-    data->opcode = destroy_opcode;
-  else
-    std::cerr << "Not setting destroy opcode on display.";
+  assert(!display);
+  data->has_destroy_opcode = true;
+  data->destroy_opcode = destroy_opcode;
 }
 
 void proxy_t::set_events(std::shared_ptr<events_base_t> events,
-                         int(*dispatcher)(int, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
+                         int(*dispatcher)(uint32_t, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
 {
   // set only one time
   if(!display && !data->events)
@@ -217,7 +235,7 @@ proxy_t::proxy_t(wl_proxy *p, bool is_display, bool donotdestroy)
       data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       if(!data)
         {
-          data = new proxy_data_t{std::shared_ptr<events_base_t>(), -1, {0}};
+          data = new proxy_data_t;
           wl_proxy_set_user_data(proxy, data);
         }
       data->counter++;
@@ -278,8 +296,8 @@ void proxy_t::proxy_release()
         {
           if(!dontdestroy)
             {
-              if(data->opcode >= 0)
-                wl_proxy_marshal(proxy, data->opcode);
+              if(data->has_destroy_opcode)
+                wl_proxy_marshal(proxy, data->destroy_opcode);
               wl_proxy_destroy(proxy);
             }
           delete data;
