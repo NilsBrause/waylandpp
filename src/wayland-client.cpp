@@ -95,12 +95,15 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
           // int_32_t
         case 'i':
         case 'h':
-        case 'f':
           a = args[c].i;
           break;
           // uint32_t
         case 'u':
           a = args[c].u;
+          break;
+          // fixed
+        case 'f':
+          a = wl_fixed_to_double(args[c].f);
           break;
           // string
         case 's':
@@ -247,7 +250,6 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
 }
 
 proxy_t::proxy_t(proxy_t &&p)
-  : proxy(NULL), data(NULL), display(false), dontdestroy(NULL), interface(NULL)
 {
   operator=(std::move(p));
 }
@@ -497,12 +499,12 @@ std::tuple<int, bool> display_t::flush()
 
 callback_t display_t::sync()
 {
-  return callback_t(marshal_constructor(0, &callback_interface, NULL));
+  return callback_t(marshal_constructor(0, &callback_interface, nullptr));
 }
 
 registry_t display_t::get_registry()
 {
-  return registry_t(marshal_constructor(1, &registry_interface, NULL));
+  return registry_t(marshal_constructor(1, &registry_interface, nullptr));
 }
 
 display_t::operator wl_display*() const

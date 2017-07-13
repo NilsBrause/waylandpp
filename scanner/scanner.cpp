@@ -66,7 +66,7 @@ struct argument_t : public element_t
     else if(type == "uint")
       return "uint32_t";
     else if(type == "fixed")
-      return "int32_t";
+      return "double";
     else if(type == "string")
       return "std::string";
     else if(type == "object")
@@ -305,7 +305,7 @@ struct request_t : public event_t
           {
             if(arg.interface == "")
               ss << "std::string(interface.interface->name), version, ";
-            ss << "NULL, ";
+            ss << "nullptr, ";
           }
         else if(arg.enum_name != "")
           ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << arg.name + "), ";
