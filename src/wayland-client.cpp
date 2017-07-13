@@ -111,12 +111,15 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
         {
           // int_32_t
         case 'i':
-        case 'h':
           a = args[c].i;
           break;
           // uint32_t
         case 'u':
           a = args[c].u;
+          break;
+          // fd
+        case 'h':
+          a = args[c].h;
           break;
           // fixed
         case 'f':
