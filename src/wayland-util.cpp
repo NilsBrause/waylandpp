@@ -71,6 +71,8 @@ argument_t &argument_t::operator=(const argument_t &arg)
       delete argument.a;
     }
 
+  is_array = arg.is_array;
+
   if(arg.is_array)
     {
       argument.a = new wl_array;
@@ -80,8 +82,6 @@ argument_t &argument_t::operator=(const argument_t &arg)
     }
   else
     argument = arg.argument;
-
-  is_array = arg.is_array;
 
   return *this;
 }
