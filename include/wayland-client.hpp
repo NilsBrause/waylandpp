@@ -61,9 +61,10 @@ namespace wayland
   */
   class event_queue_t : public detail::refcounted_wrapper<wl_event_queue>
   {
-  private:
     event_queue_t(wl_event_queue *q);
     friend class display_t;
+  public:
+    event_queue_t();
   };
 
   class display_t;

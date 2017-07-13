@@ -65,6 +65,10 @@ void wayland::set_log_handler(log_handler handler)
   wl_log_set_handler_client(_c_log_handler);
 }
 
+event_queue_t::event_queue_t()
+{
+}
+
 event_queue_t::event_queue_t(wl_event_queue *q)
   : detail::refcounted_wrapper<wl_event_queue>({q, wl_event_queue_destroy})
 {
