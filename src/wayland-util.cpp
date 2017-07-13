@@ -144,10 +144,10 @@ array_t::array_t(wl_array *arr)
   wl_array_copy(&a, arr);
 }
 
-void array_t::get(wl_array *arr)
+void array_t::get(wl_array *arr) const
 {
   wl_array_init(arr);
-  wl_array_copy(arr, &a);
+  wl_array_copy(arr, const_cast<wl_array*>(&a));
 }
 
 array_t::array_t()
