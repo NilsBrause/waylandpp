@@ -388,7 +388,7 @@ namespace wayland
     class argument_t
     {
     private:
-      bool is_array;
+      bool is_array{false};
 
     public:
       wl_argument argument;
