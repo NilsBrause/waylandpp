@@ -407,10 +407,10 @@ namespace wayland
       argument_t(double f);
 
       // handles strings
-      argument_t(std::string s);
+      argument_t(const std::string &s);
 
       // handles objects
-      argument_t(proxy_t p);
+      argument_t(const proxy_t &p);
 
       // handles arrays
       argument_t(array_t a);

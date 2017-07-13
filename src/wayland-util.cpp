@@ -112,13 +112,13 @@ argument_t::argument_t(double f)
   is_array = false;
 }
 
-argument_t::argument_t(std::string s)
+argument_t::argument_t(const std::string &s)
 {
   argument.s = s.c_str();
   is_array = false;
 }
 
-argument_t::argument_t(proxy_t p)
+argument_t::argument_t(const proxy_t& p)
 {
   argument.o = reinterpret_cast<wl_object*>(p.proxy);
   is_array = false;
