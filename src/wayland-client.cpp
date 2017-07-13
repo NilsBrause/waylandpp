@@ -29,6 +29,7 @@
 #include <cerrno>
 
 #include <iostream>
+#include <limits>
 #include <system_error>
 #include <wayland-client.hpp>
 #include <wayland-client-protocol.hpp>
@@ -51,8 +52,21 @@ void _c_log_handler(const char *format, va_list args)
   va_list args_copy;
   // vsnprintf consumes args, so copy beforehand
   va_copy(args_copy, args);
-  std::vector<char> buf(1 + std::vsnprintf(nullptr, 0, format, args));
-  std::vsnprintf(buf.data(), buf.size(), format, args_copy);
+  int length = std::vsnprintf(nullptr, 0, format, args);
+  if (length < 0)
+  {
+    throw std::runtime_error("Error getting length of formatted wayland-client log message");
+  }
+  // check for possible overflow - could be done at runtime but the following should hold on all usual platforms
+  static_assert(std::numeric_limits<std::vector<char>::size_type>::max() >= std::numeric_limits<int>::max() + 1u /* NUL */, "vector constructor must allow size big enough for vsnprintf return value");
+  // for terminating NUL
+  length++;
+
+  std::vector<char> buf(static_cast<std::vector<char>::size_type>(length));
+  if (std::vsnprintf(buf.data(), buf.size(), format, args_copy) < 0)
+  {
+    throw std::runtime_error("Error formatting wayland-client log message");
+  }
   
   g_log_handler(buf.data());
 }
