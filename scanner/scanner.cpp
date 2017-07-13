@@ -27,7 +27,7 @@
 
 using namespace pugi;
 
-std::list<std::string> interface_names;
+static std::list<std::string> interface_names;
 
 struct element_t
 {
