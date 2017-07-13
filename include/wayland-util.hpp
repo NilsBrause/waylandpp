@@ -389,11 +389,12 @@ namespace wayland
     {
     private:
       bool is_array{false};
+      // Uninitialized argument - only for internal use
+      argument_t();
 
     public:
       wl_argument argument;
 
-      argument_t();
       argument_t(const argument_t &arg);
       argument_t &operator=(const argument_t &arg);
       ~argument_t();
