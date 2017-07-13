@@ -50,12 +50,6 @@ namespace wayland
   }
 }
 
-argument_t::argument_t()
-{
-  argument.a = NULL;
-  is_array = false;
-}
-
 argument_t::argument_t(const argument_t &arg)
 {
   argument.a = NULL;
@@ -84,6 +78,10 @@ argument_t &argument_t::operator=(const argument_t &arg)
     argument = arg.argument;
 
   return *this;
+}
+
+argument_t::argument_t()
+{
 }
 
 argument_t::~argument_t()
