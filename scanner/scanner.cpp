@@ -830,7 +830,7 @@ int main(int argc, char *argv[])
                   if(entry.attribute("summary"))
                     enum_entry.summary = entry.attribute("summary").value();
 
-                  uint32_t tmp = std::floor(std::log2(stol(enum_entry.value, nullptr, 0)))+1;
+                  uint32_t tmp = static_cast<uint32_t> (std::log2(stol(enum_entry.value, nullptr, 0))) + 1u;
                   if(tmp > enu.width)
                     enu.width = tmp;
 
