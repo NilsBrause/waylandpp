@@ -426,7 +426,7 @@ namespace wayland
     wl_array a;
 
     array_t(wl_array *arr);
-    void get(wl_array *arr);
+    void get(wl_array *arr) const;
 
     friend class proxy_t;
     friend class detail::argument_t;
@@ -462,7 +462,7 @@ namespace wayland
       return *this;
     }
 
-    template <typename T> operator std::vector<T>()
+    template <typename T> operator std::vector<T>() const
     {
       std::vector<T> v;
       T *p;
