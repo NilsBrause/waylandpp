@@ -53,8 +53,6 @@ namespace wayland
 
 argument_t::argument_t(const argument_t &arg)
 {
-  argument.a = NULL;
-  is_array = false;
   operator=(arg);
 }
 
@@ -97,37 +95,31 @@ argument_t::~argument_t()
 argument_t::argument_t(uint32_t i)
 {
   argument.u = i;
-  is_array = false;
 }
 
 argument_t::argument_t(int32_t i)
 {
   argument.i = i;
-  is_array = false;
 }
 
 argument_t::argument_t(double f)
 {
   argument.f = wl_fixed_from_double(f);
-  is_array = false;
 }
 
 argument_t::argument_t(const std::string &s)
 {
   argument.s = s.c_str();
-  is_array = false;
 }
 
 argument_t::argument_t(const proxy_t& p)
 {
   argument.o = reinterpret_cast<wl_object*>(p.proxy);
-  is_array = false;
 }
 
 argument_t::argument_t(std::nullptr_t)
 {
   argument.n = 0;
-  is_array = false;
 }
 
 argument_t::argument_t(array_t a)
