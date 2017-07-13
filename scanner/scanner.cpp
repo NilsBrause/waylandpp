@@ -513,15 +513,15 @@ struct interface_t : public element_t
       ss << "     set_destroy_opcode(" << destroy_opcode << "u);" << std::endl;
     ss << "    }" << std::endl
        << "  interface = &" << name << "_interface;" << std::endl
-       << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
-       << "    { return " << name << "_t(p); };" << std::endl
+       << "  copy_constructor = [] (const proxy_t &copy_p) -> proxy_t" << std::endl
+       << "    { return " << name << "_t(copy_p); };" << std::endl
        << "}" << std::endl
        << std::endl
        << name << "_t::" << name << "_t()" << std::endl
        << "{" << std::endl
        << "  interface = &" << name << "_interface;" << std::endl
-       << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
-       << "    { return " << name << "_t(p); };" << std::endl
+       << "  copy_constructor = [] (const proxy_t &copy_p) -> proxy_t" << std::endl
+       << "    { return " << name << "_t(copy_p); };" << std::endl
        << "}" << std::endl
        << std::endl
        << "const std::string " << name << "_t::interface_name = \"" << orig_name << "\";" << std::endl
