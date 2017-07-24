@@ -181,9 +181,9 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
     {
       wl_proxy *p;
       if(version > 0)
-        p = wl_proxy_marshal_array_constructor_versioned(proxy, opcode, v.data(), interface, version);
+        p = wl_proxy_marshal_array_constructor_versioned(c_ptr(), opcode, v.data(), interface, version);
       else
-        p = wl_proxy_marshal_array_constructor(proxy, opcode, v.data(), interface);
+        p = wl_proxy_marshal_array_constructor(c_ptr(), opcode, v.data(), interface);
 
       if(!p)
         throw std::runtime_error("wl_proxy_marshal_array_constructor");
@@ -209,7 +209,7 @@ void proxy_t::set_events(std::shared_ptr<events_base_t> events,
     {
       data->events = events;
       // the dispatcher gets 'implemetation'
-      if(wl_proxy_add_dispatcher(proxy, c_dispatcher, reinterpret_cast<void*>(dispatcher), data) < 0)
+      if(wl_proxy_add_dispatcher(c_ptr(), c_dispatcher, reinterpret_cast<void*>(dispatcher), data) < 0)
         throw std::runtime_error("wl_proxy_add_dispatcher failed.");
     }
 }
@@ -234,7 +234,7 @@ proxy_t::proxy_t(wl_proxy *p, bool is_display, bool donotdestroy)
       if(!data)
         {
           data = new proxy_data_t;
-          wl_proxy_set_user_data(proxy, data);
+          wl_proxy_set_user_data(c_ptr(), data);
         }
       data->counter++;
     }
@@ -255,9 +255,7 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
   dontdestroy = p.dontdestroy;
 
   if(data)
-    {
-      data->counter++;
-    }
+    data->counter++;
   
   // Allowed: nothing set, proxy set & data unset (for wl_display), proxy & data set (for generic wl_proxy)
   assert((!display && !data && !proxy) || (!display && data && proxy) || (display && !data && proxy));
@@ -295,8 +293,8 @@ void proxy_t::proxy_release()
           if(!dontdestroy)
             {
               if(data->has_destroy_opcode)
-                wl_proxy_marshal(proxy, data->destroy_opcode);
-              wl_proxy_destroy(proxy);
+                wl_proxy_marshal(c_ptr(), data->destroy_opcode);
+              wl_proxy_destroy(c_ptr());
             }
           delete data;
         }
