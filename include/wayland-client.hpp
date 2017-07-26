@@ -106,7 +106,7 @@ namespace wayland
     wl_proxy *proxy = nullptr;
     proxy_data_t *data = nullptr;
     bool display = false;
-    bool dontdestroy = false;
+    bool foreign = false;
     friend class detail::argument_t;
 
     // universal dispatcher
@@ -178,8 +178,11 @@ namespace wayland
     /** \brief Cronstruct a proxy_t from a wl_proxy pointer
         \param p Pointer to a wl_proxy
         \param is_display True, if p is a wl_display pointer
+        \param foreign True, if p is owned by another library and should neither
+                       get a dispatcher nor be destroyed when this wrapper goes
+                       out of scope
     */
-    proxy_t(wl_proxy *p, bool is_display = false, bool donotdestroy = false);
+    proxy_t(wl_proxy *p, bool is_display = false, bool foreign = false);
 
     /** \brief Copy Constructior
         \param p A proxy_t object
