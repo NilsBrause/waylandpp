@@ -98,6 +98,11 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
   if(!args)
     throw std::invalid_argument("proxy dispatcher: args is NULL.");
 
+  // Don't bother dispatching for objects that we don't know about, or not
+  // any more (they will not have any C++ event handlers anyway)
+  if(!wl_proxy_get_user_data(reinterpret_cast<wl_proxy*>(target)))
+    return 0;
+
   std::string signature(message->signature);
   std::vector<any> vargs;
   unsigned int c = 0;
@@ -197,15 +202,18 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
 void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 {
   assert(!display);
-  data->has_destroy_opcode = true;
-  data->destroy_opcode = destroy_opcode;
+  if (data)
+    {
+      data->has_destroy_opcode = true;
+      data->destroy_opcode = destroy_opcode;
+    }
 }
 
 void proxy_t::set_events(std::shared_ptr<events_base_t> events,
                          int(*dispatcher)(uint32_t, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
 {
   // set only one time
-  if(!display && !data->events)
+  if(data && !data->events)
     {
       data->events = events;
       // the dispatcher gets 'implemetation'
@@ -216,7 +224,7 @@ void proxy_t::set_events(std::shared_ptr<events_base_t> events,
 
 std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
 {
-  if(!display)
+  if(data)
     return data->events;
   return std::shared_ptr<events_base_t>();
 }
@@ -225,10 +233,10 @@ proxy_t::proxy_t()
 {
 }
 
-proxy_t::proxy_t(wl_proxy *p, bool is_display, bool donotdestroy)
-  : proxy(p), display(is_display), dontdestroy(donotdestroy)
+proxy_t::proxy_t(wl_proxy *p, bool is_display, bool foreign)
+  : proxy(p), display(is_display), foreign(foreign)
 {
-  if(!display)
+  if(!display && !foreign)
     {
       data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
       if(!data)
@@ -252,13 +260,13 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
   interface = p.interface;
   copy_constructor = p.copy_constructor;
   display = p.display;
-  dontdestroy = p.dontdestroy;
+  foreign = p.foreign;
 
   if(data)
     data->counter++;
   
-  // Allowed: nothing set, proxy set & data unset (for wl_display), proxy & data set (for generic wl_proxy)
-  assert((!display && !data && !proxy) || (!display && data && proxy) || (display && !data && proxy));
+  // Allowed: nothing set, proxy set & data unset (for wl_display or foreign), proxy & data set (for generic wl_proxy)
+  assert((!display && !data && !proxy) || ((!display && !foreign) && data && proxy) || ((display || foreign) && !data && proxy));
 
   return *this;
 }
@@ -273,7 +281,7 @@ proxy_t &proxy_t::operator=(proxy_t &&p)
   std::swap(proxy, p.proxy);
   std::swap(data, p.data);
   std::swap(display, p.display);
-  std::swap(dontdestroy, p.dontdestroy);
+  std::swap(foreign, p.foreign);
   std::swap(interface, p.interface);
   std::swap(copy_constructor, p.copy_constructor);
   return *this;
@@ -286,22 +294,20 @@ proxy_t::~proxy_t()
 
 void proxy_t::proxy_release()
 {
-  if(proxy && !display)
+  if(data && --data->counter == 0)
     {
-      if(--data->counter == 0)
+      if(!foreign && proxy)
         {
-          if(!dontdestroy)
-            {
-              if(data->has_destroy_opcode)
-                wl_proxy_marshal(c_ptr(), data->destroy_opcode);
-              wl_proxy_destroy(c_ptr());
-            }
-          delete data;
+          if(data->has_destroy_opcode)
+            wl_proxy_marshal(proxy, data->destroy_opcode);
+          wl_proxy_destroy(proxy);
         }
-  
-      proxy = NULL;
-      data = NULL;
+
+      delete data;
     }
+  
+  proxy = NULL;
+  data = NULL;
 }
 
 
