@@ -322,7 +322,7 @@ uint32_t proxy_t::get_version() const
 
 void proxy_t::set_queue(event_queue_t queue)
 {
-  wl_proxy_set_queue(c_ptr(), queue.c_ptr());
+  wl_proxy_set_queue(c_ptr(), queue ? queue.c_ptr() : nullptr);
 }
 
 wl_proxy *proxy_t::c_ptr() const
