@@ -266,7 +266,7 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
     data->counter++;
   
   // Allowed: nothing set, proxy set & data unset (for wl_display or foreign), proxy & data set (for generic wl_proxy)
-  assert((!display && !data && !proxy) || ((!display && !foreign) && data && proxy) || ((display || foreign) && !data && proxy));
+  assert((!display && !data && !proxy) || ((display || foreign) && !data && proxy) || ((!display && !foreign) && data && proxy));
 
   return *this;
 }
