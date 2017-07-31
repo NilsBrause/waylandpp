@@ -30,7 +30,7 @@
 
 using namespace wayland;
 
-egl_window_t::egl_window_t(surface_t &surface, int width, int height)
+egl_window_t::egl_window_t(surface_t const &surface, int width, int height)
   : refcounted_wrapper<wl_egl_window>({wl_egl_window_create(surface, width, height),
                                        wl_egl_window_destroy})
 {
