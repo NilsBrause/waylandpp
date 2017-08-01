@@ -228,7 +228,7 @@ void proxy_t::set_events(std::shared_ptr<events_base_t> events,
   if(data && !data->events)
     {
       data->events = events;
-      // the dispatcher gets 'implemetation'
+      // the dispatcher gets 'implementation'
       if(wl_proxy_add_dispatcher(c_ptr(), c_dispatcher, reinterpret_cast<void*>(dispatcher), data) < 0)
         throw std::runtime_error("wl_proxy_add_dispatcher failed.");
     }
