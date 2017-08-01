@@ -457,7 +457,7 @@ struct interface_t : public element_t
     ss << "class " << name << "_t : public proxy_t" << std::endl
        << "{" << std::endl
        << "private:" << std::endl
-       << "  struct events_t : public proxy_t::events_base_t" << std::endl
+       << "  struct events_t : public detail::events_base_t" << std::endl
        << "  {" << std::endl;
 
     for(auto &event : events)
@@ -465,7 +465,7 @@ struct interface_t : public element_t
 
     ss << "  };" << std::endl
        << std::endl
-       << "  static int dispatcher(uint32_t opcode, std::vector<detail::any> args, std::shared_ptr<proxy_t::events_base_t> e);" << std::endl
+       << "  static int dispatcher(uint32_t opcode, std::vector<detail::any> args, std::shared_ptr<detail::events_base_t> e);" << std::endl
        << std::endl;
 
     ss << "public:" << std::endl
@@ -508,7 +508,7 @@ struct interface_t : public element_t
        << "{" << std::endl
        << "  if(proxy_has_object())" << std::endl
        << "    {" << std::endl
-       << "      set_events(std::shared_ptr<proxy_t::events_base_t>(new events_t), dispatcher);" << std::endl;
+       << "      set_events(std::shared_ptr<detail::events_base_t>(new events_t), dispatcher);" << std::endl;
     if(destroy_opcode != -1)
       ss << "     set_destroy_opcode(" << destroy_opcode << "u);" << std::endl;
     ss << "    }" << std::endl
@@ -540,7 +540,7 @@ struct interface_t : public element_t
     for(auto &event : events)
       ss << event.print_signal_body(name) << std::endl;
 
-    ss << "int " << name << "_t::dispatcher(uint32_t opcode, std::vector<any> args, std::shared_ptr<proxy_t::events_base_t> e)" << std::endl
+    ss << "int " << name << "_t::dispatcher(uint32_t opcode, std::vector<any> args, std::shared_ptr<detail::events_base_t> e)" << std::endl
        << "{" << std::endl;
 
     if(events.size())

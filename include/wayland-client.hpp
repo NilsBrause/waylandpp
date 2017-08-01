@@ -68,6 +68,15 @@ namespace wayland
   };
 
   class display_t;
+  namespace detail
+  {
+    struct proxy_data_t;
+    // base class for event listener storage.
+    struct events_base_t
+    {
+      virtual ~events_base_t() { }
+    };
+  }
 
   /** \brief Represents a protocol object on the client side.
 
@@ -86,28 +95,17 @@ namespace wayland
   */
   class proxy_t
   {
-  protected:
-    // base class for event listener storage.
-    struct events_base_t
     {
       virtual ~events_base_t() { }
     };
 
   private:
-    // stored in the proxy user data
-    struct proxy_data_t
-    {
-      std::shared_ptr<events_base_t> events;
-      bool has_destroy_opcode{false};
-      std::uint32_t destroy_opcode{};
-      std::atomic<unsigned int> counter{0};
-    };
-
     wl_proxy *proxy = nullptr;
-    proxy_data_t *data = nullptr;
     bool display = false;
     bool foreign = false;
+    detail::proxy_data_t *data = nullptr;
     friend class detail::argument_t;
+    friend struct detail::proxy_data_t;
 
     // universal dispatcher
     static int c_dispatcher(const void *implementation, void *target,
@@ -165,11 +163,11 @@ namespace wayland
       instance of a class derived from events_base_t, allocated with
       new. Will automatically be deleted upon destruction.
     */
-    void set_events(std::shared_ptr<events_base_t> events,
-                    int(*dispatcher)(uint32_t, std::vector<detail::any>, std::shared_ptr<proxy_t::events_base_t>));
+    void set_events(std::shared_ptr<detail::events_base_t> events,
+                    int(*dispatcher)(uint32_t, std::vector<detail::any>, std::shared_ptr<detail::events_base_t>));
 
-    // Retrieve the perviously set user data
-    std::shared_ptr<events_base_t> get_events();
+    // Retrieve the previously set user data
+    std::shared_ptr<detail::events_base_t> get_events();
 
     // Constructs NULL proxies.
     proxy_t();

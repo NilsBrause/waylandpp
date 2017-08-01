@@ -72,6 +72,15 @@ void _c_log_handler(const char *format, va_list args)
 
 }
 
+// stored in the proxy user data
+struct wayland::detail::proxy_data_t
+{
+  std::shared_ptr<events_base_t> events;
+  bool has_destroy_opcode{false};
+  std::uint32_t destroy_opcode{};
+  std::atomic<unsigned int> counter{1};
+};
+
 void wayland::set_log_handler(log_handler handler)
 {
   g_log_handler = handler;
@@ -172,7 +181,7 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
       c++;
     }
   proxy_t p(reinterpret_cast<wl_proxy*>(target), false);
-  typedef int(*dispatcher_func)(std::uint32_t, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>);
+  typedef int(*dispatcher_func)(std::uint32_t, std::vector<any>, std::shared_ptr<events_base_t>);
   dispatcher_func dispatcher = reinterpret_cast<dispatcher_func>(const_cast<void*>(implementation));
   return dispatcher(opcode, vargs, p.get_events());
 }
@@ -210,7 +219,7 @@ void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 }
 
 void proxy_t::set_events(std::shared_ptr<events_base_t> events,
-                         int(*dispatcher)(uint32_t, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
+                         int(*dispatcher)(uint32_t, std::vector<any>, std::shared_ptr<events_base_t>))
 {
   // set only one time
   if(data && !data->events)
@@ -222,7 +231,7 @@ void proxy_t::set_events(std::shared_ptr<events_base_t> events,
     }
 }
 
-std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
+std::shared_ptr<events_base_t> proxy_t::get_events()
 {
   if(data)
     return data->events;
@@ -244,7 +253,8 @@ proxy_t::proxy_t(wl_proxy *p, bool is_display, bool foreign)
           data = new proxy_data_t;
           wl_proxy_set_user_data(c_ptr(), data);
         }
-      data->counter++;
+      else
+        ++data->counter;
     }
 }
   
