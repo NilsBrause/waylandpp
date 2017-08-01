@@ -79,6 +79,7 @@ struct wayland::detail::proxy_data_t
   bool has_destroy_opcode{false};
   std::uint32_t destroy_opcode{};
   std::atomic<unsigned int> counter{1};
+  event_queue_t queue;
 };
 
 void wayland::set_log_handler(log_handler handler)
@@ -338,6 +339,8 @@ uint32_t proxy_t::get_version() const
 
 void proxy_t::set_queue(event_queue_t queue)
 {
+  if (data)
+    data->queue = queue;
   wl_proxy_set_queue(c_ptr(), queue ? queue.c_ptr() : nullptr);
 }
 
