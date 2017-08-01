@@ -466,11 +466,16 @@ struct interface_t : public element_t
     ss << "  };" << std::endl
        << std::endl
        << "  static int dispatcher(uint32_t opcode, std::vector<detail::any> args, std::shared_ptr<detail::events_base_t> e);" << std::endl
+       << std::endl
+       << "  " << name << "_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag);" << std::endl
        << std::endl;
 
     ss << "public:" << std::endl
        << "  " << name << "_t();" << std::endl
        << "  explicit " << name << "_t(const proxy_t &proxy);" << std::endl
+       << "  " << name << "_t(" << orig_name << " *p, wrapper_type t = wrapper_type::standard);" << std::endl
+       << std::endl
+       << "  " << name << "_t proxy_create_wrapper();" << std::endl
        << std::endl
        << "  static const std::string interface_name;" << std::endl
        << std::endl
@@ -502,26 +507,48 @@ struct interface_t : public element_t
 
   std::string print_body()
   {
+    std::stringstream set_events;
+    set_events << "  if(proxy_has_object() && get_wrapper_type() == wrapper_type::standard)" << std::endl
+               << "    {" << std::endl
+               << "      set_events(std::shared_ptr<detail::events_base_t>(new events_t), dispatcher);" << std::endl;
+    if(destroy_opcode != -1)
+      set_events << "      set_destroy_opcode(" << destroy_opcode << "u);" << std::endl;
+    set_events << "    }" << std::endl;
+      
+    std::stringstream set_interface;
+    set_interface << "  interface = &" << name << "_interface;" << std::endl
+                  << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
+                  << "    { return " << name << "_t(p); };" << std::endl;
+
     std::stringstream ss;
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
        << "  : proxy_t(p)" << std::endl
        << "{" << std::endl
-       << "  if(proxy_has_object())" << std::endl
-       << "    {" << std::endl
-       << "      set_events(std::shared_ptr<detail::events_base_t>(new events_t), dispatcher);" << std::endl;
-    if(destroy_opcode != -1)
-      ss << "     set_destroy_opcode(" << destroy_opcode << "u);" << std::endl;
-    ss << "    }" << std::endl
-       << "  interface = &" << name << "_interface;" << std::endl
-       << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
-       << "    { return " << name << "_t(p); };" << std::endl
+       << set_events.str()
+       << set_interface.str()
        << "}" << std::endl
        << std::endl
        << name << "_t::" << name << "_t()" << std::endl
        << "{" << std::endl
-       << "  interface = &" << name << "_interface;" << std::endl
-       << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
-       << "    { return " << name << "_t(p); };" << std::endl
+       << set_interface.str()
+       << "}" << std::endl
+       << std::endl
+       << name << "_t::" << name << "_t(" << orig_name << " *p, wrapper_type t)" << std::endl
+       << "  : proxy_t(reinterpret_cast<wl_proxy*> (p), t)"
+       << "{" << std::endl
+       << set_events.str()
+       << set_interface.str()
+       << "}" << std::endl
+       << std::endl
+       << name << "_t::" << name << "_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag)" << std::endl
+       << "  : proxy_t(wrapped_proxy, construct_proxy_wrapper_tag())"
+       << "{" << std::endl
+       << set_interface.str()
+       << "}" << std::endl
+       << std::endl
+       << name << "_t " << name << "_t::proxy_create_wrapper()" << std::endl
+       << "{" << std::endl
+       << "  return {*this, construct_proxy_wrapper_tag()};" << std::endl
        << "}" << std::endl
        << std::endl
        << "const std::string " << name << "_t::interface_name = \"" << orig_name << "\";" << std::endl
