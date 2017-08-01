@@ -95,15 +95,47 @@ namespace wayland
   */
   class proxy_t
   {
+  public:
+    /**
+     * Underlying wl_proxy type and properties of a proxy_t that affect construction,
+     * destruction, and event handling
+     */
+    enum class wrapper_type
     {
-      virtual ~events_base_t() { }
+      /**
+       * C pointer is a standard type compatible with wl_proxy*. Events are dispatched
+       * and it is destructed when the proxy_t is destructed. User data is set.
+       */
+      standard,
+      /**
+       * C pointer is a wl_display*. No events are dispatched, wl_display_disconnect
+       * is called when the proxy_t is destructed. User data is set.
+       */
+      display,
+      /**
+       * C pointer is a standard type compatible with wl_proxy*, but another library
+       * owns it and it should not be touched in a way that could affect the
+       * operation of the other library. No events are dispatched, wl_proxy_destroy
+       * is not called when the proxy_t is destructed, user data is not touched.
+       * Consequently, there is no reference counting for the proxy_t.
+       * Lifetime of such wrappers should preferably be short to minimize the chance
+       * that the owning library decides to destroy the wl_proxy.
+       */
+      foreign,
+      /**
+       * C pointer is a wl_proxy* that was constructed with wl_proxy_create_wrapper.
+       * No events are dispatched, wl_proxy_wrapper_destroy is called when the
+       * proxy_t is destroyed. Reference counting is active. A reference to the
+       * proxy_t creating this proxy wrapper is held to extend its lifetime until
+       * after the proxy wrapper is destroyed.
+       */
+      proxy_wrapper
     };
 
   private:
     wl_proxy *proxy = nullptr;
-    bool display = false;
-    bool foreign = false;
     detail::proxy_data_t *data = nullptr;
+    wrapper_type type = wrapper_type::standard;
     friend class detail::argument_t;
     friend struct detail::proxy_data_t;
 
@@ -171,16 +203,18 @@ namespace wayland
 
     // Constructs NULL proxies.
     proxy_t();
+    
+    struct construct_proxy_wrapper_tag {};
+    // Construct from proxy as wrapper
+    proxy_t(const proxy_t &wrapped_proxy, construct_proxy_wrapper_tag);
 
   public:
     /** \brief Cronstruct a proxy_t from a wl_proxy pointer
         \param p Pointer to a wl_proxy
-        \param is_display True, if p is a wl_display pointer
-        \param foreign True, if p is owned by another library and should neither
-                       get a dispatcher nor be destroyed when this wrapper goes
-                       out of scope
+        \param t type and requested behavior of the pointer
+        \param queue initial event queue reference to retain (set_queue is not called)
     */
-    proxy_t(wl_proxy *p, bool is_display = false, bool foreign = false);
+    proxy_t(wl_proxy *p, wrapper_type t = wrapper_type::standard, event_queue_t const& queue = event_queue_t());
 
     /** \brief Copy Constructior
         \param p A proxy_t object
@@ -238,6 +272,13 @@ namespace wayland
      * \return The protocol object version of the proxy or 0
      */
     uint32_t get_version() const;
+
+    /** \brief Get the type of a proxy object.
+     */
+    wrapper_type get_wrapper_type() const
+    {
+      return type;
+    }
 
     /** \brief Assign a proxy to an event queue.
         \param queue The event queue that will handle this proxy 
@@ -410,6 +451,8 @@ namespace wayland
   {
   private:
     display_t(const display_t &d) { }
+    // Construct as proxy wrapper
+    display_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag);
 
   public:
     /** \brief Connect to Wayland display on an already open fd.
@@ -661,6 +704,10 @@ namespace wayland
     registry_t get_registry();
     
     operator wl_display*() const;
+
+    /** \brief create proxy wrapper for this display
+    */
+    display_t proxy_create_wrapper();
   };
 }
 
