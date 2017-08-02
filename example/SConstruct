@@ -17,3 +17,5 @@ env.Program("shm", "shm.cpp",
                     "rt"])
 env.Program("dump", "dump.cpp",
             LIBS = ["wayland-client++"])
+env.Program("proxy_wrapper", "proxy_wrapper.cpp",
+            LIBS = ["wayland-client++", "pthread"])

@@ -72,6 +72,17 @@ void _c_log_handler(const char *format, va_list args)
 
 }
 
+// stored in the proxy user data
+struct wayland::detail::proxy_data_t
+{
+  std::shared_ptr<events_base_t> events;
+  bool has_destroy_opcode{false};
+  std::uint32_t destroy_opcode{};
+  std::atomic<unsigned int> counter{1};
+  event_queue_t queue;
+  proxy_t wrapped_proxy;
+};
+
 void wayland::set_log_handler(log_handler handler)
 {
   g_log_handler = handler;
@@ -171,8 +182,8 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
       vargs.push_back(a);
       c++;
     }
-  proxy_t p(reinterpret_cast<wl_proxy*>(target), false);
-  typedef int(*dispatcher_func)(std::uint32_t, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>);
+  proxy_t p(reinterpret_cast<wl_proxy*>(target), wrapper_type::standard);
+  typedef int(*dispatcher_func)(std::uint32_t, std::vector<any>, std::shared_ptr<events_base_t>);
   dispatcher_func dispatcher = reinterpret_cast<dispatcher_func>(const_cast<void*>(implementation));
   return dispatcher(opcode, vargs, p.get_events());
 }
@@ -193,7 +204,8 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
       if(!p)
         throw std::runtime_error("wl_proxy_marshal_array_constructor");
       wl_proxy_set_user_data(p, NULL); // Wayland leaves the user data uninitialized
-      return proxy_t(p);
+      // libwayland-client inherits the queue, so we need to, too
+      return proxy_t(p, wrapper_type::standard, data ? data->queue : wayland::event_queue_t());
     }
   wl_proxy_marshal_array(proxy, opcode, v.data());
   return proxy_t();
@@ -201,7 +213,7 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
 
 void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 {
-  assert(!display);
+  assert(type != wrapper_type::display);
   if (data)
     {
       data->has_destroy_opcode = true;
@@ -210,19 +222,19 @@ void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 }
 
 void proxy_t::set_events(std::shared_ptr<events_base_t> events,
-                         int(*dispatcher)(uint32_t, std::vector<any>, std::shared_ptr<proxy_t::events_base_t>))
+                         int(*dispatcher)(uint32_t, std::vector<any>, std::shared_ptr<events_base_t>))
 {
   // set only one time
   if(data && !data->events)
     {
       data->events = events;
-      // the dispatcher gets 'implemetation'
+      // the dispatcher gets 'implementation'
       if(wl_proxy_add_dispatcher(c_ptr(), c_dispatcher, reinterpret_cast<void*>(dispatcher), data) < 0)
         throw std::runtime_error("wl_proxy_add_dispatcher failed.");
     }
 }
 
-std::shared_ptr<proxy_t::events_base_t> proxy_t::get_events()
+std::shared_ptr<events_base_t> proxy_t::get_events()
 {
   if(data)
     return data->events;
@@ -233,21 +245,37 @@ proxy_t::proxy_t()
 {
 }
 
-proxy_t::proxy_t(wl_proxy *p, bool is_display, bool foreign)
-  : proxy(p), display(is_display), foreign(foreign)
+proxy_t::proxy_t(wl_proxy *p, wrapper_type t, event_queue_t const &queue)
+  : proxy(p), type(t)
 {
-  if(!display && !foreign)
+  if(type != wrapper_type::foreign)
     {
-      data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
+      // wl_display by default has some user_data set that can be overwritten,
+      // since you cannot copy a display_t anyway we can always create the data
+      // here
+      if (type != wrapper_type::display)
+        data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
+
       if(!data)
         {
           data = new proxy_data_t;
+          data->queue = queue;
           wl_proxy_set_user_data(c_ptr(), data);
         }
-      data->counter++;
+      else
+        ++data->counter;
     }
 }
-  
+
+proxy_t::proxy_t(const proxy_t &wrapped_proxy, construct_proxy_wrapper_tag)
+  : proxy_t(static_cast<wl_proxy*> (wl_proxy_create_wrapper(wrapped_proxy.c_ptr())), wrapper_type::proxy_wrapper, wrapped_proxy.data->queue)
+{
+  assert(data && !data->wrapped_proxy);
+  // Need to retain a reference to the proxy this wrapper was created from:
+  // It may only be deleted after the proxy wrapper.
+  data->wrapped_proxy = wrapped_proxy;
+}
+
 proxy_t::proxy_t(const proxy_t &p)
 {
   operator=(p);
@@ -259,14 +287,13 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
   data = p.data;
   interface = p.interface;
   copy_constructor = p.copy_constructor;
-  display = p.display;
-  foreign = p.foreign;
-
+  type = p.type;
+  
   if(data)
     data->counter++;
   
-  // Allowed: nothing set, proxy set & data unset (for wl_display or foreign), proxy & data set (for generic wl_proxy)
-  assert((!display && !data && !proxy) || ((display || foreign) && !data && proxy) || ((!display && !foreign) && data && proxy));
+  // Allowed: nothing set (for standard wrapper, others may not be empty), proxy set & data unset (for foreign), proxy & data set (for everything but foreign)
+  assert((type == wrapper_type::standard && !data && !proxy) || (type == wrapper_type::foreign && !data && proxy) || ((type == wrapper_type::standard || type == wrapper_type::proxy_wrapper || type == wrapper_type::display) && data && proxy));
 
   return *this;
 }
@@ -280,8 +307,7 @@ proxy_t &proxy_t::operator=(proxy_t &&p)
 {
   std::swap(proxy, p.proxy);
   std::swap(data, p.data);
-  std::swap(display, p.display);
-  std::swap(foreign, p.foreign);
+  std::swap(type, p.type);
   std::swap(interface, p.interface);
   std::swap(copy_constructor, p.copy_constructor);
   return *this;
@@ -294,17 +320,33 @@ proxy_t::~proxy_t()
 
 void proxy_t::proxy_release()
 {
-  if(data && --data->counter == 0)
+  if(data)
     {
-      if(!foreign && proxy)
+      if (--data->counter == 0)
         {
-          if(data->has_destroy_opcode)
-            wl_proxy_marshal(proxy, data->destroy_opcode);
-          wl_proxy_destroy(proxy);
-        }
+          if(proxy)
+            {
+              switch(type)
+                {
+                  case wrapper_type::standard:
+                    if(data->has_destroy_opcode)
+                      wl_proxy_marshal(proxy, data->destroy_opcode);
+                    wl_proxy_destroy(proxy);
+                    break;
+                  case wrapper_type::proxy_wrapper:
+                    wl_proxy_wrapper_destroy(proxy);
+                    break;
+                  case wrapper_type::display:
+                    wl_display_disconnect(reinterpret_cast<wl_display*> (proxy));
+                    break;
+                  default:
+                    throw std::logic_error("Invalid proxy_t type on destruction");
+                }
+            }
 
-      delete data;
-    }
+          delete data;
+      }
+  }
   
   proxy = NULL;
   data = NULL;
@@ -328,6 +370,8 @@ uint32_t proxy_t::get_version() const
 
 void proxy_t::set_queue(event_queue_t queue)
 {
+  if (data)
+    data->queue = queue;
   wl_proxy_set_queue(c_ptr(), queue ? queue.c_ptr() : nullptr);
 }
 
@@ -394,7 +438,7 @@ void read_intent::read()
 
 
 display_t::display_t(int fd)
-  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect_to_fd(fd)), true)
+  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect_to_fd(fd)), proxy_t::wrapper_type::display)
 {
   if(!proxy_has_object())
     throw std::runtime_error("Could not connect to Wayland display server via file-descriptor");
@@ -402,7 +446,7 @@ display_t::display_t(int fd)
 }
 
 display_t::display_t(std::string name)
-  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect(name == "" ? NULL : name.c_str())), true)
+  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect(name == "" ? NULL : name.c_str())), proxy_t::wrapper_type::display)
 {
   if(!proxy_has_object())
     throw std::runtime_error("Could not connect to Wayland display server via name");
@@ -422,7 +466,6 @@ display_t &display_t::operator=(display_t &&d)
 
 display_t::~display_t()
 {
-  wl_display_disconnect(*this);
 }
 
 event_queue_t display_t::create_queue()
@@ -530,4 +573,14 @@ registry_t display_t::get_registry()
 display_t::operator wl_display*() const
 {
   return reinterpret_cast<wl_display*>(c_ptr());
+}
+
+display_t::display_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag)
+: proxy_t(wrapped_proxy, construct_proxy_wrapper_tag())
+{
+}
+
+display_t display_t::proxy_create_wrapper()
+{
+  return display_t{*this, construct_proxy_wrapper_tag()};
 }

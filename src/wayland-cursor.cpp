@@ -118,8 +118,6 @@ uint32_t cursor_image_t::delay()
 buffer_t cursor_image_t::get_buffer()
 {
   wl_buffer *buffer = wl_cursor_image_get_buffer(c_ptr());
-  wl_proxy *proxy = reinterpret_cast<wl_proxy*>(buffer);
-  wl_proxy_set_user_data(proxy, nullptr);
   // buffer will be destroyed when cursor_theme is destroyed
-  return buffer_t(proxy_t(proxy, false, true));
+  return buffer_t(buffer, proxy_t::wrapper_type::foreign);
 }
