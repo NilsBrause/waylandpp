@@ -8,6 +8,7 @@ hostenv["CXX"] = os.environ.get("CXX", "g++")
 hostenv["CXXFLAGS"] = "-std=c++11 -Wall -Werror -O2 -ggdb " + os.environ.get("CXXFLAGS", "")
 
 targetenv = Environment()
+targetenv["ENV"].update({"PKG_CONFIG_PATH": os.environ.get("PKG_CONFIG_PATH", "")})
 
 targetenv["CXX"] = os.environ.get("CROSSCXX", "g++")
 targetenv["CXXFLAGS"] = "-std=c++11 -Wall -Werror -O2 -ggdb " + os.environ.get("CROSSCXXFLAGS", "")
@@ -29,22 +30,22 @@ hostenv.Command(["src/wayland-client-protocol.cpp",
                 include/wayland-client-protocol.hpp \
                 src/wayland-client-protocol.cpp")
 
-wayland_client = targetenv.SharedLibrary("src/wayland-client++",
-                                         ["src/wayland-client.cpp",
-                                          "src/wayland-client-protocol.cpp",
-                                          "src/wayland-util.cpp"],
-                                         CPPPATH = "include",
-                                         LIBS = ["wayland-client"])
+wayland_client_env = targetenv.Clone().ParseConfig("pkg-config --cflags --libs 'wayland-client >= 1.11.0'")
+wayland_client = wayland_client_env.SharedLibrary("src/wayland-client++",
+                                                 ["src/wayland-client.cpp",
+                                                  "src/wayland-client-protocol.cpp",
+                                                  "src/wayland-util.cpp"],
+                                                  CPPPATH = wayland_client_env.get("CPPPATH", []) + ["include"])
 
-wayland_egl = targetenv.SharedLibrary("src/wayland-egl++",
-                                      "src/wayland-egl.cpp",
-                                      CPPPATH = "include",
-                                      LIBS = ["wayland-egl"])
+wayland_egl_env = targetenv.Clone().ParseConfig("pkg-config --cflags --libs wayland-egl")
+wayland_egl = wayland_egl_env.SharedLibrary("src/wayland-egl++",
+                                            "src/wayland-egl.cpp",
+                                            CPPPATH = wayland_egl_env.get("CPPPATH", []) + ["include"])
 
-wayland_cursor = targetenv.SharedLibrary("src/wayland-cursor++",
-                                         "src/wayland-cursor.cpp",
-                                         CPPPATH = "include",
-                                         LIBS = ["wayland-cursor"])
+wayland_cursor_env = targetenv.Clone().ParseConfig("pkg-config --cflags --libs wayland-cursor")
+wayland_cursor = wayland_cursor_env.SharedLibrary("src/wayland-cursor++",
+                                                  "src/wayland-cursor.cpp",
+                                                  CPPPATH = wayland_cursor_env.get("CPPPATH", []) + ["include"])
 
 prefix = os.environ.get("PREFIX", "/usr/local")
 
