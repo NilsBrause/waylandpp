@@ -13,7 +13,8 @@ hostenv["CXX"] = os.environ.get("CXX", "g++")
 hostenv["CXXFLAGS"] = "-std=c++11 -Wall -Werror -O2 -ggdb " + os.environ.get("CXXFLAGS", "")
 
 targetenv = Environment()
-targetenv["ENV"].update({"PKG_CONFIG_PATH": os.environ.get("PKG_CONFIG_PATH", "")})
+targetenv["ENV"].update({k: v for k, v in os.environ.items() if k.startswith("PKG_CONFIG")})
+pkg_config = os.environ.get("PKG_CONFIG", "pkg-config")
 
 targetenv["CXX"] = os.environ.get("CROSSCXX", "g++")
 targetenv["CXXFLAGS"] = "-std=c++11 -Wall -Werror -O2 -ggdb " + os.environ.get("CROSSCXXFLAGS", "")
@@ -42,19 +43,19 @@ version_subst = hostenv.Substfile("include/wayland-version.hpp.in", SUBST_DICT =
   "@WAYLANDPP_VERSION@": VERSION
 })
 
-wayland_client_env = targetenv.Clone().ParseConfig("pkg-config --cflags --libs 'wayland-client >= 1.11.0'")
+wayland_client_env = targetenv.Clone().ParseConfig("{} --cflags --libs 'wayland-client >= 1.11.0'".format(pkg_config))
 wayland_client = wayland_client_env.SharedLibrary("src/wayland-client++",
                                                  ["src/wayland-client.cpp",
                                                   "src/wayland-client-protocol.cpp",
                                                   "src/wayland-util.cpp"],
                                                   CPPPATH = wayland_client_env.get("CPPPATH", []) + ["include"])
 
-wayland_egl_env = targetenv.Clone().ParseConfig("pkg-config --cflags --libs wayland-egl")
+wayland_egl_env = targetenv.Clone().ParseConfig("{} --cflags --libs wayland-egl".format(pkg_config))
 wayland_egl = wayland_egl_env.SharedLibrary("src/wayland-egl++",
                                             "src/wayland-egl.cpp",
                                             CPPPATH = wayland_egl_env.get("CPPPATH", []) + ["include"])
 
-wayland_cursor_env = targetenv.Clone().ParseConfig("pkg-config --cflags --libs wayland-cursor")
+wayland_cursor_env = targetenv.Clone().ParseConfig("{} --cflags --libs wayland-cursor".format(pkg_config))
 wayland_cursor = wayland_cursor_env.SharedLibrary("src/wayland-cursor++",
                                                   "src/wayland-cursor.cpp",
                                                   CPPPATH = wayland_cursor_env.get("CPPPATH", []) + ["include"])
