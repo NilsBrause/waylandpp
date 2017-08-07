@@ -1,0 +1,14 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+datarootdir=@datarootdir@
+pkgdatadir=@pkgdatadir@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: Wayland C++ Cursor Helper
+Description: Wayland C++ cursor helper library
+Version: @WAYLANDPP_VERSION@
+URL: https://github.com/NilsBrause/waylandpp
+Requires: wayland-cursor wayland-client++
+Cflags: -I${includedir}
+Libs: -L${libdir} -lwayland-cursor++

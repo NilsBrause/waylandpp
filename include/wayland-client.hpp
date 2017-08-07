@@ -33,8 +33,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <wayland-version.hpp>
 #include <wayland-client-core.h>
-#include <wayland-egl.hpp>
 #include <wayland-util.hpp>
 
 namespace wayland
