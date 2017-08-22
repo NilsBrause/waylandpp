@@ -1,11 +1,14 @@
 *~
 *.o
 *.os
-*.so
+*.so*
+*.pc
+*-protocol.*pp
 .sconsign.dblite
+compile_commands.json
+.clang_complete
 scanner/wayland-scanner++
-wayland-client-protocol.cpp
-wayland-client-protocol.hpp
+include/wayland-version.hpp
 example/opengles
 example/shm
 example/dump
