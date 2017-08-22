@@ -18,6 +18,7 @@ pkg_config = os.environ.get("PKG_CONFIG", "pkg-config")
 
 targetenv["CXX"] = os.environ.get("CROSSCXX", "g++")
 targetenv["CXXFLAGS"] = "-std=c++11 -Wall -Werror -O2 -ggdb " + os.environ.get("CROSSCXXFLAGS", "")
+targetenv["SHLIBVERSION"] = VERSION
 
 wayland_scanner = hostenv.Program("scanner/wayland-scanner++",
                                   ["scanner/scanner.cpp", "scanner/pugixml.cpp"],
@@ -90,7 +91,9 @@ wayland_egl_pc = hostenv.Substfile("wayland-egl++.pc.in", SUBST_DICT = pc_subst)
 wayland_cursor_pc = hostenv.Substfile("wayland-cursor++.pc.in", SUBST_DICT = pc_subst)
 wayland_scanner_pc = hostenv.Substfile("wayland-scanner++.pc.in", SUBST_DICT = pc_subst)
 
-targetenv.Install(os.path.join(prefix, "lib"), [wayland_client, wayland_egl, wayland_cursor])
+targetenv.InstallVersionedLib(os.path.join(prefix, "lib"), [wayland_client,
+                                                            wayland_egl,
+                                                            wayland_cursor])
 targetenv.Install(os.path.join(prefix, "include"), ["include/wayland-client-protocol.hpp",
                                                     "include/wayland-client.hpp",
                                                     "include/wayland-cursor.hpp",
