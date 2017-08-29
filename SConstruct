@@ -19,6 +19,7 @@ targetenv.Replace(CXXFLAGS = "-std=c++11 -Wall -Werror -O2 -ggdb ")
 targetenv.Append(CXXFLAGS = os.environ.get("CROSSCXXFLAGS", ""))
 targetenv.Replace(CPPPATH = "include")
 targetenv.Replace(SHLIBVERSION = VERSION)
+targetenv.Replace(SHLIBVERSIONFLAGS = "")
 
 pkg_config = os.environ.get("PKG_CONFIG", "pkg-config")
 

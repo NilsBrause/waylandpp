@@ -12,4 +12,5 @@ include/wayland-version.hpp
 example/opengles
 example/shm
 example/dump
+example/proxy_wrapper
 doc
