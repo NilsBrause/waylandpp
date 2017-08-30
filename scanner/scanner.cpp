@@ -595,17 +595,34 @@ struct interface_t : public element_t
   std::string print_interface_body()
   {
     std::stringstream ss;
-    ss << "const wl_interface wayland::detail::" << name << "_interface =" << std::endl
-       << "  {" << std::endl
-       << "    \"" << orig_name << "\"," << std::endl
-       << "    " << version << "," << std::endl
-       << "    " << requests.size() << "," << std::endl
-       << "    (const wl_message[]) {" << std::endl;
     for(auto &request : requests)
       {
-        ss << "      {" << std::endl
-           << "        \"" << request.name << "\"," << std::endl
-           << "        \"";
+        ss << "const wl_interface* " << name << "_interface_" << request.name << "_request[" << request.args.size() << "] = {" << std::endl;
+        for(auto &arg : request.args)
+          if(arg.interface != "")
+            ss  << "  &" << arg.interface << "_interface," << std::endl;
+          else
+            ss  << "  NULL," << std::endl;
+        ss << "};" << std::endl
+           << std::endl;
+      }
+    for(auto &event : events)
+      {
+        ss << "const wl_interface* " << name << "_interface_" << event.name << "_event[" << event.args.size() << "] = {" << std::endl;
+        for(auto &arg : event.args)
+          if(arg.interface != "")
+            ss  << "  &" << arg.interface << "_interface," << std::endl;
+          else
+            ss  << "  NULL," << std::endl;
+        ss << "};" << std::endl
+           << std::endl;
+      }
+    ss << "const wl_message " << name << "_interface_requests[" << requests.size() << "] = {" << std::endl;
+    for(auto &request : requests)
+      {
+        ss << "  {" << std::endl
+           << "    \"" << request.name << "\"," << std::endl
+           << "    \"";
         if(request.since > 1)
           ss << request.since;
         for(auto &arg : request.args)
@@ -617,23 +634,17 @@ struct interface_t : public element_t
             ss << arg.print_short();
           }
         ss << "\"," << std::endl
-           << "        (const wl_interface*[]) {" << std::endl;
-        for(auto &arg : request.args)
-          if(arg.interface != "")
-            ss  << "          &" << arg.interface << "_interface," << std::endl;
-          else
-            ss  << "          NULL," << std::endl;
-        ss << "        }," << std::endl
-           << "      }," << std::endl;
+           << "    " << name << "_interface_" << request.name << "_request," << std::endl
+           << "  }," << std::endl;
       }
-    ss << "    }," << std::endl
-       << "    " << events.size() << "," << std::endl
-       << "    (const wl_message[]) {" << std::endl;
+    ss << "};" << std::endl
+       << std::endl;
+    ss << "const wl_message " << name << "_interface_events[" << events.size() << "] = {" << std::endl;
     for(auto &event : events)
       {
-        ss << "      {" << std::endl
-           << "        \"" << event.name << "\"," << std::endl
-           << "        \"";
+        ss << "  {" << std::endl
+           << "    \"" << event.name << "\"," << std::endl
+           << "    \"";
         if(event.since > 1)
           ss << event.since;
         for(auto &arg : event.args)
@@ -645,16 +656,19 @@ struct interface_t : public element_t
             ss << arg.print_short();
           }
         ss << "\"," << std::endl
-           << "        (const wl_interface*[]) {" << std::endl;
-        for(auto &arg : event.args)
-          if(arg.interface != "")
-            ss  << "          &" << arg.interface << "_interface," << std::endl;
-          else
-            ss  << "          NULL," << std::endl;
-        ss << "        }," << std::endl
-           << "      }," << std::endl;
+           << "    " << name << "_interface_" << event.name << "_event," << std::endl
+           << "  }," << std::endl;
       }
-    ss << "    }" << std::endl
+    ss << "};" << std::endl
+       << std::endl;
+    ss << "const wl_interface wayland::detail::" << name << "_interface =" << std::endl
+       << "  {" << std::endl
+       << "    \"" << orig_name << "\"," << std::endl
+       << "    " << version << "," << std::endl
+       << "    " << requests.size() << "," << std::endl
+       << "    " << name << "_interface_requests," << std::endl
+       << "    " << events.size() << "," << std::endl
+       << "    " << name << "_interface_events," << std::endl
        << "  };" << std::endl
        << std::endl;
 
