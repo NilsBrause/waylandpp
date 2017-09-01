@@ -4,7 +4,7 @@ import os;
 
 VERSION_MAJOR = 0
 VERSION_MINOR = 1
-VERSION_PATCH = 0
+VERSION_PATCH = 1
 VERSION = "{}.{}.{}".format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
 hostenv = Environment(tools = ["default", "textfile"])
@@ -14,9 +14,9 @@ hostenv.Append(CXXFLAGS = os.environ.get("CXXFLAGS", ""))
 
 targetenv = Environment()
 targetenv.Append(ENV = {k: v for k, v in os.environ.items() if k.startswith("PKG_CONFIG")})
-targetenv.Replace(CXX = os.environ.get("CROSSCXX", "g++"))
+targetenv.Replace(CXX = os.environ.get("CROSSCXX", os.environ.get("CXX", "g++")))
 targetenv.Replace(CXXFLAGS = "-std=c++11 -Wall -Werror -O2 -ggdb ")
-targetenv.Append(CXXFLAGS = os.environ.get("CROSSCXXFLAGS", ""))
+targetenv.Append(CXXFLAGS = os.environ.get("CROSSCXXFLAGS", os.environ.get("CXXFLAGS", "")))
 targetenv.Replace(CPPPATH = "include")
 targetenv.Replace(SHLIBVERSION = VERSION)
 targetenv.Replace(SHLIBVERSIONFLAGS = "")
