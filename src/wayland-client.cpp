@@ -214,7 +214,7 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
 void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 {
   assert(type != wrapper_type::display);
-  if (data)
+  if(data)
     {
       data->has_destroy_opcode = true;
       data->destroy_opcode = destroy_opcode;
@@ -248,12 +248,12 @@ proxy_t::proxy_t()
 proxy_t::proxy_t(wl_proxy *p, wrapper_type t, event_queue_t const &queue)
   : proxy(p), type(t)
 {
-  if(type != wrapper_type::foreign)
+  if(type != wrapper_type::foreign && p != nullptr)
     {
       // wl_display by default has some user_data set that can be overwritten,
       // since you cannot copy a display_t anyway we can always create the data
       // here
-      if (type != wrapper_type::display)
+      if(type != wrapper_type::display)
         data = reinterpret_cast<proxy_data_t*>(wl_proxy_get_user_data(c_ptr()));
 
       if(!data)
@@ -322,7 +322,7 @@ void proxy_t::proxy_release()
 {
   if(data)
     {
-      if (--data->counter == 0)
+      if(--data->counter == 0)
         {
           if(proxy)
             {
@@ -370,7 +370,7 @@ uint32_t proxy_t::get_version() const
 
 void proxy_t::set_queue(event_queue_t queue)
 {
-  if (data)
+  if(data)
     data->queue = queue;
   wl_proxy_set_queue(c_ptr(), queue ? queue.c_ptr() : nullptr);
 }

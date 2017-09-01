@@ -131,7 +131,7 @@ argument_t::argument_t(array_t a)
 
 argument_t argument_t::fd(int fileno)
 {
-  if (fileno > std::numeric_limits<int32_t>::max())
+  if(fileno > std::numeric_limits<int32_t>::max())
     throw std::invalid_argument("FD number too big");
   argument_t arg;
   arg.argument.h = static_cast<int32_t> (fileno);
