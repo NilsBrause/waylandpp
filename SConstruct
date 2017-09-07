@@ -74,16 +74,25 @@ TryPkgConfig(wayland_cursor_env, "wayland-cursor")
 wayland_cursor = wayland_cursor_env.SharedLibrary("src/wayland-cursor++",
                                                   "src/wayland-cursor.cpp")
 
-prefix = os.environ.get("PREFIX", "/usr/local")
 root = os.environ.get("ROOT", "/")
+prefix = os.environ.get("PREFIX", "/usr/local")
+libdir = os.environ.get("LIBDIR", "lib")
+includedir = os.environ.get("INCLUDEDIR", "include")
+bindir = os.environ.get("BINDIR", "bin")
+sharedir = os.environ.get("SHAREDIR", "share")
+
+libdir = libdir.strip('/')
+includedir = includedir.strip('/')
+bindir = bindir.strip('/')
+sharedir = sharedir.strip('/')
 
 pc_subst = {
   "@prefix@": prefix,
-  "@bindir@": '$${prefix}/bin',
-  "@includedir@": '$${prefix}/include',
-  "@libdir@": '$${prefix}/lib',
-  "@datarootdir@": '$${prefix}/share',
-  "@pkgdatadir@": '$${datarootdir}/waylandpp',
+  "@bindir@": os.path.join('$${prefix}', bindir),
+  "@includedir@": os.path.join('$${prefix}', includedir),
+  "@libdir@": os.path.join('$${prefix}', libdir),
+  "@datarootdir@": os.path.join('$${prefix}', sharedir),
+  "@pkgdatadir@": os.path.join('$${datarootdir}', 'waylandpp'),
   "@WAYLANDPP_VERSION@": VERSION
 }
 
@@ -94,22 +103,22 @@ wayland_egl_pc = hostenv.Substfile("wayland-egl++.pc.in", SUBST_DICT = pc_subst)
 wayland_cursor_pc = hostenv.Substfile("wayland-cursor++.pc.in", SUBST_DICT = pc_subst)
 wayland_scanner_pc = hostenv.Substfile("wayland-scanner++.pc.in", SUBST_DICT = pc_subst)
 
-targetenv.InstallVersionedLib(os.path.join(root, prefix, "lib"), [wayland_client,
+targetenv.InstallVersionedLib(os.path.join(root, prefix, libdir), [wayland_client,
                                                                   wayland_egl,
                                                                   wayland_cursor])
-targetenv.Install(os.path.join(root, prefix, "include"), ["include/wayland-client-protocol.hpp",
+targetenv.Install(os.path.join(root, prefix, includedir), ["include/wayland-client-protocol.hpp",
                                                           "include/wayland-client.hpp",
                                                           "include/wayland-cursor.hpp",
                                                           "include/wayland-egl.hpp",
                                                           "include/wayland-util.hpp",
                                                           version_subst])
-targetenv.Install(os.path.join(root, prefix, "lib", "pkgconfig"), [wayland_client_pc, wayland_egl_pc, wayland_cursor_pc, wayland_scanner_pc])
-hostenv.Install(os.path.join(root, prefix, "bin"), [wayland_scanner])
-hostenv.Install(os.path.join(root, prefix, "share", "waylandpp"), ["protocols/wayland.xml",
+targetenv.Install(os.path.join(root, prefix, libdir, "pkgconfig"), [wayland_client_pc, wayland_egl_pc, wayland_cursor_pc, wayland_scanner_pc])
+hostenv.Install(os.path.join(root, prefix, bindir), [wayland_scanner])
+hostenv.Install(os.path.join(root, prefix, sharedir, "waylandpp"), ["protocols/wayland.xml",
                                                                    "protocols/presentation-time.xml",
                                                                    "protocols/viewporter.xml"])
 
-targetenv.Alias("install", os.path.join(root, prefix, "lib"))
-targetenv.Alias("install", os.path.join(root, prefix, "include"))
-hostenv.Alias("install", os.path.join(root, prefix, "bin"))
-hostenv.Alias("install", os.path.join(root, prefix, "share", "waylandpp"))
+targetenv.Alias("install", os.path.join(root, prefix, libdir))
+targetenv.Alias("install", os.path.join(root, prefix, includedir))
+hostenv.Alias("install", os.path.join(root, prefix, bindir))
+hostenv.Alias("install", os.path.join(root, prefix, sharedir, "waylandpp"))
