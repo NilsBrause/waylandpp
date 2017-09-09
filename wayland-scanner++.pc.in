@@ -1,7 +1,7 @@
 prefix=@prefix@
 exec_prefix=${prefix}
 datarootdir=@datarootdir@
-pkgdatadir=@datadir@/@PACKAGE@
+pkgdatadir=@pkgdatadir@
 wayland_scannerpp=@bindir@/wayland-scanner++
 
 Name: Wayland C++ Scanner
