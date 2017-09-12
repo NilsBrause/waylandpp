@@ -2,10 +2,9 @@
 
 import os;
 
-VERSION_MAJOR = 0
-VERSION_MINOR = 1
-VERSION_PATCH = 2
-VERSION = "{}.{}.{}".format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
+with open("VERSION", "r") as versionfile:
+  VERSION = versionfile.read().strip()
+VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH = VERSION.split(".")
 
 hostenv = Environment(tools = ["default", "textfile"])
 hostenv.Replace(CXX = os.environ.get("CXX", "g++"))
