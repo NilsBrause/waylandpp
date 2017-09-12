@@ -17,6 +17,8 @@ set(BUILD_LIBRARIES ON CACHE BOOL "whether to build the libraries")
 
 set(INSTALL_SHARE_WAYLANDPP_DIR "${INSTALL_SHARE_DIR}/waylandpp")
 
+set(CMAKE_CXX_STANDARD 11)
+
 # variables for .pc.in files
 set(prefix "${CMAKE_INSTALL_PREFIX}")
 set(bindir "${prefix}/${INSTALL_BIN_DIR}")
