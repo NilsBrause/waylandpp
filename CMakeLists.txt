@@ -27,6 +27,8 @@ set(pkgdatadir "${prefix}/${INSTALL_SHARE_WAYLANDPP_DIR}")
 set(libdir "${prefix}/${INSTALL_LIB_DIR}")
 set(includedir "${prefix}/${INSTALL_INCLUDE_DIR}")
 
+configure_file(Doxyfile.in Doxyfile @ONLY)
+
 if(BUILD_SCANNER)
   add_executable(wayland-scanner++
     scanner/pugiconfig.hpp

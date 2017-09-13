@@ -13,4 +13,6 @@ example/opengles
 example/shm
 example/dump
 example/proxy_wrapper
+Doxyfile
 doc
+

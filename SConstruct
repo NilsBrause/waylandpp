@@ -46,6 +46,10 @@ version_subst = hostenv.Substfile("include/wayland-version.hpp.in", SUBST_DICT =
   "@WAYLANDPP_VERSION@": VERSION
 })
 
+doxyfile_subst = hostenv.Substfile("Doxyfile.in", SUBST_DICT = {
+  "@WAYLANDPP_VERSION@": VERSION
+})
+
 def TryPkgConfig(env, library, version=None):
   library_version_str = library if (version is None) else "{} >= {}".format(library, version)
   command = "{} --cflags --libs '{}'".format(pkg_config, library_version_str)
