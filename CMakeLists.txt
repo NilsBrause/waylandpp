@@ -83,9 +83,10 @@ if(BUILD_LIBRARIES)
     src/wayland-client.cpp
     src/wayland-util.cpp
     wayland-client-protocol.cpp
+    wayland-client-protocol.hpp
   )
-  define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LDFLAGS}" include/wayland-egl.hpp src/wayland-egl.cpp)
-  define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LDFLAGS}" include/wayland-cursor.hpp src/wayland-cursor.cpp)
+  define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LDFLAGS}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
+  define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LDFLAGS}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
 
   install(FILES ${PROTO_XMLS} DESTINATION "${INSTALL_SHARE_WAYLANDPP_DIR}/protocols")
   install(
