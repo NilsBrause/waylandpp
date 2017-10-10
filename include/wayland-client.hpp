@@ -44,6 +44,7 @@ namespace wayland
    * Log message is the first argument
    */
   typedef std::function<void(std::string)> log_handler;
+
   /** \brief Set C library log handler
    *
    * The C library sometimes logs important information such as protocol
@@ -68,6 +69,7 @@ namespace wayland
   };
 
   class display_t;
+
   namespace detail
   {
     struct proxy_data_t;
@@ -151,7 +153,8 @@ namespace wayland
   protected:
     // Interface desctiption filled in by the each interface class
     const wl_interface *interface = nullptr;
-    // constructor filled in by the each interface class
+
+    // copy constructor filled in by the each interface class
     std::function<proxy_t(proxy_t)> copy_constructor;
 
     friend class registry_t;
@@ -161,7 +164,7 @@ namespace wayland
     // - int32_t
     // - proxy_t
     // - std::string
-    // - std::vector<char>
+    // - array_t
     template <typename...T>
     void marshal(uint32_t opcode, T...args)
     {
@@ -219,7 +222,7 @@ namespace wayland
     /** \brief Copy Constructior
         \param p A proxy_t object
 
-        For details see operator=()
+        Creates a copy of the proxy_t object that points to the sme proxy.
     */
     proxy_t(const proxy_t &p);
 
@@ -232,11 +235,16 @@ namespace wayland
 
     /** \brief Move Constructior
         \param p A proxy_t object
+
+        Transfers the contents of the proxy_t object on the right
+        to the proxy_t object being constructed.
     */
     proxy_t(proxy_t &&p);
 
     /** \brief Move Asignment operator
         \param p A proxy_t object
+
+        Swaps the contents of both proxy_t objects.
     */
     proxy_t &operator=(proxy_t &&p);
 
@@ -246,6 +254,8 @@ namespace wayland
         be detroyed and an destroy request will be marshaled.
         If the proxy belongs to a wl_display object, the connection will be
         closed.
+        Special rules apply to proxy wrappers and foreign proxies.
+        See \ref wrapper_type for more infos.
     */
     ~proxy_t();
 
@@ -311,6 +321,7 @@ namespace wayland
     /** \brief Check whether two wrappers refer to the same object
      */
     bool operator==(const proxy_t &right) const;
+
     /** \brief Check whether two wrappers refer to different objects
      */    
     bool operator!=(const proxy_t &right) const;
@@ -353,11 +364,13 @@ namespace wayland
      * or \ref read
      */
     bool is_finalized() const;
+
     /** \brief Cancel read intent
      * 
      * An exception is thrown when the read intent was already finalized.
      */
     void cancel();
+
     /** \brief Read events from display file descriptor
      * 
      * This will read events from the file descriptor for the
