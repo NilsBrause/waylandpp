@@ -48,6 +48,7 @@ option(INSTALL_UNSTABLE_PROTOCOLS "whether to install the unstable protocols" ON
 cmake_dependent_option(BUILD_EXAMPLES
   "whether to build the examples (requires BUILD_LIBRARIES to be ON)" OFF
   "BUILD_LIBRARIES" OFF)
+option(BUILD_SERVER "whether to build the server bindings." ON)
 
 # Do not report undefined references in libraries, since the protocol libraries cannot be used on their own.
 if(CMAKE_SHARED_LINKER_FLAGS)
@@ -110,7 +111,9 @@ if(BUILD_LIBRARIES)
 
   # required libraries
   pkg_check_modules(WAYLAND_CLIENT REQUIRED "wayland-client>=1.11.0")
-  pkg_libs_full_path(WAYLAND_CLIENT)
+  if(BUILD_SERVER)
+    pkg_check_modules(WAYLAND_SERVER REQUIRED "wayland-server>=1.17.0")
+  endif()
   pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl)
   pkg_libs_full_path(WAYLAND_EGL)
   pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor)
@@ -168,6 +171,15 @@ if(BUILD_LIBRARIES)
   if(${CMAKE_VERSION} VERSION_GREATER "3.14.0")
     target_link_options(wayland-client++ PRIVATE "-Wl,--no-undefined")
   endif()
+  if(BUILD_SERVER)
+    define_library(wayland-server++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+      "include/wayland-server.hpp;include/wayland-util.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-version.hpp"
+      src/wayland-server.cpp src/wayland-util.cpp)
+    # Report undefined references only for the base library.
+    if(${CMAKE_VERSION} VERSION_GREATER "3.14.0")
+      target_link_options(wayland-server++ PRIVATE "-Wl,--no-undefined")
+    endif()
+  endif()
   define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
     wayland-client-protocol-extra.cpp wayland-client-protocol-extra.hpp wayland-client-protocol.hpp)
@@ -186,6 +198,9 @@ if(BUILD_LIBRARIES)
   list(APPEND INSTALL_TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++)
   if (INSTALL_UNSTABLE_PROTOCOLS)
 	  list(APPEND INSTALL_TARGETS wayland-client-unstable++)
+  endif()
+  if(BUILD_SERVER)
+    list(APPEND INSTALL_TARGETS wayland-server++)
   endif()
   install(TARGETS ${INSTALL_TARGETS} EXPORT ${CMAKE_PROJECT_NAME}-targets
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
