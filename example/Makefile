@@ -23,7 +23,7 @@
 
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Werror -ggdb -O2 `pkg-config --cflags --libs ${LIBS}`
-SRC = egl.cpp shm.cpp dump.cpp proxy_wrapper.cpp foreign_display.cpp
+SRC = egl.cpp shm.cpp dump.cpp proxy_wrapper.cpp foreign_display.cpp server.cpp
 
 all: $(patsubst %.cpp,%,${SRC})
 
@@ -35,6 +35,7 @@ dump: LIBS = wayland-client++
 proxy_wrapper: LIBS = wayland-client++
 proxy_wrapper: FLAGS = -pthread
 foreign_display: LIBS = wayland-client++
+server: LIBS = wayland-server++
 
 %: %.cpp Makefile
 	${CXX} $< ${CXXFLAGS} ${FLAGS} -o $@

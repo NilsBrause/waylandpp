@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="test">
+  <interface name="pingpong" version="1">
+    <request name="ping">
+      <arg name="message" type="string"/>
+    </request>
+    <event name="pong">
+      <arg name="message" type="string"/>
+    </event>
+  </interface>
+  <interface name="dummy" version="1"/>
+</protocol>

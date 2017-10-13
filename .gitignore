@@ -13,5 +13,6 @@ example/shm
 example/dump
 example/proxy_wrapper
 Doxyfile
+example/server
 doc
 /build/
