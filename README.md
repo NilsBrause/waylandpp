@@ -45,16 +45,6 @@ Evirnoment Variable | Effect
 `BINDIR`            | Binary folder relative to the prefix
 `SHAREDIR`          | Shared folder relative to the prefix
 
-To build the example programs, `scons` is executed in the example
-directory. If the library is not yet installed, the following
-commands can be used to run the example programs from the root
-directory of the repository, while a Wayland compositor is running:
-
-    $ LD_LIBRARY_PATH=src example/opengles
-    $ LD_LIBRARY_PATH=src example/shm
-    $ LD_LIBRARY_PATH=src example/dump
-    $ LD_LIBRARY_PATH=src example/proxy-wrapper
-
 To build the documentation, `doxygen` needs to be executed in the
 root directory of the repository. The resulting documentation can
 then be found in the `doc` directory. The required Doxyfile is
@@ -69,6 +59,11 @@ by a `make`. After that, `make install` will install the library.
 
 For building the examples and the documentation refer to the previous
 subsection.
+
+## Example programs
+
+To build the example programs, `make` can executed in the example
+directory after the library has been built and installed.
 
 # Usage
 
