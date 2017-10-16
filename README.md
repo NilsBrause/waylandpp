@@ -77,6 +77,8 @@ In the following, it is assumed that the reader is familiar with
 basic Wayland concepts and at least version 11 of the C++
 programming language.
 
+## Clients
+
 Each interface is represented by a class. E.g. the `wl_registry`
 interface is represented by the `registry_t` class.
 
@@ -125,6 +127,35 @@ For example:
                               array_t keys)
       { std::vector<uint32_t> vec = keys; };
 
+## Servers
+
+Instead of proxies the object wrappers of a specific interface are
+called resources and are represented by a `resource_t` object. They
+are pretty similar to proxies, as they have events and requests.
+
+The server bindings allow the creation of global objects. These can
+be constructed by prepending `global_` to the class name. They have
+to be initialised with the display object:
+
+    display_t display;
+    global_output_t output(display);
+
+Global objects only have a single event called "on_bind", that is
+called whenever a client binds to this interface. The event then
+supplies the corresponding resource:
+
+    output.on_bind() = [this] (client_t client, output_t output) { /* ... */ }
+
+A `client_t` object which represents the client connected to the
+server is also supplied with the bind event.
+
+The client and resource objects should be saved for later to be able
+to identify the exact origin of a request. To help with that, all
+server-side wrapper classes allow saving of user data through the
+`user_data()` member which returns a reference to an `any` type.
+
+## Compiling
+
 To compile code that using this library, pkg-config can be used to
 take care of the compiler flags. Assuming the source file is called
 `foo.cpp` and the executable shall be called `foo` type:
@@ -139,6 +170,8 @@ directly be specified on the command line.
 If the Wayland cursor classes and/or EGL is used, the corresponding
 libreries `wayland-cursor++` and/or `wayland-egl++` need to be linked
 in as well. If any extension protocols such as xdg-shell are used,
-the library `wayland-client-extra++` should be linked in as well.
+the library `wayland-client-extra++` should be linked in as well,
+and if the Waylans server bindings are used, the library
+`wayland-server++` needs to be linked in as well.
 
 Further examples can be found in the examples/Makefile.
