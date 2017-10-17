@@ -2,6 +2,12 @@
 
 import os;
 
+AddOption("--documentation",
+          dest="documentation",
+          action='store_true',
+          help="Build and install documentation",
+          default=False if WhereIs("doxygen") == None else True)
+
 with open("VERSION", "r") as versionfile:
   VERSION = versionfile.read().strip()
 VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH = VERSION.split(".")
@@ -83,6 +89,8 @@ libdir = os.environ.get("LIBDIR", "lib" + os.environ.get("LIB_SUFFIX", ""))
 includedir = os.environ.get("INCLUDEDIR", "include")
 bindir = os.environ.get("BINDIR", "bin")
 sharedir = os.environ.get("SHAREDIR", "share")
+docdir = os.environ.get("DOCDIR", os.path.join(sharedir, "doc"))
+mandir = os.environ.get("MANDIR", os.path.join(sharedir, "man"))
 
 libdir = libdir.strip('/')
 includedir = includedir.strip('/')
@@ -125,3 +133,15 @@ targetenv.Alias("install", os.path.join(root, prefix, libdir))
 targetenv.Alias("install", os.path.join(root, prefix, includedir))
 hostenv.Alias("install", os.path.join(root, prefix, bindir))
 hostenv.Alias("install", os.path.join(root, prefix, sharedir, "waylandpp"))
+
+if GetOption("documentation"):
+  y = hostenv.Command(["doc/html/index.html", "doc/latex/index.tex", "doc/man/man3/wayland_display_t.3"],
+                      [wayland_client, wayland_egl, wayland_cursor, "Doxyfile"],
+                      "doxygen >/dev/null 2>/dev/null")
+  Clean(y, ["doc/html", "doc/latex", "doc/man"])
+  hostenv.Install(os.path.join(root, prefix, docdir, "waylandpp"),
+                  [os.path.join("doc", "html"), os.path.join("doc", "latex")])
+  hostenv.Install(os.path.join(root, prefix, mandir, "man3"),
+                  Glob(os.path.join("doc", "man", "man3", "*")))
+  hostenv.Alias("install", os.path.join(root, prefix, docdir))
+  hostenv.Alias("install", os.path.join(root, prefix, mandir))

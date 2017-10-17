@@ -44,12 +44,8 @@ Evirnoment Variable | Effect
 `INCLUDEDIR`        | Header folder relative to the prefix
 `BINDIR`            | Binary folder relative to the prefix
 `SHAREDIR`          | Shared folder relative to the prefix
-
-To build the documentation, `doxygen` needs to be executed in the
-root directory of the repository. The resulting documentation can
-then be found in the `doc` directory. The required Doxyfile is
-available after the library has been built. The documentaion is also
-online availabe [here](http://nilsbrause.de/waylandpp/).
+`DOCDIR`            | Dcoumentation folder relative to the prefix
+`MANDIR`            | Manpage folder relative to the prefix
 
 ## With CMake
 
@@ -57,8 +53,17 @@ To build the library, `cmake ..` needs to executed in a newly created
 `build` directory in the root directory of the repository, followed 
 by a `make`. After that, `make install` will install the library.
 
-For building the examples and the documentation refer to the previous
-subsection.
+## Documentation
+
+If the requirements are met, the documentation will normally be built
+automatically when using scons or cmake. HTML pages, LaTeX source
+files as well as manpages are generated.
+
+To build the documentation amnually, `doxygen` needs to be executed
+in the root directory of the repository. The resulting documentation
+can then be found in the `doc` directory. The required Doxyfile is
+available after the library has been built. The documentaion is also
+online availabe [here](http://nilsbrause.de/waylandpp/).
 
 ## Example programs
 
