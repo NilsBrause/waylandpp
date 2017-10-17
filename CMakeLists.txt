@@ -14,6 +14,10 @@ set(INSTALL_PKGCONFIG_DIR "${INSTALL_LIB_DIR}/pkgconfig" CACHE PATH "Installatio
 set(INSTALL_SHARE_DIR share CACHE PATH "Installation directory for shared files")
 set(BUILD_SCANNER ON CACHE BOOL "whether to build wayland-scanner++")
 set(BUILD_LIBRARIES ON CACHE BOOL "whether to build the libraries")
+find_package(Doxygen)
+option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
+set(INSTALL_DOC_DIR "${INSTALL_SHARE_DIR}/doc/waylandpp" CACHE PATH "Installation directory for documentation")
+set(INSTALL_MAN_DIR "${INSTALL_SHARE_DIR}/man" CACHE PATH "Installation directory for man pages")
 
 set(INSTALL_SHARE_WAYLANDPP_DIR "${INSTALL_SHARE_DIR}/waylandpp")
 
@@ -26,8 +30,6 @@ set(datarootdir "${prefix}/${INSTALL_SHARE_DIR}")
 set(pkgdatadir "${prefix}/${INSTALL_SHARE_WAYLANDPP_DIR}")
 set(libdir "${prefix}/${INSTALL_LIB_DIR}")
 set(includedir "${prefix}/${INSTALL_INCLUDE_DIR}")
-
-configure_file(Doxyfile.in Doxyfile @ONLY)
 
 if(BUILD_SCANNER)
   add_executable(wayland-scanner++
@@ -99,4 +101,21 @@ if(BUILD_LIBRARIES)
     PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}"
     RESOURCE DESTINATION "${INSTALL_PKGCONFIG_DIR}"
   )
+endif()
+
+if(BUILD_DOCUMENTATION)
+  if(NOT DOXYGEN_FOUND)
+    message(FATAL_ERROR "Doxygen is needed to build the documentation.")
+  endif()
+
+  configure_file(Doxyfile.in Doxyfile @ONLY)
+
+  add_custom_target(doc ALL
+    COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Generating API documentation with Doxygen"
+   VERBATIM)
+
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/man/ DESTINATION ${INSTALL_MAN_DIR})
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html ${CMAKE_CURRENT_BINARY_DIR}/doc/latex DESTINATION ${INSTALL_DOC_DIR})
 endif()
