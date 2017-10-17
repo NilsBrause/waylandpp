@@ -79,7 +79,7 @@ wayland_cursor = wayland_cursor_env.SharedLibrary("src/wayland-cursor++",
 
 root = os.environ.get("ROOT", "/")
 prefix = os.environ.get("PREFIX", "/usr/local")
-libdir = os.environ.get("LIBDIR", "lib")
+libdir = os.environ.get("LIBDIR", "lib" + os.environ.get("LIB_SUFFIX", ""))
 includedir = os.environ.get("INCLUDEDIR", "include")
 bindir = os.environ.get("BINDIR", "bin")
 sharedir = os.environ.get("SHAREDIR", "share")
