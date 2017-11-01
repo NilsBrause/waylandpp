@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2014-2017, Nils Christopher Brause
  * All rights reserved.
@@ -28,6 +29,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
 #include <typeinfo>
 #include <utility>
 #include <vector>
