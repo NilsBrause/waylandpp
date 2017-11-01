@@ -28,7 +28,7 @@ To build the library, `scons` needs to be executed in the root
 directory of the repository. After that, `scons install` will install
 the library.
 
-There are several environment variable that can be set in order to
+There are several environment variables that can be set in order to
 customise the build and install process:
 
 Evirnoment Variable | Effect
@@ -52,6 +52,28 @@ Evirnoment Variable | Effect
 To build the library, `cmake ..` needs to executed in a newly created
 `build` directory in the root directory of the repository, followed 
 by a `make`. After that, `make install` will install the library.
+
+There are several CMake variables that can be set in order to
+customise the build and install process:
+
+CMake Variable          | Effect
+----------------------- | ------
+`CMAKE_CXX_COMPILER`    | C++ compiler to use
+`CMAKE_CXX_FLAGS`       | Additionsl flags for the C++ compiler
+`INSTALL_PKGCONFIG_DIR` | Path to the pkg-config executable
+`CMAKE_INSTALL_PREFIX`  | Prefix folder, under which everything is installed
+`INSTALL_LIB_DIR`       | Library folder relative to the prefix
+`INSTALL_INCLUDE_DIR`   | Header folder relative to the prefix
+`INSTALL_BIN_DIR`       | Binary folder relative to the prefix
+`INSTALL_SHARE_DIR`     | Shared folder relative to the prefix
+`INSTALL_DOC_DIR`       | Dcoumentation folder relative to the prefix
+`INSTALL_MAN_DIR`       | Manpage folder relative to the prefix
+`BUILD_SCANNER`         | Whether to build the scanner
+`BUILD_LIBRARIES`       | Whether to build the libraries
+`BUILD_DOCUMENTATION`   | Whether to build the documentation
+
+The installation root can also be changed using the environment variable
+`DESTDIR` when using `make install`.
 
 ## Documentation
 
