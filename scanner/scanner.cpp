@@ -310,7 +310,7 @@ struct request_t : public event_t
         else if(arg.type == "fd")
           ss << "argument_t::fd(" << arg.name << "), ";
         else if(arg.type == "object")
-          ss << "reinterpret_cast<wl_object*>(" << arg.name << ".c_ptr()), ";
+          ss << arg.name << ".proxy_has_object() ? reinterpret_cast<wl_object*>(" << arg.name << ".c_ptr()) : nullptr, ";
         else if(arg.enum_name != "")
           ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << arg.name + "), ";
         else
