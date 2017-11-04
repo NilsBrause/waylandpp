@@ -1,5 +1,5 @@
 project(waylandpp)
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 # packages
 include(FindPkgConfig)
@@ -22,6 +22,7 @@ set(INSTALL_FULL_PKGDATADIR "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp")
 set(BUILD_SCANNER ON CACHE BOOL "whether to build wayland-scanner++")
 set(BUILD_LIBRARIES ON CACHE BOOL "whether to build the libraries")
 set(BUILD_DOCUMENTATION ${DOXYGEN_FOUND} CACHE BOOL "Create and install the HTML based API documentation (requires Doxygen)")
+set(BUILD_EXAMPLES OFF CACHE BOOL "whether to build the examples (requires BUILD_LIBRARIES to be ON)")
 
 # variables for .pc.in files
 set(prefix "${CMAKE_INSTALL_PREFIX}")
@@ -98,6 +99,12 @@ if(BUILD_LIBRARIES)
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
     RESOURCE DESTINATION "${INSTALL_FULL_PKGCONFIGDIR}")
 endif()
+
+if(BUILD_EXAMPLES)
+  if(NOT BUILD_LIBRARIES)
+    message(FATAL_ERROR "Cannot build examples without building libraries")
+  endif()
+  add_subdirectory(example)
 endif()
 
 if(BUILD_DOCUMENTATION)

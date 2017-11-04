@@ -70,6 +70,7 @@ CMake Variable              | Effect
 `BUILD_SCANNER`             | Whether to build the scanner
 `BUILD_LIBRARIES`           | Whether to build the libraries
 `BUILD_DOCUMENTATION`       | Whether to build the documentation
+`BUILD_EXAMPLES`            | Whether to build the examples
 
 The installation root can also be changed using the environment variable
 `DESTDIR` when using `make install`.
@@ -88,8 +89,13 @@ online availabe [here](http://nilsbrause.de/waylandpp/).
 
 ## Example programs
 
-To build the example programs, `make` can executed in the example
-directory after the library has been built and installed.
+To build the example programs when using scons, `make` can executed in
+the example directory after the library has been built and installed.
+
+When using cmake, it is sufficient to enable the `BUILD_EXAMPLES` option
+during the build. The resulting binaries will be put under the `example`
+directory inside the build directory. They can be run directly without
+installing the library first.
 
 # Usage
 
