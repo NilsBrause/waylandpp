@@ -4,7 +4,6 @@
 *.so*
 *.pc
 *-protocol.*pp
-.sconsign.dblite
 compile_commands.json
 .clang_complete
 scanner/wayland-scanner++
