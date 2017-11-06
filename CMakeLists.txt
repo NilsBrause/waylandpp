@@ -1,8 +1,9 @@
 project(waylandpp)
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 # packages
 include(FindPkgConfig)
+include(GNUInstallDirs)
 find_package(Doxygen)
 
 # read version information
@@ -13,26 +14,23 @@ set(WAYLANDPP_VERSION_MINOR "${CMAKE_MATCH_2}")
 set(WAYLANDPP_VERSION_PATCH "${CMAKE_MATCH_3}")
 configure_file(include/wayland-version.hpp.in wayland-version.hpp @ONLY)
 
+# path shorthands
+set(INSTALL_FULL_PKGCONFIGDIR "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig")
+set(INSTALL_FULL_PKGDATADIR "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp")
+
 # user options
-set(INSTALL_LIB_DIR "lib${LIB_SUFFIX}" CACHE PATH "Installation directory for libraries")
-set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
-set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")
-set(INSTALL_PKGCONFIG_DIR "${INSTALL_LIB_DIR}/pkgconfig" CACHE PATH "Installation directory for pkgconfig files")
-set(INSTALL_SHARE_DIR share CACHE PATH "Installation directory for shared files")
-set(INSTALL_SHARE_WAYLANDPP_DIR "${INSTALL_SHARE_DIR}/waylandpp")
-set(INSTALL_DOC_DIR "${INSTALL_SHARE_DIR}/doc/waylandpp" CACHE PATH "Installation directory for documentation")
-set(INSTALL_MAN_DIR "${INSTALL_SHARE_DIR}/man" CACHE PATH "Installation directory for man pages")
 set(BUILD_SCANNER ON CACHE BOOL "whether to build wayland-scanner++")
 set(BUILD_LIBRARIES ON CACHE BOOL "whether to build the libraries")
 set(BUILD_DOCUMENTATION ${DOXYGEN_FOUND} CACHE BOOL "Create and install the HTML based API documentation (requires Doxygen)")
+set(BUILD_EXAMPLES OFF CACHE BOOL "whether to build the examples (requires BUILD_LIBRARIES to be ON)")
 
 # variables for .pc.in files
 set(prefix "${CMAKE_INSTALL_PREFIX}")
-set(bindir "${prefix}/${INSTALL_BIN_DIR}")
-set(datarootdir "${prefix}/${INSTALL_SHARE_DIR}")
-set(pkgdatadir "${prefix}/${INSTALL_SHARE_WAYLANDPP_DIR}")
-set(libdir "${prefix}/${INSTALL_LIB_DIR}")
-set(includedir "${prefix}/${INSTALL_INCLUDE_DIR}")
+set(bindir "${CMAKE_INSTALL_FULL_BINDIR}")
+set(datarootdir "${CMAKE_INSTALL_FULL_DATAROOTDIR}")
+set(pkgdatadir "${INSTALL_FULL_PKGDATADIR}")
+set(libdir "${CMAKE_INSTALL_FULL_LIBDIR}")
+set(includedir "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
 
 # C++ 11
 set(CMAKE_CXX_STANDARD 11)
@@ -41,8 +39,8 @@ set(CMAKE_CXX_STANDARD 11)
 if(BUILD_SCANNER)
   add_executable(wayland-scanner++ scanner/scanner.cpp scanner/pugixml.cpp)
   configure_file(wayland-scanner++.pc.in wayland-scanner++.pc @ONLY)
-  install(TARGETS wayland-scanner++ RUNTIME DESTINATION "${INSTALL_BIN_DIR}")
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/wayland-scanner++.pc" DESTINATION "${INSTALL_PKGCONFIG_DIR}")
+  install(TARGETS wayland-scanner++ RUNTIME DESTINATION "${CMAKE_INSTALL_FULL_BINDIR}")
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/wayland-scanner++.pc" DESTINATION "${INSTALL_FULL_PKGCONFIGDIR}")
 endif()
 
 # build libraries
@@ -95,11 +93,18 @@ if(BUILD_LIBRARIES)
   define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LDFLAGS}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
 
   # Install libraries
-  install(FILES ${PROTO_XMLS} DESTINATION "${INSTALL_SHARE_WAYLANDPP_DIR}/protocols")
+  install(FILES ${PROTO_XMLS} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
   install(TARGETS wayland-client++ wayland-egl++ wayland-cursor++
-    LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-    PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}"
-    RESOURCE DESTINATION "${INSTALL_PKGCONFIG_DIR}")
+    LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
+    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
+    RESOURCE DESTINATION "${INSTALL_FULL_PKGCONFIGDIR}")
+endif()
+
+if(BUILD_EXAMPLES)
+  if(NOT BUILD_LIBRARIES)
+    message(FATAL_ERROR "Cannot build examples without building libraries")
+  endif()
+  add_subdirectory(example)
 endif()
 
 if(BUILD_DOCUMENTATION)
@@ -107,14 +112,18 @@ if(BUILD_DOCUMENTATION)
     message(FATAL_ERROR "Doxygen is needed to build the documentation.")
   endif()
 
+  set(WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/doc")
   configure_file(Doxyfile.in Doxyfile @ONLY)
 
-  add_custom_target(doc ALL
-    COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  add_custom_command(
+    OUTPUT "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html/index.html"
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+    COMMAND ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMENT "Generating API documentation with Doxygen"
-   VERBATIM)
+    VERBATIM
+  )
+  add_custom_target(doc ALL DEPENDS "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html/index.html")
 
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/man/ DESTINATION ${INSTALL_MAN_DIR})
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html ${CMAKE_CURRENT_BINARY_DIR}/doc/latex DESTINATION ${INSTALL_DOC_DIR})
+  install(DIRECTORY "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/man/" DESTINATION ${CMAKE_INSTALL_FULL_MANDIR})
+  install(DIRECTORY "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html" "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/latex" DESTINATION ${CMAKE_INSTALL_FULL_DOCDIR})
 endif()

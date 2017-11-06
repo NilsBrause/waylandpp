@@ -56,21 +56,21 @@ by a `make`. After that, `make install` will install the library.
 There are several CMake variables that can be set in order to
 customise the build and install process:
 
-CMake Variable          | Effect
------------------------ | ------
-`CMAKE_CXX_COMPILER`    | C++ compiler to use
-`CMAKE_CXX_FLAGS`       | Additionsl flags for the C++ compiler
-`INSTALL_PKGCONFIG_DIR` | Path to the pkg-config executable
-`CMAKE_INSTALL_PREFIX`  | Prefix folder, under which everything is installed
-`INSTALL_LIB_DIR`       | Library folder relative to the prefix
-`INSTALL_INCLUDE_DIR`   | Header folder relative to the prefix
-`INSTALL_BIN_DIR`       | Binary folder relative to the prefix
-`INSTALL_SHARE_DIR`     | Shared folder relative to the prefix
-`INSTALL_DOC_DIR`       | Dcoumentation folder relative to the prefix
-`INSTALL_MAN_DIR`       | Manpage folder relative to the prefix
-`BUILD_SCANNER`         | Whether to build the scanner
-`BUILD_LIBRARIES`       | Whether to build the libraries
-`BUILD_DOCUMENTATION`   | Whether to build the documentation
+CMake Variable              | Effect
+--------------------------- | ------
+`CMAKE_CXX_COMPILER`        | C++ compiler to use
+`CMAKE_CXX_FLAGS`           | Additional flags for the C++ compiler
+`CMAKE_INSTALL_PREFIX`      | Prefix folder, under which everything is installed
+`CMAKE_INSTALL_LIBDIR`      | Library folder relative to the prefix
+`CMAKE_INSTALL_INCLUDEDIR`  | Header folder relative to the prefix
+`CMAKE_INSTALL_BINDIR`      | Binary folder relative to the prefix
+`CMAKE_INSTALL_DATAROOTDIR` | Shared folder relative to the prefix
+`CMAKE_INSTALL_DOCDIR`      | Dcoumentation folder relative to the prefix
+`CMAKE_INSTALL_MANDIR`      | Manpage folder relative to the prefix
+`BUILD_SCANNER`             | Whether to build the scanner
+`BUILD_LIBRARIES`           | Whether to build the libraries
+`BUILD_DOCUMENTATION`       | Whether to build the documentation
+`BUILD_EXAMPLES`            | Whether to build the examples
 
 The installation root can also be changed using the environment variable
 `DESTDIR` when using `make install`.
@@ -89,8 +89,13 @@ online availabe [here](http://nilsbrause.de/waylandpp/).
 
 ## Example programs
 
-To build the example programs, `make` can executed in the example
-directory after the library has been built and installed.
+To build the example programs when using scons, `make` can executed in
+the example directory after the library has been built and installed.
+
+When using cmake, it is sufficient to enable the `BUILD_EXAMPLES` option
+during the build. The resulting binaries will be put under the `example`
+directory inside the build directory. They can be run directly without
+installing the library first.
 
 # Usage
 

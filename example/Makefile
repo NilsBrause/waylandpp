@@ -1,11 +1,11 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Werror -ggdb -O2 `pkg-config --cflags --libs ${LIBS}`
-SRC = opengles.cpp shm.cpp dump.cpp proxy_wrapper.cpp
+SRC = egl.cpp shm.cpp dump.cpp proxy_wrapper.cpp
 
 all: $(patsubst %.cpp,%,${SRC})
 
-opengles: LIBS = wayland-client++ wayland-cursor++ wayland-egl++
-opengles: FLAGS = -lEGL -lGL
+egl: LIBS = wayland-client++ wayland-cursor++ wayland-egl++
+egl: FLAGS = -lEGL -lGL
 shm: LIBS = wayland-client++ wayland-cursor++
 shm: FLAGS = -lrt
 dump: LIBS = wayland-client++

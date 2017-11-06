@@ -53,7 +53,8 @@ version_subst = hostenv.Substfile("include/wayland-version.hpp.in", SUBST_DICT =
 })
 
 doxyfile_subst = hostenv.Substfile("Doxyfile.in", SUBST_DICT = {
-  "@WAYLANDPP_VERSION@": VERSION
+  "@WAYLANDPP_VERSION@": VERSION,
+  "@WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY@": "doc"
 })
 
 def TryPkgConfig(env, library, version=None):

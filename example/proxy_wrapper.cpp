@@ -23,7 +23,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \example proxy-wrapper.cpp
+/** \example proxy_wrapper.cpp
  * This is an example of how to use the Wayland C++ bindings with multiple threads
  * binding to globals on one shared connection using proxy wrappers.
  *

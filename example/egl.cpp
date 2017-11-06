@@ -23,8 +23,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \example opengles.cpp
- * This is an example of how to use the Wayland C++ bindings with OpenGL ES.
+/** \example egl.cpp
+ * This is an example of how to use the Wayland C++ bindings with EGL and OpenGL.
  */
 
 #include <stdexcept>
