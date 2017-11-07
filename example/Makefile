@@ -15,7 +15,7 @@ proxy_wrapper: FLAGS = -pthread
 %: %.cpp Makefile
 	${CXX} $< ${CXXFLAGS} ${FLAGS} -o $@
 
-Clean: Makefile
+clean: Makefile
 	rm -f $(patsubst %.cpp,%,${SRC})
 
 .SUFFIXES:
