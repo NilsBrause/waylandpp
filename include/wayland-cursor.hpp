@@ -44,13 +44,13 @@ namespace wayland
 
   public:
     cursor_image_t();
-    uint32_t width();
-    uint32_t height();
-    uint32_t hotspot_x();
-    uint32_t hotspot_y();
-    uint32_t delay();
+    uint32_t width() const;
+    uint32_t height() const;
+    uint32_t hotspot_x() const;
+    uint32_t hotspot_y() const;
+    uint32_t delay() const;
     // buffer will be destroyed when cursor_theme is destroyed
-    buffer_t get_buffer();
+    buffer_t get_buffer() const;
   };
 
   class cursor_t : public detail::basic_wrapper<wl_cursor>
@@ -63,10 +63,10 @@ namespace wayland
 
   public:
     cursor_t();
-    unsigned int image_count();
-    std::string name();
-    cursor_image_t image(unsigned int n);
-    int frame(uint32_t time);
+    unsigned int image_count() const;
+    std::string name() const;
+    cursor_image_t image(unsigned int n) const;
+    int frame(uint32_t time) const;
   };
 
   class cursor_theme_t : public detail::refcounted_wrapper<wl_cursor_theme>
@@ -74,7 +74,7 @@ namespace wayland
   public:
     cursor_theme_t();
     cursor_theme_t(std::string name, int size, shm_t shm);
-    cursor_t get_cursor(std::string name);
+    cursor_t get_cursor(std::string name) const;
   };
 }
 

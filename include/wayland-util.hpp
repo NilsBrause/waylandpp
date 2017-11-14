@@ -156,7 +156,7 @@ namespace wayland
       {
       }
 
-      std::shared_ptr<native_t> ref_ptr()
+      std::shared_ptr<native_t> ref_ptr() const
       {
         return object;
       }
