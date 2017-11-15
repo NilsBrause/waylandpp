@@ -40,7 +40,7 @@ cursor_theme_t::cursor_theme_t(std::string name, int size, shm_t shm)
     throw std::runtime_error("wl_cursor_theme_load failed.");
 }
 
-cursor_t cursor_theme_t::get_cursor(std::string name)
+cursor_t cursor_theme_t::get_cursor(std::string name) const
 {
   wl_cursor *cursor = wl_cursor_theme_get_cursor(c_ptr(), name.c_str());
   if(!cursor)
@@ -58,24 +58,24 @@ cursor_t::cursor_t()
 {
 }
 
-unsigned int cursor_t::image_count()
+unsigned int cursor_t::image_count() const
 {
   return c_ptr()->image_count;
 }
 
-std::string cursor_t::name()
+std::string cursor_t::name() const
 {
   return c_ptr()->name;
 }
 
-cursor_image_t cursor_t::image(unsigned int n)
+cursor_image_t cursor_t::image(unsigned int n) const
 {
   if(n >= image_count())
     throw std::runtime_error("n >= image count");
   return cursor_image_t(c_ptr()->images[n], cursor_theme);
 }
 
-int cursor_t::frame(uint32_t time)
+int cursor_t::frame(uint32_t time) const
 {
   return wl_cursor_frame(c_ptr(), time);
 }
@@ -90,32 +90,32 @@ cursor_image_t::cursor_image_t()
 {
 }
 
-uint32_t cursor_image_t::width()
+uint32_t cursor_image_t::width() const
 {
   return c_ptr()->width;
 }
 
-uint32_t cursor_image_t::height()
+uint32_t cursor_image_t::height() const
 {
   return c_ptr()->height;
 }
 
-uint32_t cursor_image_t::hotspot_x()
+uint32_t cursor_image_t::hotspot_x() const
 {
   return c_ptr()->hotspot_x;
 }
 
-uint32_t cursor_image_t::hotspot_y()
+uint32_t cursor_image_t::hotspot_y() const
 {
   return c_ptr()->hotspot_y;
 }
 
-uint32_t cursor_image_t::delay()
+uint32_t cursor_image_t::delay() const
 {
   return c_ptr()->delay;
 }
 
-buffer_t cursor_image_t::get_buffer()
+buffer_t cursor_image_t::get_buffer() const
 {
   wl_buffer *buffer = wl_cursor_image_get_buffer(c_ptr());
   // buffer will be destroyed when cursor_theme is destroyed
