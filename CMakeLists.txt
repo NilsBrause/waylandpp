@@ -119,6 +119,7 @@ if(BUILD_DOCUMENTATION)
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMAND ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMENT "Generating API documentation with Doxygen"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     VERBATIM
   )
   add_custom_target(doc ALL DEPENDS "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html/index.html")
