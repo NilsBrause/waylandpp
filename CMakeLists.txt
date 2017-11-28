@@ -6,12 +6,11 @@ include(FindPkgConfig)
 include(GNUInstallDirs)
 find_package(Doxygen)
 
-# read version information
-file(STRINGS "VERSION" WAYLANDPP_VERSION LIMIT_COUNT 1)
-string(REGEX MATCHALL "([0-9]+)\\.([0-9]+)\\.([0-9]+)" WAYLANDPP_VERSION_PARSED "${WAYLANDPP_VERSION}")
-set(WAYLANDPP_VERSION_MAJOR "${CMAKE_MATCH_1}")
-set(WAYLANDPP_VERSION_MINOR "${CMAKE_MATCH_2}")
-set(WAYLANDPP_VERSION_PATCH "${CMAKE_MATCH_3}")
+# version information
+set(WAYLANDPP_VERSION_MAJOR 0)
+set(WAYLANDPP_VERSION_MINOR 1)
+set(WAYLANDPP_VERSION_PATCH 5)
+set(WAYLANDPP_VERSION "${WAYLANDPP_VERSION_MAJOR}.${WAYLANDPP_VERSION_MINOR}.${WAYLANDPP_VERSION_PATCH}")
 configure_file(include/wayland-version.hpp.in wayland-version.hpp @ONLY)
 
 # path shorthands
@@ -120,6 +119,7 @@ if(BUILD_DOCUMENTATION)
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMAND ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMENT "Generating API documentation with Doxygen"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     VERBATIM
   )
   add_custom_target(doc ALL DEPENDS "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html/index.html")
