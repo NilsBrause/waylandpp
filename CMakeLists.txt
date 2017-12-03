@@ -63,7 +63,8 @@ if(BUILD_LIBRARIES)
   set(PROTO_XMLS
     "${CMAKE_SOURCE_DIR}/protocols/wayland.xml"
     "${CMAKE_SOURCE_DIR}/protocols/presentation-time.xml"
-    "${CMAKE_SOURCE_DIR}/protocols/viewporter.xml")
+    "${CMAKE_SOURCE_DIR}/protocols/viewporter.xml"
+    "${CMAKE_SOURCE_DIR}/protocols/xdg-shell.xml")
   set(PROTO_FILES
     "wayland-client-protocol.hpp"
     "wayland-client-protocol.cpp")
