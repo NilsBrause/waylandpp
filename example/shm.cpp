@@ -133,12 +133,15 @@ private:
   registry_t registry;
   compositor_t compositor;
   shell_t shell;
+  xdg_wm_base_t xdg_wm_base;
   seat_t seat;
   shm_t shm;
   
   // local objects
   surface_t surface;
   shell_surface_t shell_surface;
+  xdg_surface_t xdg_surface;
+  xdg_toplevel_t xdg_toplevel;
   pointer_t pointer;
   keyboard_t keyboard;
   callback_t frame_cb;
@@ -219,6 +222,8 @@ public:
           registry.bind(name, compositor, version);
         else if(interface == shell_t::interface_name)
           registry.bind(name, shell, version);
+        else if(interface == xdg_wm_base_t::interface_name)
+          registry.bind(name, xdg_wm_base, version);
         else if(interface == seat_t::interface_name)
           registry.bind(name, seat, version);
         else if(interface == shm_t::interface_name)
@@ -247,11 +252,23 @@ public:
 
     // create a surface
     surface = compositor.create_surface();
-    shell_surface = shell.get_shell_surface(surface);
-    
-    shell_surface.on_ping() = [&] (uint32_t serial) { shell_surface.pong(serial); };
-    shell_surface.set_title("Window");
-    shell_surface.set_toplevel();
+
+    // create a shell surface
+    if(xdg_wm_base)
+      {
+        xdg_wm_base.on_ping() = [&] (uint32_t serial) { xdg_wm_base.pong(serial); };
+        xdg_surface = xdg_wm_base.get_xdg_surface(surface);
+        xdg_toplevel = xdg_surface.get_toplevel();
+        xdg_toplevel.set_title("Window");
+        xdg_toplevel.on_close() = [&] () { running = false; };
+      }
+    else
+      {
+        shell_surface = shell.get_shell_surface(surface);
+        shell_surface.on_ping() = [&] (uint32_t serial) { shell_surface.pong(serial); };
+        shell_surface.set_title("Window");
+        shell_surface.set_toplevel();
+      }
 
     // Get input devices
     pointer = seat.get_pointer();
@@ -279,7 +296,12 @@ public:
     pointer.on_button() = [&] (uint32_t serial, uint32_t time, uint32_t button, pointer_button_state state)
       {
         if(button == BTN_LEFT && state == pointer_button_state::pressed)
-          shell_surface.move(seat, serial);
+          {
+            if(xdg_toplevel)
+              xdg_toplevel.move(seat, serial);
+            else
+              shell_surface.move(seat, serial);
+          }
       };
 
     // press 'q' to exit
