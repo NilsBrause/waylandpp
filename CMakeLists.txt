@@ -80,7 +80,8 @@ if(BUILD_LIBRARIES)
     target_link_libraries("${TARGET}" ${LDFLAGS})
     set_target_properties("${TARGET}" PROPERTIES
       PUBLIC_HEADER "${HEADERS}"
-      SOVERSION "${WAYLANDPP_VERSION}")
+      VERSION "${WAYLANDPP_VERSION}"
+      SOVERSION "${WAYLANDPP_VERSION_MAJOR}")
     configure_file("${TARGET}.pc.in" "${TARGET}.pc" @ONLY)
     set_target_properties("${TARGET}" PROPERTIES RESOURCE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc")
   endfunction()
