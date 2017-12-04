@@ -9,7 +9,7 @@ find_package(Doxygen)
 # version information
 set(WAYLANDPP_VERSION_MAJOR 0)
 set(WAYLANDPP_VERSION_MINOR 1)
-set(WAYLANDPP_VERSION_PATCH 5)
+set(WAYLANDPP_VERSION_PATCH 6)
 set(WAYLANDPP_VERSION "${WAYLANDPP_VERSION_MAJOR}.${WAYLANDPP_VERSION_MINOR}.${WAYLANDPP_VERSION_PATCH}")
 configure_file(include/wayland-version.hpp.in wayland-version.hpp @ONLY)
 
@@ -81,7 +81,7 @@ if(BUILD_LIBRARIES)
     target_link_libraries("${TARGET}" ${LDFLAGS})
     set_target_properties("${TARGET}" PROPERTIES
       PUBLIC_HEADER "${HEADERS}"
-      SOVERSION "${WAYLANDPP_VERSION}")
+      SOVERSION "${WAYLANDPP_VERSION_MAJOR}.${WAYLANDPP_VERSION_MINOR}")
     configure_file("${TARGET}.pc.in" "${TARGET}.pc" @ONLY)
     set_target_properties("${TARGET}" PROPERTIES RESOURCE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc")
   endfunction()
