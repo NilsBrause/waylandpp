@@ -60,11 +60,7 @@ if(BUILD_LIBRARIES)
   pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor)
 
   # generate protocol source/headers from protocol XMLs
-  set(PROTO_XMLS
-    "${CMAKE_SOURCE_DIR}/protocols/wayland.xml"
-    "${CMAKE_SOURCE_DIR}/protocols/presentation-time.xml"
-    "${CMAKE_SOURCE_DIR}/protocols/viewporter.xml"
-    "${CMAKE_SOURCE_DIR}/protocols/xdg-shell.xml")
+  set(PROTO_XMLS "${CMAKE_SOURCE_DIR}/protocols/wayland.xml")
   set(PROTO_FILES
     "wayland-client-protocol.hpp"
     "wayland-client-protocol.cpp")

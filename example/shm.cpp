@@ -36,6 +36,7 @@
 #include <algorithm>
 
 #include <wayland-client.hpp>
+#include "wayland-extra-client-protocol.hpp"
 #include <linux/input.h>
 #include <wayland-cursor.hpp>
 
