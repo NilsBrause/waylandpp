@@ -31,6 +31,7 @@
 #include <iostream>
 #include <array>
 #include <wayland-client.hpp>
+#include <wayland-client-protocol-extra.hpp>
 #include <wayland-egl.hpp>
 #include <GL/gl.h>
 #include <linux/input.h>

@@ -8,8 +8,8 @@ find_package(Doxygen)
 
 # version information
 set(WAYLANDPP_VERSION_MAJOR 0)
-set(WAYLANDPP_VERSION_MINOR 1)
-set(WAYLANDPP_VERSION_PATCH 6)
+set(WAYLANDPP_VERSION_MINOR 2)
+set(WAYLANDPP_VERSION_PATCH 0)
 set(WAYLANDPP_VERSION "${WAYLANDPP_VERSION_MAJOR}.${WAYLANDPP_VERSION_MINOR}.${WAYLANDPP_VERSION_PATCH}")
 configure_file(include/wayland-version.hpp.in wayland-version.hpp @ONLY)
 
@@ -60,18 +60,24 @@ if(BUILD_LIBRARIES)
   pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor)
 
   # generate protocol source/headers from protocol XMLs
-  set(PROTO_XMLS
-    "${CMAKE_SOURCE_DIR}/protocols/wayland.xml"
-    "${CMAKE_SOURCE_DIR}/protocols/presentation-time.xml"
+  set(PROTO_XMLS "${CMAKE_SOURCE_DIR}/protocols/wayland.xml")
+  set(PROTO_XMLS_EXTRA "${CMAKE_SOURCE_DIR}/protocols/presentation-time.xml"
     "${CMAKE_SOURCE_DIR}/protocols/viewporter.xml"
     "${CMAKE_SOURCE_DIR}/protocols/xdg-shell.xml")
   set(PROTO_FILES
     "wayland-client-protocol.hpp"
     "wayland-client-protocol.cpp")
+  set(PROTO_FILES_EXTRA
+    "wayland-client-protocol-extra.hpp"
+    "wayland-client-protocol-extra.cpp")
   add_custom_command(
     OUTPUT ${PROTO_FILES}
     COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS} ${PROTO_FILES}
     DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS})
+  add_custom_command(
+    OUTPUT ${PROTO_FILES_EXTRA}
+    COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_EXTRA} ${PROTO_FILES_EXTRA}
+    DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_EXTRA})
 
   # library building helper functions
   function(define_library TARGET CFLAGS LDFLAGS HEADERS)
@@ -89,12 +95,15 @@ if(BUILD_LIBRARIES)
   define_library(wayland-client++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LDFLAGS}"
     "include/wayland-client.hpp;include/wayland-util.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-version.hpp"
     src/wayland-client.cpp src/wayland-util.cpp wayland-client-protocol.cpp wayland-client-protocol.hpp)
+  define_library(wayland-client-extra++ "${WAYLAND_CLIENT_EXTRA_CFLAGS}" "${WAYLAND_CLIENT_EXTRA_LDFLAGS}"
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-version.hpp"
+    wayland-client-protocol-extra.cpp wayland-client-protocol-extra.hpp)
   define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LDFLAGS}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
   define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LDFLAGS}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
 
   # Install libraries
   install(FILES ${PROTO_XMLS} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
-  install(TARGETS wayland-client++ wayland-egl++ wayland-cursor++
+  install(TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
     RESOURCE DESTINATION "${INSTALL_FULL_PKGCONFIGDIR}")
