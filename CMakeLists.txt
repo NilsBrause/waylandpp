@@ -9,7 +9,7 @@ find_package(Doxygen)
 # version information
 set(WAYLANDPP_VERSION_MAJOR 0)
 set(WAYLANDPP_VERSION_MINOR 2)
-set(WAYLANDPP_VERSION_PATCH 0)
+set(WAYLANDPP_VERSION_PATCH 1)
 set(WAYLANDPP_VERSION "${WAYLANDPP_VERSION_MAJOR}.${WAYLANDPP_VERSION_MINOR}.${WAYLANDPP_VERSION_PATCH}")
 configure_file(include/wayland-version.hpp.in wayland-version.hpp @ONLY)
 

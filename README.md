@@ -136,6 +136,7 @@ directly be specified on the command line.
 
 If the Wayland cursor classes and/or EGL is used, the corresponding
 libreries `wayland-cursor++` and/or `wayland-egl++` need to be linked
-in as well.
+in as well. If any extension protocols such as xdg-shell are used,
+the library `wayland-client-extra++` should be linked in as well.
 
 Further examples can be found in the examples/Makefile.
