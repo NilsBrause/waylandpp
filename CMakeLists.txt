@@ -9,7 +9,7 @@ find_package(Doxygen)
 # version information
 set(WAYLANDPP_VERSION_MAJOR 0)
 set(WAYLANDPP_VERSION_MINOR 2)
-set(WAYLANDPP_VERSION_PATCH 1)
+set(WAYLANDPP_VERSION_PATCH 2)
 set(WAYLANDPP_VERSION "${WAYLANDPP_VERSION_MAJOR}.${WAYLANDPP_VERSION_MINOR}.${WAYLANDPP_VERSION_PATCH}")
 configure_file(include/wayland-version.hpp.in wayland-version.hpp @ONLY)
 
@@ -102,7 +102,7 @@ if(BUILD_LIBRARIES)
   define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LDFLAGS}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
 
   # Install libraries
-  install(FILES ${PROTO_XMLS} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
+  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
   install(TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
