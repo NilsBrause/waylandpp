@@ -95,7 +95,7 @@ if(BUILD_LIBRARIES)
   define_library(wayland-client++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LDFLAGS}"
     "include/wayland-client.hpp;include/wayland-util.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-version.hpp"
     src/wayland-client.cpp src/wayland-util.cpp wayland-client-protocol.cpp wayland-client-protocol.hpp)
-  define_library(wayland-client-extra++ "${WAYLAND_CLIENT_EXTRA_CFLAGS}" "${WAYLAND_CLIENT_EXTRA_LDFLAGS}"
+  define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LDFLAGS}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
     wayland-client-protocol-extra.cpp wayland-client-protocol-extra.hpp wayland-client-protocol.hpp)
   define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LDFLAGS}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
