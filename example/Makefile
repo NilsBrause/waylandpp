@@ -4,7 +4,7 @@ SRC = egl.cpp shm.cpp dump.cpp proxy_wrapper.cpp
 
 all: $(patsubst %.cpp,%,${SRC})
 
-egl: LIBS = wayland-client++ waylabd-client-extra++ wayland-cursor++ wayland-egl++
+egl: LIBS = wayland-client++ wayland-client-extra++ wayland-cursor++ wayland-egl++
 egl: FLAGS = -lEGL -lGL
 shm: LIBS = wayland-client++ wayland-client-extra++ wayland-cursor++
 shm: FLAGS = -lrt
