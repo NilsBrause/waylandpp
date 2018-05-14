@@ -237,19 +237,6 @@ public:
         has_keyboard = capability & seat_capability::keyboard;
         has_pointer = capability & seat_capability::pointer;
       };
-    display.roundtrip();
-
-    if(!has_keyboard)
-      throw std::runtime_error("No keyboard found.");
-    if(!has_pointer)
-      throw std::runtime_error("No pointer found.");
-
-    // create shared memory
-    shared_mem = std::shared_ptr<shared_mem_t>(new shared_mem_t(2*320*240*4));
-    auto pool = shm.create_pool(shared_mem->get_fd(), 2*320*240*4);
-    for(unsigned int c = 0; c < 2; c++)
-      buffer[c] = pool.create_buffer(c*320*240*4, 320, 240, 320*4, shm_format::argb8888);
-    cur_buf = 0;
 
     // create a surface
     surface = compositor.create_surface();
@@ -259,6 +246,7 @@ public:
       {
         xdg_wm_base.on_ping() = [&] (uint32_t serial) { xdg_wm_base.pong(serial); };
         xdg_surface = xdg_wm_base.get_xdg_surface(surface);
+        xdg_surface.on_configure() = [&] (uint32_t serial) { xdg_surface.ack_configure(serial); };
         xdg_toplevel = xdg_surface.get_toplevel();
         xdg_toplevel.set_title("Window");
         xdg_toplevel.on_close() = [&] () { running = false; };
@@ -270,10 +258,25 @@ public:
         shell_surface.set_title("Window");
         shell_surface.set_toplevel();
       }
+    surface.commit();
+
+    display.roundtrip();
 
     // Get input devices
+    if(!has_keyboard)
+      throw std::runtime_error("No keyboard found.");
+    if(!has_pointer)
+      throw std::runtime_error("No pointer found.");
+
     pointer = seat.get_pointer();
     keyboard = seat.get_keyboard();
+
+    // create shared memory
+    shared_mem = std::shared_ptr<shared_mem_t>(new shared_mem_t(2*320*240*4));
+    auto pool = shm.create_pool(shared_mem->get_fd(), 2*320*240*4);
+    for(unsigned int c = 0; c < 2; c++)
+      buffer[c] = pool.create_buffer(c*320*240*4, 320, 240, 320*4, shm_format::argb8888);
+    cur_buf = 0;
 
     // load cursor theme
     cursor_theme_t cursor_theme = cursor_theme_t("default", 16, shm);
