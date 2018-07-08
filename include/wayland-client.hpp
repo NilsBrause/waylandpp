@@ -490,10 +490,36 @@ namespace wayland
     */
     display_t(std::string name = "");
 
+    /** \brief Use an existing connection to a Wayland display to
+               construct a waylandpp display_t
+        \param display C wl_display pointer to use; must not be nullptr
+
+        A wl_display* that was already established using the C wayland-client
+        API is wrapped in an waylandpp display_t instance so it can be used
+        easily from C++. Ownership of the display is not taken, so this may
+        be used for wrapping a wl_display connection established by another library.
+
+        On destruction of the display_t, wl_display_disconnect is not called and
+        no resources are freed.
+        It is the responsibility of the caller to make sure that the wl_display
+        and the display_t are not used simultaneously in incompatible ways. It is
+        especially problematic if the wl_display is destroyed while the display_t
+        wrapper is still being used.
+
+        Whether the wl_display or the display_t is destructed first ultimately
+        does not matter, but any waylandpp proxy_t instances must be destructed
+        or have their owned objects released before the wl_display is destroyed.
+        Otherwise, the proxy_t destructor will try to free the underlying wl_proxy
+        that was already destroyed together with the wl_display.
+     */
+    explicit display_t(wl_display* display);
+
     /** \brief Close a connection to a Wayland display.
 
         Close the connection to display and free all resources
         associated with it.
+        This does not apply to display_t instances that are wrappers for
+        a pre-established C wl_display.
     */
     ~display_t();
 

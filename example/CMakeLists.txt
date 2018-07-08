@@ -15,6 +15,9 @@ target_link_libraries(egl wayland-client++ wayland-client-extra++ wayland-cursor
 target_include_directories(egl PUBLIC "${OPENGL_INCLUDE_DIR}")
 target_compile_options(egl PUBLIC ${EGL_CFLAGS})
 
+add_executable(foreign_display foreign_display.cpp)
+target_link_libraries(foreign_display wayland-client++)
+
 add_executable(proxy_wrapper proxy_wrapper.cpp)
 target_link_libraries(proxy_wrapper wayland-client++ Threads::Threads)
 
