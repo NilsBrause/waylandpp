@@ -456,6 +456,8 @@ display_t::display_t(std::string name)
 display_t::display_t(wl_display* display)
   : proxy_t(reinterpret_cast<wl_proxy*> (display), proxy_t::wrapper_type::foreign)
 {
+  if(!proxy_has_object())
+    throw std::runtime_error("Cannot construct display_t wrapper from nullptr");
   interface = &display_interface;
 }
 
