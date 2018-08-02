@@ -29,6 +29,18 @@ using namespace pugi;
 
 std::list<std::string> interface_names;
 
+std::string safe_name(std::string name) {
+  if (name == "namespace" ||
+      name == "class" ||
+      name == "new" ||
+      name == "delete" ||
+      false) 
+  {
+    return "_" + name;
+  }
+  return name;
+}
+
 struct element_t
 {
   std::string summary;
@@ -103,10 +115,16 @@ struct argument_t : public element_t
       return "x";
   }
 
+  std::string print_safe_name()
+  {
+    return safe_name(name);
+  }
+
   std::string print_argument()
   {
-    return print_type() + " " + name;
+    return print_type() + " " + print_safe_name();
   }
+
 };
 
 struct event_t : public element_t
@@ -132,7 +150,7 @@ struct event_t : public element_t
   {
     std::stringstream ss;
     ss << "    case " << opcode << ":" << std::endl
-       << "      if(events->" << name << ") events->" << name << "(";
+       << "      if(events->" << safe_name(name) << ") events->" << safe_name(name) << "(";
 
     int c = 0;
     for(auto &arg : args)
@@ -155,7 +173,7 @@ struct event_t : public element_t
     std::stringstream ss;
     ss << "  /** \\brief " << summary << std::endl;
     for(auto &arg : args)
-      ss << "      \\param " << arg.name << " " << arg.summary << std::endl;
+      ss << "      \\param " << arg.print_safe_name() << " " << arg.summary << std::endl;
     ss << description << std::endl
        << "  */" << std::endl;
 
@@ -219,7 +237,7 @@ struct request_t : public event_t
                  << "      \\param version Interface version" << std::endl;
           }
         else
-          ss << "      \\param " << arg.name << " " << arg.summary << std::endl;
+          ss << "      \\param " << arg.print_safe_name() << " " << arg.summary << std::endl;
       }
     ss << description << std::endl
        << "  */" << std::endl;
@@ -228,7 +246,7 @@ struct request_t : public event_t
       ss << "  void ";
     else
       ss << "  " << ret.print_type() << " ";
-    ss << name << "(";
+    ss << safe_name(name) << "(";
 
     for(auto &arg : args)
       if(arg.type == "new_id")
@@ -268,7 +286,7 @@ struct request_t : public event_t
       ss <<  "void ";
     else
       ss << ret.print_type() << " ";
-    ss << interface_name << "_t::" << name << "(";
+    ss << interface_name << "_t::" << safe_name(name) << "(";
 
     bool new_id_arg = false;
     for(auto &arg : args)
@@ -308,13 +326,13 @@ struct request_t : public event_t
             ss << "nullptr, ";
           }
         else if(arg.type == "fd")
-          ss << "argument_t::fd(" << arg.name << "), ";
+          ss << "argument_t::fd(" << arg.print_safe_name() << "), ";
         else if(arg.type == "object")
-          ss << arg.name << ".proxy_has_object() ? reinterpret_cast<wl_object*>(" << arg.name << ".c_ptr()) : nullptr, ";
+          ss << arg.print_safe_name() << ".proxy_has_object() ? reinterpret_cast<wl_object*>(" << arg.print_safe_name() << ".c_ptr()) : nullptr, ";
         else if(arg.enum_name != "")
-          ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << arg.name + "), ";
+          ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << arg.print_safe_name() + "), ";
         else
-          ss << arg.name + ", ";
+          ss << arg.print_safe_name() + ", ";
       }
 
     ss.str(ss.str().substr(0, ss.str().size()-2));

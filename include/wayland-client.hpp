@@ -490,6 +490,8 @@ namespace wayland
     */
     display_t(std::string name = "");
 
+    explicit display_t(wl_display* display);
+
     /** \brief Close a connection to a Wayland display.
 
         Close the connection to display and free all resources

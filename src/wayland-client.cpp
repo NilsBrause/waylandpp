@@ -453,6 +453,12 @@ display_t::display_t(std::string name)
   interface = &display_interface;
 }
 
+display_t::display_t(wl_display* display)
+  : proxy_t(reinterpret_cast<wl_proxy*> (display), proxy_t::wrapper_type::foreign)
+{
+  interface = &display_interface;
+}
+
 display_t::display_t(display_t &&d)
 {
   operator=(std::move(d));
