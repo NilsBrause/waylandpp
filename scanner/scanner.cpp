@@ -29,28 +29,24 @@ using namespace pugi;
 
 std::list<std::string> interface_names;
 
-std::string safe_name(std::string name) {
-  if (name == "namespace" ||
-      name == "class" ||
-      name == "new" ||
-      name == "delete" ||
-      false) 
-  {
-    return "_" + name;
-  }
-  return name;
-}
-
 struct element_t
 {
+  std::string name;
   std::string summary;
   std::string description;
+  static const std::set<std::string> keywords;
+
+  std::string sanitise(std::string str)
+  {
+    if(keywords.count(str))
+      return "_" + str;
+    return str;
+  }
 };
 
 struct argument_t : public element_t
 {
   std::string type;
-  std::string name;
   std::string interface;
   std::string enum_iface;
   std::string enum_name;
@@ -115,21 +111,14 @@ struct argument_t : public element_t
       return "x";
   }
 
-  std::string print_safe_name()
-  {
-    return safe_name(name);
-  }
-
   std::string print_argument()
   {
-    return print_type() + " " + print_safe_name();
+    return print_type() + " " + sanitise(name);
   }
-
 };
 
 struct event_t : public element_t
 {
-  std::string name;
   std::list<argument_t> args;
   int since;
 
@@ -142,7 +131,7 @@ struct event_t : public element_t
     if(args.size())
       ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
-    ss << ")> " << name << ";";
+    ss << ")> " << sanitise(name) << ";";
     return ss.str();
   }
 
@@ -150,7 +139,7 @@ struct event_t : public element_t
   {
     std::stringstream ss;
     ss << "    case " << opcode << ":" << std::endl
-       << "      if(events->" << safe_name(name) << ") events->" << safe_name(name) << "(";
+       << "      if(events->" << sanitise(name) << ") events->" << sanitise(name) << "(";
 
     int c = 0;
     for(auto &arg : args)
@@ -173,7 +162,7 @@ struct event_t : public element_t
     std::stringstream ss;
     ss << "  /** \\brief " << summary << std::endl;
     for(auto &arg : args)
-      ss << "      \\param " << arg.print_safe_name() << " " << arg.summary << std::endl;
+      ss << "      \\param " << arg.name << " " << arg.summary << std::endl;
     ss << description << std::endl
        << "  */" << std::endl;
 
@@ -198,7 +187,7 @@ struct event_t : public element_t
     ss.seekp(0, std::ios_base::end);
     ss << ")> &" + interface_name + "_t::on_" + name + "()" << std::endl
        << "{" << std::endl
-       << "  return std::static_pointer_cast<events_t>(get_events())->" + name + ";" << std::endl
+       << "  return std::static_pointer_cast<events_t>(get_events())->" + sanitise(name) + ";" << std::endl
        << "}" << std::endl;
     return ss.str();
   }
@@ -237,7 +226,7 @@ struct request_t : public event_t
                  << "      \\param version Interface version" << std::endl;
           }
         else
-          ss << "      \\param " << arg.print_safe_name() << " " << arg.summary << std::endl;
+          ss << "      \\param " << sanitise(arg.name) << " " << arg.summary << std::endl;
       }
     ss << description << std::endl
        << "  */" << std::endl;
@@ -246,7 +235,7 @@ struct request_t : public event_t
       ss << "  void ";
     else
       ss << "  " << ret.print_type() << " ";
-    ss << safe_name(name) << "(";
+    ss << sanitise(name) << "(";
 
     for(auto &arg : args)
       if(arg.type == "new_id")
@@ -263,7 +252,7 @@ struct request_t : public event_t
     ss << ");" << std::endl;
 
     ss << std::endl
-       << "  /** \\brief Minimum protocol version required for the \\ref " << name << " function" << std::endl
+       << "  /** \\brief Minimum protocol version required for the \\ref " << sanitise(name) << " function" << std::endl
        << "  */" << std::endl
        << "  static constexpr std::uint32_t " << since_version_constant_name() << " = " << since << ";" << std::endl;
 
@@ -286,7 +275,7 @@ struct request_t : public event_t
       ss <<  "void ";
     else
       ss << ret.print_type() << " ";
-    ss << interface_name << "_t::" << safe_name(name) << "(";
+    ss << interface_name << "_t::" << sanitise(name) << "(";
 
     bool new_id_arg = false;
     for(auto &arg : args)
@@ -326,13 +315,13 @@ struct request_t : public event_t
             ss << "nullptr, ";
           }
         else if(arg.type == "fd")
-          ss << "argument_t::fd(" << arg.print_safe_name() << "), ";
+          ss << "argument_t::fd(" << sanitise(arg.name) << "), ";
         else if(arg.type == "object")
-          ss << arg.print_safe_name() << ".proxy_has_object() ? reinterpret_cast<wl_object*>(" << arg.print_safe_name() << ".c_ptr()) : nullptr, ";
+          ss << sanitise(arg.name) << ".proxy_has_object() ? reinterpret_cast<wl_object*>(" << sanitise(arg.name) << ".c_ptr()) : nullptr, ";
         else if(arg.enum_name != "")
-          ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << arg.print_safe_name() + "), ";
+          ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << sanitise(arg.name) + "), ";
         else
-          ss << arg.print_safe_name() + ", ";
+          ss << sanitise(arg.name) + ", ";
       }
 
     ss.str(ss.str().substr(0, ss.str().size()-2));
@@ -366,13 +355,11 @@ struct request_t : public event_t
 
 struct enum_entry_t : public element_t
 {
-  std::string name;
   std::string value;
 };
 
 struct enumeration_t : public element_t
 {
-  std::string name;
   std::list<enum_entry_t> entries;
   bool bitfield;
   int id;
@@ -412,9 +399,9 @@ struct enumeration_t : public element_t
           ss << "  /** \\brief " << entry.summary << " */" << std::endl;
 
         if(!bitfield)
-          ss << "  " << entry.name << " = " << entry.value << "," << std::endl;
+          ss << "  " << sanitise(entry.name) << " = " << entry.value << "," << std::endl;
         else
-          ss << "  static const detail::bitfield<" << width << ", " << id << "> " << entry.name << ";" << std::endl;
+          ss << "  static const detail::bitfield<" << width << ", " << id << "> " << sanitise(entry.name) << ";" << std::endl;
       }
 
     if(!bitfield)
@@ -435,7 +422,7 @@ struct enumeration_t : public element_t
       for(auto &entry : entries)
         {
           ss << "const bitfield<" << width << ", " << id << "> " << iface_name << "_" << name
-             << "::" << entry.name << "{" << entry.value << "};" << std::endl;
+             << "::" << sanitise(entry.name) << "{" << entry.value << "};" << std::endl;
         }
     return ss.str();
   }
@@ -444,7 +431,6 @@ struct enumeration_t : public element_t
 struct interface_t : public element_t
 {
   int version;
-  std::string name;
   std::string orig_name;
   int destroy_opcode;
   std::list<request_t> requests;
@@ -978,3 +964,92 @@ int main(int argc, char *argv[])
   
   return 0;
 }
+
+// set of C++-only keywords not to use as names
+const std::set<std::string> element_t::keywords =
+  {
+   "alignas",
+   "alignof",
+   "and",
+   "and_eq",
+   "asm",
+   "auto",
+   "bitand",
+   "bitor",
+   "bool",
+   "break",
+   "case",
+   "catch",
+   "char",
+   "char16_t",
+   "char32_t",
+   "class",
+   "compl",
+   "const",
+   "constexpr",
+   "const_cast",
+   "continue",
+   "decltype",
+   "default",
+   "delete",
+   "do",
+   "double",
+   "dynamic_cast",
+   "else",
+   "enum",
+   "explicit",
+   "export",
+   "extern",
+   "false",
+   "float",
+   "for",
+   "friend",
+   "goto",
+   "if",
+   "inline",
+   "int",
+   "long",
+   "mutable",
+   "namespace",
+   "new",
+   "noexcept",
+   "not",
+   "not_eq",
+   "nullptr",
+   "operator",
+   "or",
+   "or_eq",
+   "private",
+   "protected",
+   "public",
+   "register",
+   "reinterpret_cast",
+   "return",
+   "short",
+   "signed",
+   "sizeof",
+   "static",
+   "static_assert",
+   "static_cast",
+   "struct",
+   "switch",
+   "template",
+   "this",
+   "thread_local",
+   "throw",
+   "true",
+   "try",
+   "typedef",
+   "typeid",
+   "typename",
+   "union",
+   "unsigned",
+   "using",
+   "virtual",
+   "void",
+   "volatile",
+   "wchar_t",
+   "while",
+   "xor",
+   "xor_eq",
+  };
