@@ -22,6 +22,7 @@
 #include <sstream>
 #include <cctype>
 #include <cmath>
+#include <stdexcept>
 
 #include "pugixml.hpp"
 
