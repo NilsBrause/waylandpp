@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2014-2017 Nils Christopher Brause
+ *  Copyright (c) 2014-2019 Nils Christopher Brause
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 #include <list>
 #include <set>
 #include <sstream>
+#include <vector>
 #include <cctype>
 #include <cmath>
 #include <stdexcept>
@@ -144,7 +145,7 @@ struct event_t : public element_t
 
     int c = 0;
     for(auto &arg : args)
-      if(arg.enum_name != "")
+      if(arg.enum_name != "" && arg.type != "array")
         ss << arg.print_type() << "(args[" << c++ << "].get<" << arg.print_enum_wire_type() << ">()), ";
       else if(arg.interface != "")
         ss << arg.print_type() << "(args[" << c++ << "].get<proxy_t>()), ";
@@ -695,22 +696,52 @@ std::string unprefix(const std::string &name)
   return name;
 }
 
+struct arg_t
+{
+  std::string key;
+  std::string value;
+};
+
+void parse_args(int argc, char **argv, std::vector<arg_t>& map, std::vector<std::string>& extra)
+{
+  bool opts_end = false;
+  for(unsigned int c = 1; c < argc; c++)
+  {
+    std::string str(argv[c]);
+    if(opts_end || str[0] != '-')
+      extra.push_back(str);
+    else if(str == "--")
+      opts_end = true;
+    else
+    {
+      std::string value;
+      if (c + 1 < argc && argv[c+1][0] != '-')
+	value = argv[++c];
+      map.push_back(arg_t{str.substr(1), value});
+    }
+  }
+}
+
 int main(int argc, char *argv[])
 {
-  if(argc < 4)
+  std::vector<arg_t> map;
+  std::vector<std::string> extra;
+  parse_args(argc, argv, map, extra);
+
+  if(extra.size() < 3)
     {
       std::cerr << "Usage:" << std::endl
-                << "  " << argv[0] << " protocol1.xml [protocol2.xml ...] protocol.hpp protocol.cpp" << std::endl;
+                << "  " << argv[0] << " [-x extra_header.hpp] protocol1.xml [protocol2.xml ...] protocol.hpp protocol.cpp" << std::endl;
       return 1;
     }
 
   std::list<interface_t> interfaces;
   int enum_id = 0;
 
-  for(int c = 1; c < argc-2; c++)
+  for(int c = 0; c < extra.size()-2; c++)
     {
       xml_document doc;
-      doc.load_file(argv[c]);
+      doc.load_file(extra[c].c_str());
       xml_node protocol = doc.child("protocol");
 
       for(xml_node &interface : protocol.children("interface"))
@@ -894,7 +925,7 @@ int main(int argc, char *argv[])
         }
     }
 
-  std::string hpp_file(argv[argc-2]), cpp_file(argv[argc-1]);
+  std::string hpp_file(extra[extra.size()-2]), cpp_file(extra[extra.size()-1]);
   std::fstream wayland_hpp(hpp_file, std::ios_base::out | std::ios_base::trunc);
   std::fstream wayland_cpp(cpp_file, std::ios_base::out | std::ios_base::trunc);
 
@@ -907,8 +938,13 @@ int main(int argc, char *argv[])
               << "#include <string>" << std::endl
               << "#include <vector>" << std::endl
               << std::endl
-              << "#include <wayland-client.hpp>" << std::endl
-              << std::endl;
+              << "#include <wayland-client.hpp>" << std::endl;
+
+  for(auto const& opt : map)
+    if(opt.key == std::string("x"))
+      wayland_hpp << "#include <" << opt.value << ">" << std::endl;
+
+  wayland_hpp << std::endl;
 
   // C forward declarations
   for(auto &iface : interfaces)

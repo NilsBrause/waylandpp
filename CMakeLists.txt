@@ -61,15 +61,17 @@ if(BUILD_LIBRARIES)
 
   # generate protocol source/headers from protocol XMLs
   set(PROTO_XMLS "${CMAKE_SOURCE_DIR}/protocols/wayland.xml")
-  set(PROTO_XMLS_EXTRA "${CMAKE_SOURCE_DIR}/protocols/presentation-time.xml"
-    "${CMAKE_SOURCE_DIR}/protocols/viewporter.xml"
-    "${CMAKE_SOURCE_DIR}/protocols/xdg-shell.xml")
+  file(GLOB PROTO_XMLS_EXTRA "${CMAKE_SOURCE_DIR}/protocols/extra/*.xml")
+  file(GLOB PROTO_XMLS_UNSTABLE "${CMAKE_SOURCE_DIR}/protocols/unstable/*.xml")
   set(PROTO_FILES
     "wayland-client-protocol.hpp"
     "wayland-client-protocol.cpp")
   set(PROTO_FILES_EXTRA
     "wayland-client-protocol-extra.hpp"
     "wayland-client-protocol-extra.cpp")
+  set(PROTO_FILES_UNSTABLE
+    "wayland-client-protocol-unstable.hpp"
+    "wayland-client-protocol-unstable.cpp")
   add_custom_command(
     OUTPUT ${PROTO_FILES}
     COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS} ${PROTO_FILES}
@@ -78,6 +80,10 @@ if(BUILD_LIBRARIES)
     OUTPUT ${PROTO_FILES_EXTRA}
     COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_EXTRA} ${PROTO_FILES_EXTRA}
     DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_EXTRA})
+  add_custom_command(
+    OUTPUT ${PROTO_FILES_UNSTABLE}
+    COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_UNSTABLE} "-x" "wayland-client-protocol-extra.hpp"
+    DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE})
 
   # library building helper functions
   function(define_library TARGET CFLAGS LDFLAGS HEADERS)
@@ -98,11 +104,14 @@ if(BUILD_LIBRARIES)
   define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LDFLAGS}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
     wayland-client-protocol-extra.cpp wayland-client-protocol-extra.hpp wayland-client-protocol.hpp)
+  define_library(wayland-client-unstable++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LDFLAGS}"
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-unstable.hpp"
+    wayland-client-protocol-unstable.cpp wayland-client-protocol-unstable.hpp wayland-client-protocol.hpp)
   define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LDFLAGS}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
   define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LDFLAGS}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
 
   # Install libraries
-  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
+  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
   install(TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
@@ -127,7 +136,7 @@ if(BUILD_DOCUMENTATION)
 
   add_custom_command(
     OUTPUT "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html/index.html"
-    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" ${PROTO_FILES} ${PROTO_FILES_EXTRA}
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" ${PROTO_FILES} ${PROTO_FILES_EXTRA} ${PROTO_FILES_UNSTABLE}
     COMMAND ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMENT "Generating API documentation with Doxygen"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
