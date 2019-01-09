@@ -91,7 +91,7 @@ if(BUILD_LIBRARIES)
   add_custom_command(
     OUTPUT ${PROTO_FILES_UNSTABLE}
     COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_UNSTABLE} "-x" "wayland-client-protocol-extra.hpp"
-    DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE})
+    DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_EXTRA})
 
   # library building helper functions
   function(define_library TARGET CFLAGS LDFLAGS HEADERS)
