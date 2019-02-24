@@ -26,7 +26,7 @@
     DEALINGS IN THE SOFTWARE.
   </copyright>
 
-  <interface name="zwp_linux_explicit_synchronization_v1" version="1">
+  <interface name="zwp_linux_explicit_synchronization_v1" version="2">
     <description summary="protocol for providing explicit synchronization">
       This global is a factory interface, allowing clients to request
       explicit synchronization for buffers on a per-surface basis.
@@ -66,6 +66,12 @@
 
         If the given wl_surface already has an explicit synchronization object
         associated, the synchronization_exists protocol error is raised.
+
+        Graphics APIs, like EGL or Vulkan, that manage the buffer queue and
+        commits of a wl_surface themselves, are likely to be using this
+        extension internally. If a client is using such an API for a
+        wl_surface, it should not directly use this extension on that surface,
+        to avoid raising a synchronization_exists protocol error.
       </description>
 
       <arg name="id" type="new_id"
@@ -76,7 +82,7 @@
     </request>
   </interface>
 
-  <interface name="zwp_linux_surface_synchronization_v1" version="1">
+  <interface name="zwp_linux_surface_synchronization_v1" version="2">
     <description summary="per-surface explicit synchronization support">
       This object implements per-surface explicit synchronization.
 
@@ -101,8 +107,13 @@
       Each surface can be associated with only one object of this interface at
       any time.
 
-      Explicit synchronization is guaranteed to be supported only for buffers
-      created with any version of the wp_linux_dmabuf buffer factory.
+      In version 1 of this interface, explicit synchronization is only
+      guaranteed to be supported for buffers created with any version of the
+      wp_linux_dmabuf buffer factory. Version 2 additionally guarantees
+      explicit synchronization support for opaque EGL buffers, which is a type
+      of platform specific buffers described in the EGL_WL_bind_wayland_display
+      extension. Compositors are free to support explicit synchronization for
+      additional buffer types.
     </description>
 
     <request name="destroy" type="destructor">
@@ -215,6 +226,11 @@
         signaled when all operations by the compositor on that buffer for that
         commit have finished.
 
+        Once the fence has signaled, and assuming the associated buffer is not
+        pending release from other wl_surface.commit requests, no additional
+        explicit or implicit synchronization is required to safely reuse or
+        destroy the buffer.
+
         This event destroys the zwp_linux_buffer_release_v1 object.
       </description>
       <arg name="fence" type="fd" summary="fence for last operation on buffer"/>
@@ -226,6 +242,11 @@
         buffer for the relevant commit, and either performed no operations
         using it, or has a guarantee that all its operations on that buffer for
         that commit have finished.
+
+        Once this event is received, and assuming the associated buffer is not
+        pending release from other wl_surface.commit requests, no additional
+        explicit or implicit synchronization is required to safely reuse or
+        destroy the buffer.
 
         This event destroys the zwp_linux_buffer_release_v1 object.
       </description>
