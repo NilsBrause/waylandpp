@@ -32,6 +32,6 @@ Name: Wayland C++ EGL helper
 Description: Mesa C++ egl helper library
 Version: @WAYLANDPP_VERSION@
 URL: https://github.com/NilsBrause/waylandpp
-Requires: wayland-egl wayland-client++
+Requires.private: egl wayland-egl wayland-client++
 Cflags: -I${includedir}
 Libs: -L${libdir} -lwayland-egl++
