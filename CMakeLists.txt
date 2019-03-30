@@ -21,8 +21,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-project(waylandpp)
 cmake_minimum_required(VERSION 3.1)
+project(waylandpp)
 
 # packages
 include(FindPkgConfig)
