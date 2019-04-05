@@ -30,7 +30,7 @@ includedir=@includedir@
 
 Name: Wayland C++ Client
 Description: Wayland C++ client side library
-Version: @WAYLANDPP_VERSION@
+Version: @PROJECT_VERSION@
 URL: https://github.com/NilsBrause/waylandpp
 Requires.private: wayland-client
 Cflags: -I${includedir}
