@@ -22,7 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 cmake_minimum_required(VERSION 3.1)
-project(waylandpp)
+project(waylandpp VERSION 0.2.5 LANGUAGES CXX)
 
 # packages
 include(FindPkgConfig)
@@ -30,10 +30,6 @@ include(GNUInstallDirs)
 find_package(Doxygen)
 
 # version information
-set(WAYLANDPP_VERSION_MAJOR 0)
-set(WAYLANDPP_VERSION_MINOR 2)
-set(WAYLANDPP_VERSION_PATCH 5)
-set(WAYLANDPP_VERSION "${WAYLANDPP_VERSION_MAJOR}.${WAYLANDPP_VERSION_MINOR}.${WAYLANDPP_VERSION_PATCH}")
 configure_file(include/wayland-version.hpp.in wayland-version.hpp @ONLY)
 
 # path shorthands
@@ -119,8 +115,8 @@ if(BUILD_LIBRARIES)
     target_link_libraries("${TARGET}" ${LDFLAGS})
     set_target_properties("${TARGET}" PROPERTIES
       PUBLIC_HEADER "${HEADERS}"
-      VERSION "${WAYLANDPP_VERSION_MAJOR}.${WAYLANDPP_VERSION_MINOR}.${WAYLANDPP_VERSION_PATCH}"
-      SOVERSION ${WAYLANDPP_VERSION_MAJOR})
+      VERSION "${PROJECT_VERSION}"
+      SOVERSION ${PROJECT_VERSION_MAJOR})
     configure_file("${TARGET}.pc.in" "${TARGET}.pc" @ONLY)
     set_target_properties("${TARGET}" PROPERTIES RESOURCE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc")
   endfunction()

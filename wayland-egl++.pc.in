@@ -30,7 +30,7 @@ includedir=@includedir@
 
 Name: Wayland C++ EGL helper
 Description: Mesa C++ egl helper library
-Version: @WAYLANDPP_VERSION@
+Version: @PROJECT_VERSION@
 URL: https://github.com/NilsBrause/waylandpp
 Requires.private: egl wayland-egl wayland-client++
 Cflags: -I${includedir}

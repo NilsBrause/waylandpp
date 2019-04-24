@@ -30,7 +30,7 @@ includedir=@includedir@
 
 Name: Wayland C++ Client Extra
 Description: Wayland C++ client side library extra rotocols
-Version: @WAYLANDPP_VERSION@
+Version: @PROJECT_VERSION@
 URL: https://github.com/NilsBrause/waylandpp
 Requires: wayland-client++
 Cflags: -I${includedir}
