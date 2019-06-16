@@ -53,9 +53,23 @@ set(includedir "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
 # C++ 11
 set(CMAKE_CXX_STANDARD 11)
 
+# sets ${PREFIX}_LIBRARIES to the libraries' full path
+function(pkg_libs_full_path PREFIX)
+  if(${PREFIX}_FOUND)
+    unset(LIBS_TMP CACHE)
+    foreach(LIB ${${PREFIX}_LIBRARIES})
+      unset(LIB_TMP CACHE)
+      find_library(LIB_TMP ${LIB} PATHS ${${PREFIX}_LIBRARY_DIRS})
+      list(APPEND LIBS_TMP ${LIB_TMP})
+    endforeach()
+    set(${PREFIX}_LIBRARIES ${LIBS_TMP} PARENT_SCOPE)
+  endif()
+endfunction()
+
 # build scanner
 if(BUILD_SCANNER)
   pkg_check_modules(PUGIXML REQUIRED "pugixml>=1.4")
+  pkg_libs_full_path(PUGIXML)
   add_executable(wayland-scanner++ scanner/scanner.cpp)
   target_link_libraries(wayland-scanner++ ${PUGIXML_LIBRARIES})
   target_compile_options(wayland-scanner++ PUBLIC ${PUGIXML_CFLAGS})
@@ -78,8 +92,11 @@ if(BUILD_LIBRARIES)
 
   # required libraries
   pkg_check_modules(WAYLAND_CLIENT REQUIRED "wayland-client>=1.11.0")
+  pkg_libs_full_path(WAYLAND_CLIENT)
   pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl)
+  pkg_libs_full_path(WAYLAND_EGL)
   pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor)
+  pkg_libs_full_path(WAYLAND_CURSOR)
 
   # generate protocol source/headers from protocol XMLs
   set(PROTO_XMLS "${CMAKE_SOURCE_DIR}/protocols/wayland.xml")
@@ -108,11 +125,11 @@ if(BUILD_LIBRARIES)
     DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_EXTRA})
 
   # library building helper functions
-  function(define_library TARGET CFLAGS LDFLAGS HEADERS)
+  function(define_library TARGET CFLAGS LIBRARIES HEADERS)
     add_library("${TARGET}" SHARED ${ARGN})
     target_include_directories("${TARGET}" PUBLIC "include" "${CMAKE_CURRENT_BINARY_DIR}") # latter for wayland-version.hpp
     target_compile_options("${TARGET}" PUBLIC ${CFLAGS})
-    target_link_libraries("${TARGET}" ${LDFLAGS})
+    target_link_libraries("${TARGET}" ${LIBRARIES})
     set_target_properties("${TARGET}" PROPERTIES
       PUBLIC_HEADER "${HEADERS}"
       VERSION "${PROJECT_VERSION}"
@@ -121,20 +138,20 @@ if(BUILD_LIBRARIES)
     set_target_properties("${TARGET}" PROPERTIES RESOURCE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc")
   endfunction()
 
-  define_library(wayland-client++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LDFLAGS}"
+  define_library(wayland-client++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "include/wayland-client.hpp;include/wayland-util.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-version.hpp"
     src/wayland-client.cpp src/wayland-util.cpp wayland-client-protocol.cpp wayland-client-protocol.hpp)
-  define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LDFLAGS}"
+  define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
     wayland-client-protocol-extra.cpp wayland-client-protocol-extra.hpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-client-extra++ wayland-client++)
-  define_library(wayland-client-unstable++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LDFLAGS}"
+  define_library(wayland-client-unstable++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-unstable.hpp"
     wayland-client-protocol-unstable.cpp wayland-client-protocol-unstable.hpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-client-unstable++ wayland-client-extra++)
-  define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LDFLAGS}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
+  define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LIBRARIES}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-egl++ wayland-client++)
-  define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LDFLAGS}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
+  define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LIBRARIES}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-cursor++ wayland-client++)
 
   # Install libraries
