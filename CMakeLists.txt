@@ -28,6 +28,7 @@ project(waylandpp VERSION 0.2.5 LANGUAGES CXX)
 include(FindPkgConfig)
 include(GNUInstallDirs)
 include(CMakeDependentOption)
+include(CMakePackageConfigHelpers)
 find_package(Doxygen)
 
 # version information
@@ -54,6 +55,8 @@ set(datarootdir "${CMAKE_INSTALL_FULL_DATAROOTDIR}")
 set(pkgdatadir "${INSTALL_FULL_PKGDATADIR}")
 set(libdir "${CMAKE_INSTALL_FULL_LIBDIR}")
 set(includedir "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
+
+set(install_namespace "Waylandpp")
 
 # C++ 11
 set(CMAKE_CXX_STANDARD 11)
@@ -132,8 +135,12 @@ if(BUILD_LIBRARIES)
   # library building helper functions
   function(define_library TARGET CFLAGS LIBRARIES HEADERS)
     add_library("${TARGET}" ${ARGN})
+    add_library(${install_namespace}::${TARGET} ALIAS ${TARGET})
     get_target_property(libtype "${TARGET}" TYPE)
-    target_include_directories("${TARGET}" PUBLIC "include" "${CMAKE_CURRENT_BINARY_DIR}") # latter for wayland-version.hpp
+    target_include_directories("${TARGET}" PUBLIC
+      $<BUILD_INTERFACE:include;${CMAKE_CURRENT_BINARY_DIR}> # latter for wayland-version.hpp
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+      )
     target_compile_options("${TARGET}" PUBLIC ${CFLAGS})
     if(libtype STREQUAL "STATIC_LIBRARY")
     endif()
@@ -164,11 +171,27 @@ if(BUILD_LIBRARIES)
 
   # Install libraries
   install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
-  install(TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++
+  install(TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++ EXPORT ${CMAKE_PROJECT_NAME}-targets
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
     RESOURCE DESTINATION "${INSTALL_FULL_PKGCONFIGDIR}")
+
+  # create and install CMake-Config files
+  set(_CMAKECONFIGDIR "${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME}")
+
+  install(EXPORT ${CMAKE_PROJECT_NAME}-targets
+        DESTINATION "${_CMAKECONFIGDIR}"
+        NAMESPACE ${install_namespace}::)
+  write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config-version.cmake
+    COMPATIBILITY AnyNewerVersion)
+  configure_package_config_file(waylandpp-config.cmake.in
+                              ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake
+                              INSTALL_DESTINATION "${_CMAKECONFIGDIR}")
+
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config-version.cmake
+                ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake
+          DESTINATION "${_CMAKECONFIGDIR}")
 endif()
 
 if(BUILD_EXAMPLES)
