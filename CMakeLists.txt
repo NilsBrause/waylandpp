@@ -27,6 +27,7 @@ project(waylandpp VERSION 0.2.5 LANGUAGES CXX)
 # packages
 include(FindPkgConfig)
 include(GNUInstallDirs)
+include(CMakeDependentOption)
 find_package(Doxygen)
 
 # version information
@@ -37,10 +38,12 @@ set(INSTALL_FULL_PKGCONFIGDIR "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig")
 set(INSTALL_FULL_PKGDATADIR "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp")
 
 # user options
-set(BUILD_SCANNER ON CACHE BOOL "whether to build wayland-scanner++")
-set(BUILD_LIBRARIES ON CACHE BOOL "whether to build the libraries")
-set(BUILD_DOCUMENTATION ${DOXYGEN_FOUND} CACHE BOOL "Create and install the HTML based API documentation (requires Doxygen)")
-set(BUILD_EXAMPLES OFF CACHE BOOL "whether to build the examples (requires BUILD_LIBRARIES to be ON)")
+option(BUILD_SCANNER "whether to build wayland-scanner++" ON)
+option(BUILD_LIBRARIES "whether to build the libraries" ON)
+option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
+cmake_dependent_option(BUILD_EXAMPLES
+  "whether to build the examples (requires BUILD_LIBRARIES to be ON)" OFF
+  "BUILD_LIBRARIES" OFF)
 
 # variables for .pc.in files
 set(prefix "${CMAKE_INSTALL_PREFIX}")
