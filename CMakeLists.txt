@@ -40,6 +40,8 @@ set(INSTALL_FULL_PKGDATADIR "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp")
 # user options
 option(BUILD_SCANNER "whether to build wayland-scanner++" ON)
 option(BUILD_LIBRARIES "whether to build the libraries" ON)
+cmake_dependent_option(BUILD_SHARED_LIBS "Build shared libraries" ON
+  "BUILD_LIBRARIES" OFF)
 option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
 cmake_dependent_option(BUILD_EXAMPLES
   "whether to build the examples (requires BUILD_LIBRARIES to be ON)" OFF
@@ -129,7 +131,7 @@ if(BUILD_LIBRARIES)
 
   # library building helper functions
   function(define_library TARGET CFLAGS LIBRARIES HEADERS)
-    add_library("${TARGET}" SHARED ${ARGN})
+    add_library("${TARGET}" ${ARGN})
     target_include_directories("${TARGET}" PUBLIC "include" "${CMAKE_CURRENT_BINARY_DIR}") # latter for wayland-version.hpp
     target_compile_options("${TARGET}" PUBLIC ${CFLAGS})
     target_link_libraries("${TARGET}" ${LIBRARIES})
@@ -161,6 +163,7 @@ if(BUILD_LIBRARIES)
   install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
   install(TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
     RESOURCE DESTINATION "${INSTALL_FULL_PKGCONFIGDIR}")
 endif()
