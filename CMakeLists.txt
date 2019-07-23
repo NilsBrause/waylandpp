@@ -132,9 +132,12 @@ if(BUILD_LIBRARIES)
   # library building helper functions
   function(define_library TARGET CFLAGS LIBRARIES HEADERS)
     add_library("${TARGET}" ${ARGN})
+    get_target_property(libtype "${TARGET}" TYPE)
     target_include_directories("${TARGET}" PUBLIC "include" "${CMAKE_CURRENT_BINARY_DIR}") # latter for wayland-version.hpp
     target_compile_options("${TARGET}" PUBLIC ${CFLAGS})
-    target_link_libraries("${TARGET}" ${LIBRARIES})
+    if(libtype STREQUAL "STATIC_LIBRARY")
+    endif()
+    target_link_libraries("${TARGET}" PUBLIC ${LIBRARIES})
     set_target_properties("${TARGET}" PROPERTIES
       PUBLIC_HEADER "${HEADERS}"
       VERSION "${PROJECT_VERSION}"
@@ -149,15 +152,15 @@ if(BUILD_LIBRARIES)
   define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
     wayland-client-protocol-extra.cpp wayland-client-protocol-extra.hpp wayland-client-protocol.hpp)
-  target_link_libraries(wayland-client-extra++ wayland-client++)
+  target_link_libraries(wayland-client-extra++ INTERFACE wayland-client++)
   define_library(wayland-client-unstable++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-unstable.hpp"
     wayland-client-protocol-unstable.cpp wayland-client-protocol-unstable.hpp wayland-client-protocol.hpp)
-  target_link_libraries(wayland-client-unstable++ wayland-client-extra++)
+  target_link_libraries(wayland-client-unstable++ INTERFACE wayland-client-extra++)
   define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LIBRARIES}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
-  target_link_libraries(wayland-egl++ wayland-client++)
+  target_link_libraries(wayland-egl++ INTERFACE wayland-client++)
   define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LIBRARIES}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
-  target_link_libraries(wayland-cursor++ wayland-client++)
+  target_link_libraries(wayland-cursor++ INTERFACE wayland-client++)
 
   # Install libraries
   install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
