@@ -27,6 +27,8 @@ project(waylandpp VERSION 0.2.5 LANGUAGES CXX)
 # packages
 include(FindPkgConfig)
 include(GNUInstallDirs)
+include(CMakeDependentOption)
+include(CMakePackageConfigHelpers)
 find_package(Doxygen)
 
 # version information
@@ -37,10 +39,14 @@ set(INSTALL_FULL_PKGCONFIGDIR "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig")
 set(INSTALL_FULL_PKGDATADIR "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp")
 
 # user options
-set(BUILD_SCANNER ON CACHE BOOL "whether to build wayland-scanner++")
-set(BUILD_LIBRARIES ON CACHE BOOL "whether to build the libraries")
-set(BUILD_DOCUMENTATION ${DOXYGEN_FOUND} CACHE BOOL "Create and install the HTML based API documentation (requires Doxygen)")
-set(BUILD_EXAMPLES OFF CACHE BOOL "whether to build the examples (requires BUILD_LIBRARIES to be ON)")
+option(BUILD_SCANNER "whether to build wayland-scanner++" ON)
+option(BUILD_LIBRARIES "whether to build the libraries" ON)
+cmake_dependent_option(BUILD_SHARED_LIBS "Build shared libraries" ON
+  "BUILD_LIBRARIES" OFF)
+option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
+cmake_dependent_option(BUILD_EXAMPLES
+  "whether to build the examples (requires BUILD_LIBRARIES to be ON)" OFF
+  "BUILD_LIBRARIES" OFF)
 
 # variables for .pc.in files
 set(prefix "${CMAKE_INSTALL_PREFIX}")
@@ -49,6 +55,8 @@ set(datarootdir "${CMAKE_INSTALL_FULL_DATAROOTDIR}")
 set(pkgdatadir "${INSTALL_FULL_PKGDATADIR}")
 set(libdir "${CMAKE_INSTALL_FULL_LIBDIR}")
 set(includedir "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
+
+set(install_namespace "Waylandpp")
 
 # C++ 11
 set(CMAKE_CXX_STANDARD 11)
@@ -126,10 +134,17 @@ if(BUILD_LIBRARIES)
 
   # library building helper functions
   function(define_library TARGET CFLAGS LIBRARIES HEADERS)
-    add_library("${TARGET}" SHARED ${ARGN})
-    target_include_directories("${TARGET}" PUBLIC "include" "${CMAKE_CURRENT_BINARY_DIR}") # latter for wayland-version.hpp
+    add_library("${TARGET}" ${ARGN})
+    add_library(${install_namespace}::${TARGET} ALIAS ${TARGET})
+    get_target_property(libtype "${TARGET}" TYPE)
+    target_include_directories("${TARGET}" PUBLIC
+      $<BUILD_INTERFACE:include;${CMAKE_CURRENT_BINARY_DIR}> # latter for wayland-version.hpp
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+      )
     target_compile_options("${TARGET}" PUBLIC ${CFLAGS})
-    target_link_libraries("${TARGET}" ${LIBRARIES})
+    if(libtype STREQUAL "STATIC_LIBRARY")
+    endif()
+    target_link_libraries("${TARGET}" PUBLIC ${LIBRARIES})
     set_target_properties("${TARGET}" PROPERTIES
       PUBLIC_HEADER "${HEADERS}"
       VERSION "${PROJECT_VERSION}"
@@ -144,22 +159,39 @@ if(BUILD_LIBRARIES)
   define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
     wayland-client-protocol-extra.cpp wayland-client-protocol-extra.hpp wayland-client-protocol.hpp)
-  target_link_libraries(wayland-client-extra++ wayland-client++)
+  target_link_libraries(wayland-client-extra++ INTERFACE wayland-client++)
   define_library(wayland-client-unstable++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-unstable.hpp"
     wayland-client-protocol-unstable.cpp wayland-client-protocol-unstable.hpp wayland-client-protocol.hpp)
-  target_link_libraries(wayland-client-unstable++ wayland-client-extra++)
+  target_link_libraries(wayland-client-unstable++ INTERFACE wayland-client-extra++)
   define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LIBRARIES}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
-  target_link_libraries(wayland-egl++ wayland-client++)
+  target_link_libraries(wayland-egl++ INTERFACE wayland-client++)
   define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LIBRARIES}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
-  target_link_libraries(wayland-cursor++ wayland-client++)
+  target_link_libraries(wayland-cursor++ INTERFACE wayland-client++)
 
   # Install libraries
   install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
-  install(TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++
+  install(TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++ EXPORT ${CMAKE_PROJECT_NAME}-targets
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
     RESOURCE DESTINATION "${INSTALL_FULL_PKGCONFIGDIR}")
+
+  # create and install CMake-Config files
+  set(_CMAKECONFIGDIR "${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME}")
+
+  install(EXPORT ${CMAKE_PROJECT_NAME}-targets
+        DESTINATION "${_CMAKECONFIGDIR}"
+        NAMESPACE ${install_namespace}::)
+  write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config-version.cmake
+    COMPATIBILITY AnyNewerVersion)
+  configure_package_config_file(waylandpp-config.cmake.in
+                              ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake
+                              INSTALL_DESTINATION "${_CMAKECONFIGDIR}")
+
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config-version.cmake
+                ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake
+          DESTINATION "${_CMAKECONFIGDIR}")
 endif()
 
 if(BUILD_EXAMPLES)
