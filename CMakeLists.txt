@@ -142,8 +142,6 @@ if(BUILD_LIBRARIES)
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
       )
     target_compile_options("${TARGET}" PUBLIC ${CFLAGS})
-    if(libtype STREQUAL "STATIC_LIBRARY")
-    endif()
     target_link_libraries("${TARGET}" PUBLIC ${LIBRARIES})
     set_target_properties("${TARGET}" PROPERTIES
       PUBLIC_HEADER "${HEADERS}"
