@@ -101,10 +101,10 @@
     <event name="delete_id">
       <description summary="acknowledge object ID deletion">
 	This event is used internally by the object ID management
-	logic.  When a client deletes an object, the server will send
-	this event to acknowledge that it has seen the delete request.
-	When the client receives this event, it will know that it can
-	safely reuse the object ID.
+	logic. When a client deletes an object that it had created,
+	the server will send this event to acknowledge that it has
+	seen the delete request. When the client receives this event,
+	it will know that it can safely reuse the object ID.
       </description>
       <arg name="id" type="uint" summary="deleted object ID"/>
     </event>
@@ -509,6 +509,9 @@
 	this request after a NULL mime type has been set in
 	wl_data_offer.accept or no action was received through
 	wl_data_offer.action.
+
+	If wl_data_offer.finish request is received for a non drag and drop
+	operation, the invalid_finish protocol error is raised.
       </description>
     </request>
 
@@ -1276,8 +1279,10 @@
 
   <interface name="wl_surface" version="4">
     <description summary="an onscreen surface">
-      A surface is a rectangular area that is displayed on the screen.
-      It has a location, size and pixel contents.
+      A surface is a rectangular area that may be displayed on zero
+      or more outputs, and shown any number of times at the compositor's
+      discretion. They can present wl_buffers, receive user input, and
+      define a local coordinate system.
 
       The size of a surface (and relative positions on it) is described
       in surface-local coordinates, which may differ from the buffer
@@ -1364,6 +1369,12 @@
 	attached and then replaced by another attach instead of committed
 	will not receive a release event, and is not used by the
 	compositor.
+
+	If a pending wl_buffer has been committed to more than one wl_surface,
+	the delivery of wl_buffer.release events becomes undefined. A well
+	behaved client should not rely on wl_buffer.release events in this
+	case. Alternatively, a client could create multiple wl_buffer objects
+	from the same backing storage or use wp_linux_buffer_release.
 
 	Destroying the wl_buffer after wl_buffer.release does not change
 	the surface contents. However, if the client destroys the
@@ -2461,6 +2472,9 @@
 	or transformed, as described in wl_output.transform. Clients
 	willing to retrieve the output size in the global compositor
 	space should use xdg_output.logical_size instead.
+
+	The vertical refresh rate can be set to zero if it doesn't make
+	sense for this output (e.g. for virtual outputs).
 
 	Clients should not use the refresh rate to schedule frames. Instead,
 	they should use the wl_surface.frame event or the presentation-time
