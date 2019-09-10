@@ -24,7 +24,7 @@ well as graphviz is required.
 ## Library
 
 To build the library, `cmake ..` needs to executed in a newly created
-`build` directory in the root directory of the repository, followed 
+`build` directory in the root directory of the repository, followed
 by a `make`. After that, `make install` will install the library.
 
 There are several CMake variables that can be set in order to

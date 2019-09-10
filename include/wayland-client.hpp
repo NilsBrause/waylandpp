@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2014-2019, Nils Christopher Brause, Philipp Kerling
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer. 
+ *    list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -55,8 +55,8 @@ namespace wayland
    */
   void set_log_handler(log_handler handler);
 
-  /** \brief A queue for proxy_t object events. 
-    
+  /** \brief A queue for proxy_t object events.
+
       Event queues allows the events on a display to be handled in a
       thread-safe manner. See display_t for details.
   */
@@ -206,7 +206,7 @@ namespace wayland
 
     // Constructs NULL proxies.
     proxy_t();
-    
+
     struct construct_proxy_wrapper_tag {};
     // Construct from proxy as wrapper
     proxy_t(const proxy_t &wrapped_proxy, construct_proxy_wrapper_tag);
@@ -264,21 +264,21 @@ namespace wayland
     */
     uint32_t get_id() const;
 
-    /** \brief Get the interface name (class) of a proxy object. 
-        \return The interface name of the object associated with the proxy 
+    /** \brief Get the interface name (class) of a proxy object.
+        \return The interface name of the object associated with the proxy
     */
     std::string get_class() const;
-    
+
     /** \brief Get the protocol object version of a proxy object.
-     * 
+     *
      * Gets the protocol object version of a proxy object, or 0 if the proxy was
      * created with unversioned API.
-     * 
+     *
      * A returned value of 0 means that no version information is available,
      * so the caller must make safe assumptions about the object's real version.
-     * 
+     *
      * \ref display_t will always return version 0.
-     * 
+     *
      * \return The protocol object version of the proxy or 0
      */
     uint32_t get_version() const;
@@ -291,7 +291,7 @@ namespace wayland
     }
 
     /** \brief Assign a proxy to an event queue.
-        \param queue The event queue that will handle this proxy 
+        \param queue The event queue that will handle this proxy
 
         Assign proxy to event queue. Events coming from proxy will be queued in
         queue instead of the display's main queue.
@@ -299,35 +299,35 @@ namespace wayland
         See also: display_t::dispatch_queue().
     */
     void set_queue(event_queue_t queue);
-    
+
     /** \brief Get a pointer to the underlying C struct.
      *  \return The underlying wl_proxy wrapped by this proxy_t if it exists,
      *          otherwise an exception is thrown
      */
     wl_proxy *c_ptr() const;
-    
+
     /** \brief Check whether this wrapper actually wraps an object
      *  \return true if there is an underlying object, false if this wrapper is
      *          empty
      */
     bool proxy_has_object() const;
-    
+
     /** \brief Check whether this wrapper actually wraps an object
      *  \return true if there is an underlying object, false if this wrapper is
      *          empty
      */
     operator bool() const;
-    
+
     /** \brief Check whether two wrappers refer to the same object
      */
     bool operator==(const proxy_t &right) const;
 
     /** \brief Check whether two wrappers refer to different objects
-     */    
+     */
     bool operator!=(const proxy_t &right) const;
-    
+
     /** \brief Release the wrapped object (if any), making this an empty wrapper
-     * 
+     *
      * Note that display_t instances cannot be released this way. Attempts to
      * do so are ignored.
      */
@@ -336,21 +336,21 @@ namespace wayland
 
   /** \brief Represents an intention to read from the display file
    *  descriptor
-   * 
+   *
    * When not using the convenience method \ref display_t::dispatch that takes care
    * of this automatically, threads that want to read events from a Wayland
    * display file descriptor must announce their intention to do so beforehand - in the C API,
    * this is done using wl_display_prepare_read. This intention must then be
    * resolved either by actually invoking a read from the file descriptor or cancelling.
-   * 
+   *
    * This RAII class makes sure that when it goes out of scope, the intent
    * is cancelled automatically if it was not finalized by manually cancelling
    * or reading before. Otherwise, it would be easy to forget resolving the
    * intent e.g. when handling errors, potentially leading to a deadlock.
-   * 
+   *
    * Read intents can only be created by a \ref display_t with
    * \ref display_t::obtain_read_intent and \ref display_t::obtain_queue_read_intent.
-   * 
+   *
    * Undefined behavior occurs when the associated \ref display_t or
    * \ref event_queue_t is destroyed when a read_intent has not been finalized yet.
    */
@@ -359,44 +359,44 @@ namespace wayland
   public:
     read_intent(read_intent &&other) = default;
     ~read_intent();
-    
+
     /** \brief Check whether this intent was already finalized with \ref cancel
      * or \ref read
      */
     bool is_finalized() const;
 
     /** \brief Cancel read intent
-     * 
+     *
      * An exception is thrown when the read intent was already finalized.
      */
     void cancel();
 
     /** \brief Read events from display file descriptor
-     * 
+     *
      * This will read events from the file descriptor for the
      * display. This function does not dispatch events, it only reads
      * and queues events into their corresponding event queues. If no
      * data is avilable on the file descriptor, read() returns immediately.
      * To dispatch events that may have been queued, call
      * \ref display_t::dispatch_pending or \ref display_t::dispatch_queue_pending.
-     * 
+     *
      * An exception is thrown when the read intent was already finalized.
      * Each read intent can only be used for reading once. A new one must be
      * obtained for any further read requests.
      */
     void read();
-    
+
   private:
     read_intent(wl_display *display, wl_event_queue *event_queue = nullptr);
     friend class display_t;
     read_intent(read_intent const &other) = delete;
     read_intent& operator=(read_intent const &other) = delete;
-    
+
     wl_display *display;
     wl_event_queue *event_queue = nullptr;
     bool finalized = false;
   };
-  
+
   class callback_t;
   class registry_t;
 
@@ -470,7 +470,7 @@ namespace wayland
   public:
     /** \brief Connect to Wayland display on an already open fd.
         \param fd The fd to use for the connection
-      
+
         The display_t takes ownership of the fd and will close it when
         the display is destroyed. The fd will also be closed in case of
         failure.
@@ -480,7 +480,7 @@ namespace wayland
     display_t(display_t &&d);
     display_t &operator=(display_t &&d);
 
-    /**  \brief Connect to a Wayland display. 
+    /**  \brief Connect to a Wayland display.
          \param name Optional name of the Wayland display to connect to
 
          Connect to the Wayland display named name. If name is empty,
@@ -526,7 +526,7 @@ namespace wayland
     /** \brief Create a new event queue for this display.
         \return A new event queue associated with this display or NULL
         on failure.
-    */ 
+    */
     event_queue_t create_queue();
 
     /** \brief Get a display context's file descriptor.
@@ -559,20 +559,20 @@ namespace wayland
          prepare_read() and read_events())
     */
     int roundtrip_queue(event_queue_t queue);
-    
+
     /** \brief Announce calling thread's intention to read events from the
      * Wayland display file descriptor
-     * 
+     *
      * This ensures that until the thread is ready to read and calls \ref
      * read_intent::read, no other thread will read from the file descriptor.
      * During preparation, all undispatched events in the event queue
      * are dispatched until the queue is empty.
-     * 
+     *
      * Use this function before polling on the display fd or to integrate the
      * fd into a toolkit event loop in a race-free way.
-     * 
+     *
      * Typical usage is:
-     * 
+     *
      * \code
      * auto read_intent = display.obtain_read_intent();
      * display.flush();
@@ -581,31 +581,31 @@ namespace wayland
      *   read_intent.read();
      * display.dispatch_pending();
      * \endcode
-     * 
+     *
      * The \ref read_intent ensures that if the above code e.g. throws an
      * exception before actually reading from the file descriptor or times out
      * in poll(), the read intent is always cancelled so other threads can proceed.
-     * 
+     *
      * In one thread, do not hold more than one read intent for the same
      * display at the same time, irrespective of the event queue.
-     * 
+     *
      * \return New \ref read_intent for this display and the default event queue
      * \exception std::system_error on failure
      */
     read_intent obtain_read_intent();
-    
+
     /** \brief Announce calling thread's intention to read events from the
      * Wayland display file descriptor
-     * 
+     *
      * \param queue event queue for which the read event will be valid
      * \return New \ref read_intent for this display and the specified event queue
      * \exception std::system_error on failure
-     * 
+     *
      * See \ref obtain_read_intent for details.
      */
     read_intent obtain_queue_read_intent(event_queue_t queue);
 
-    /** \brief Dispatch events in an event queue. 
+    /** \brief Dispatch events in an event queue.
         \param queue The event queue to dispatch
         \return The number of dispatched events
         \exception std::system_error on failure
@@ -618,11 +618,11 @@ namespace wayland
         calling from the main thread, it will block reading data from
         the display fd. For other threads this will block until the main
         thread queues events on the queue passed as argument.
-    */ 
+    */
     int dispatch_queue(event_queue_t queue);
 
     /** \brief Dispatch pending events in an event queue.
-        \param queue The event queue to dispatch 
+        \param queue The event queue to dispatch
         \return The number of dispatched events
         \exception std::system_error on failure
 
@@ -632,13 +632,13 @@ namespace wayland
         returns immediately.
     */
     int dispatch_queue_pending(event_queue_t queue);
-      
-    /** \brief Process incoming events. 
+
+    /** \brief Process incoming events.
         \return The number of dispatched events
         \exception std::system_error on failure
 
         Dispatch the display's main event queue.
-      
+
         If the main event queue is empty, this function blocks until
         there are events to be read from the display fd. Events are read
         and queued on the appropriate event queues. Finally, events on
@@ -658,11 +658,11 @@ namespace wayland
     /** \brief Dispatch main queue events without reading from the display fd.
         \return The number of dispatched events
         \exception std::system_error on failure
-      
+
         This function dispatches events on the main event queue. It
         does not attempt to read the display fd and simply returns zero
         if the main queue is empty, i.e., it doesn't block.
-       
+
         This is necessary when a client's main loop wakes up on some fd
         other than the display fd (network socket, timer fd, etc) and
         calls wl_display_dispatch_queue() from that callback. This may
@@ -671,14 +671,14 @@ namespace wayland
         to block, the display fd no longer has data, causing a call to
         poll(2) (or similar functions) to block indefinitely, even
         though there are events ready to dispatch.
-       
+
         To proper integrate the wayland display fd into a main loop,
         the client should always call display_t::dispatch_pending() and
         then display_t::flush() prior to going back to sleep. At that
         point, the fd typically doesn't have data so attempting I/O
         could block, but events queued up on the main queue should be
         dispatched.
-       
+
         A real-world example is a main loop that wakes up on a timerfd
         (or a sound card fd becoming writable, for example in a video
         player), which then triggers GL rendering and eventually
@@ -705,11 +705,11 @@ namespace wayland
     */
     int get_error() const;
 
-    /** \brief Send all buffered requests on the display to the server. 
+    /** \brief Send all buffered requests on the display to the server.
         \return Tuple of the number of bytes sent and whether all data
                 was sent.
         \exception std::system_error on failure
-      
+
         Send all buffered data on the client side to the server. Clients
         should call this function before blocking. On success, the
         number of bytes sent to the server is returned.
@@ -722,7 +722,7 @@ namespace wayland
     std::tuple<int, bool> flush();
 
     /** \brief asynchronous roundtrip
-      
+
         The sync request asks the server to emit the 'done' event on
         the returned callback_t object. Since requests are handled
         in-order and events are delivered in-order, this can be used as
@@ -741,7 +741,7 @@ namespace wayland
         list and bind the global objects available from the compositor.
     */
     registry_t get_registry();
-    
+
     operator wl_display*() const;
 
     /** \brief create proxy wrapper for this display

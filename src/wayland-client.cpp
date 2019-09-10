@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2014-2019, Nils Christopher Brause, Philipp Kerling
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer. 
+ *    list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -47,7 +47,7 @@ void _c_log_handler(const char *format, va_list args)
 {
   if(!g_log_handler)
     return;
-  
+
   // Format string
   va_list args_copy;
 
@@ -66,7 +66,7 @@ void _c_log_handler(const char *format, va_list args)
   std::vector<char> buf(static_cast<std::vector<char>::size_type>(length));
   if(std::vsnprintf(buf.data(), buf.size(), format, args_copy) < 0)
     throw std::runtime_error("Error formatting wayland-client log message");
-  
+
   g_log_handler(buf.data());
 }
 
@@ -288,10 +288,10 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
   interface = p.interface;
   copy_constructor = p.copy_constructor;
   type = p.type;
-  
+
   if(data)
     data->counter++;
-  
+
   // Allowed: nothing set (for standard wrapper, others may not be empty), proxy set & data unset (for foreign), proxy & data set (for everything but foreign)
   assert((type == wrapper_type::standard && !data && !proxy) || (type == wrapper_type::foreign && !data && proxy) || ((type == wrapper_type::standard || type == wrapper_type::proxy_wrapper || type == wrapper_type::display) && data && proxy));
 
@@ -347,7 +347,7 @@ void proxy_t::proxy_release()
           delete data;
       }
   }
-  
+
   proxy = NULL;
   data = NULL;
 }
@@ -505,7 +505,7 @@ read_intent display_t::obtain_read_intent()
   {
     if(errno != EAGAIN)
       throw std::system_error(errno, std::generic_category(), "wl_display_prepare_read");
-    
+
     dispatch_pending();
   }
   return read_intent(*this);
@@ -517,7 +517,7 @@ read_intent display_t::obtain_queue_read_intent(event_queue_t queue)
   {
     if(errno != EAGAIN)
       throw std::system_error(errno, std::generic_category(), "wl_display_prepare_read_queue");
-    
+
     dispatch_queue_pending(queue);
   }
   return read_intent(*this, queue);
@@ -526,27 +526,27 @@ read_intent display_t::obtain_queue_read_intent(event_queue_t queue)
 int display_t::dispatch_queue(event_queue_t queue)
 {
   return check_return_value(wl_display_dispatch_queue(*this, queue), "wl_display_dispatch_queue");
-}    
+}
 
 int display_t::dispatch_queue_pending(event_queue_t queue)
 {
   return check_return_value(wl_display_dispatch_queue_pending(*this, queue), "wl_display_dispatch_queue_pending");
-}    
+}
 
 int display_t::dispatch()
 {
   return check_return_value(wl_display_dispatch(*this), "wl_display_dispatch");
-}    
+}
 
 int display_t::dispatch_pending()
 {
   return check_return_value(wl_display_dispatch_pending(*this), "wl_display_dispatch_pending");
-}    
+}
 
 int display_t::get_error() const
 {
   return wl_display_get_error(*this);
-}    
+}
 
 std::tuple<int, bool> display_t::flush()
 {
@@ -566,7 +566,7 @@ std::tuple<int, bool> display_t::flush()
   {
     return std::make_tuple(bytes_written, true);
   }
-}    
+}
 
 callback_t display_t::sync()
 {

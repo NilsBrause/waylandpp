@@ -447,7 +447,7 @@ struct interface_t : public element_t
       ss << e.print_forward(name);
     return ss.str();
   }
-  
+
   std::string print_c_forward()
   {
     std::stringstream ss;
@@ -499,7 +499,7 @@ struct interface_t : public element_t
 
     ss << "};" << std::endl
        << std::endl;
-    
+
     for(auto &enumeration : enums)
       ss << enumeration.print_header(name) << std::endl;
 
@@ -522,7 +522,7 @@ struct interface_t : public element_t
     if(destroy_opcode != -1)
       set_events << "      set_destroy_opcode(" << destroy_opcode << "u);" << std::endl;
     set_events << "    }" << std::endl;
-      
+
     std::stringstream set_interface;
     set_interface << "  interface = &" << name << "_interface;" << std::endl
                   << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
@@ -583,11 +583,11 @@ struct interface_t : public element_t
         ss << "  std::shared_ptr<events_t> events = std::static_pointer_cast<events_t>(e);" << std::endl
            << "  switch(opcode)" << std::endl
            << "    {" << std::endl;
-        
+
         int opcode = 0;
         for(auto &event : events)
           ss << event.print_dispatcher(opcode++) << std::endl;
-        
+
         ss << "    }" << std::endl;
       }
 
@@ -920,7 +920,7 @@ int main(int argc, char *argv[])
                 }
               iface.enums.push_back(enu);
             }
-          
+
           interfaces.push_back(iface);
         }
     }
@@ -951,7 +951,7 @@ int main(int argc, char *argv[])
     if(iface.name != "display")
       wayland_hpp << iface.print_c_forward();
   wayland_hpp << std::endl;
-  
+
   wayland_hpp << "namespace wayland" << std::endl
               << "{" << std::endl;
 
@@ -984,7 +984,7 @@ int main(int argc, char *argv[])
               << "using namespace wayland;" << std::endl
               << "using namespace detail;" << std::endl
               << std::endl;
-  
+
   // interface bodys
   for(auto &iface : interfaces)
     wayland_cpp << iface.print_interface_body();
@@ -998,7 +998,7 @@ int main(int argc, char *argv[])
   // clean up
   wayland_hpp.close();
   wayland_cpp.close();
-  
+
   return 0;
 }
 

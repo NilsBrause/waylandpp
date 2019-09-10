@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2014-2019, Nils Christopher Brause, Philipp Kerling, Zsolt Bölöny
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer. 
+ *    list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -79,7 +79,7 @@ public:
     // stolen by other running processes.
     // Linux code should use memfd_create when possible (ommited here for
     // simplicity).
-    
+
     // create random filename
     std::stringstream ss;
     std::srand(std::time(0));
@@ -137,7 +137,7 @@ private:
   xdg_wm_base_t xdg_wm_base;
   seat_t seat;
   shm_t shm;
-  
+
   // local objects
   surface_t surface;
   shell_surface_t shell_surface;
@@ -295,7 +295,7 @@ public:
         cursor_surface.commit();
         pointer.set_cursor(serial, cursor_surface, 0, 0);
       };
-    
+
     // window movement
     pointer.on_button() = [&] (uint32_t serial, uint32_t time, uint32_t button, pointer_button_state state)
       {
