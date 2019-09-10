@@ -55,7 +55,10 @@ void _c_log_handler(const char *format, va_list args)
   va_copy(args_copy, args);
   int length = std::vsnprintf(nullptr, 0, format, args);
   if(length < 0)
+  {
+    va_end(args_copy);
     throw std::runtime_error("Error getting length of formatted wayland-client log message");
+  }
 
   // check for possible overflow - could be done at runtime but the following should hold on all usual platforms
   static_assert(std::numeric_limits<std::vector<char>::size_type>::max() >= std::numeric_limits<int>::max() + 1u /* NUL */, "vector constructor must allow size big enough for vsnprintf return value");
@@ -66,6 +69,8 @@ void _c_log_handler(const char *format, va_list args)
   std::vector<char> buf(static_cast<std::vector<char>::size_type>(length));
   if(std::vsnprintf(buf.data(), buf.size(), format, args_copy) < 0)
     throw std::runtime_error("Error formatting wayland-client log message");
+
+  va_end(args_copy);
 
   g_log_handler(buf.data());
 }
