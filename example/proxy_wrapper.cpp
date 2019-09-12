@@ -121,6 +121,7 @@ public:
         std::cout << "Round " << round << "/" << round_count << std::endl;
       }
       std::vector<std::thread> threads;
+      threads.reserve(thread_count);
       for(int i = 0; i < thread_count; i++)
       {
         threads.emplace_back(bind_thread(safe));

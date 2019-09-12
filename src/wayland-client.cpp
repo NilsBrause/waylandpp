@@ -196,6 +196,7 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
 proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<argument_t> args, std::uint32_t version)
 {
   std::vector<wl_argument> v;
+  v.reserve(args.size());
   for(auto &arg : args)
     v.push_back(arg.argument);
   if(interface)
