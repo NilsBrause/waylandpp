@@ -43,7 +43,7 @@ namespace wayland
    *
    * Log message is the first argument
    */
-  typedef std::function<void(std::string)> log_handler;
+  using log_handler = std::function<void(std::string)> ;
 
   /** \brief Set C library log handler
    *

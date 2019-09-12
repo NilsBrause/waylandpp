@@ -188,7 +188,7 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
       c++;
     }
   proxy_t p(reinterpret_cast<wl_proxy*>(target), wrapper_type::standard);
-  typedef int(*dispatcher_func)(std::uint32_t, std::vector<any>, std::shared_ptr<events_base_t>);
+  using dispatcher_func = int(*)(std::uint32_t, std::vector<any>, std::shared_ptr<events_base_t>);
   dispatcher_func dispatcher = reinterpret_cast<dispatcher_func>(const_cast<void*>(implementation));
   return dispatcher(opcode, vargs, p.get_events());
 }
