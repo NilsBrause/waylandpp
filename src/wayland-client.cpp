@@ -165,7 +165,7 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
           {
             if(args[c].o)
               {
-                wl_proxy *proxy = reinterpret_cast<wl_proxy*>(args[c].o);
+                auto *proxy = reinterpret_cast<wl_proxy*>(args[c].o);
                 wl_proxy_set_user_data(proxy, nullptr); // Wayland leaves the user data uninitialized
                 a = proxy_t(proxy);
               }
@@ -189,7 +189,7 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
     }
   proxy_t p(reinterpret_cast<wl_proxy*>(target), wrapper_type::standard);
   using dispatcher_func = int(*)(std::uint32_t, std::vector<any>, std::shared_ptr<events_base_t>);
-  dispatcher_func dispatcher = reinterpret_cast<dispatcher_func>(const_cast<void*>(implementation));
+  auto dispatcher = reinterpret_cast<dispatcher_func>(const_cast<void*>(implementation));
   return dispatcher(opcode, vargs, p.get_events());
 }
 

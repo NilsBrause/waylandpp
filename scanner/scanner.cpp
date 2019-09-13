@@ -686,10 +686,10 @@ struct interface_t : public element_t
 
 std::string unprefix(const std::string &name)
 {
-  std::string::size_type prefix_len = name.find("_");
+  auto prefix_len = name.find("_");
   if(prefix_len != std::string::npos)
     {
-      std::string prefix = name.substr(0, prefix_len);
+      auto prefix = name.substr(0, prefix_len);
       if(prefix == "wl" || prefix == "wp")
         return name.substr(prefix_len+1, name.size());
     }
@@ -742,9 +742,9 @@ int main(int argc, char *argv[])
     {
       xml_document doc;
       doc.load_file(extra[c].c_str());
-      xml_node protocol = doc.child("protocol");
+      auto protocol = doc.child("protocol");
 
-      for(xml_node &interface : protocol.children("interface"))
+      for(auto const& interface : protocol.children("interface"))
         {
           interface_t iface;
           iface.destroy_opcode = -1;
@@ -756,7 +756,7 @@ int main(int argc, char *argv[])
             iface.version = 1;
           if(interface.child("description"))
             {
-              xml_node description = interface.child("description");
+              auto description = interface.child("description");
               iface.summary = description.attribute("summary").value();
               iface.description = description.text().get();
             }
@@ -764,7 +764,7 @@ int main(int argc, char *argv[])
           interface_names.push_back(iface.name);
 
           int opcode = 0; // Opcodes are in order of the XML. (Sadly undocumented)
-          for(xml_node &request : interface.children("request"))
+          for(auto const& request : interface.children("request"))
             {
               request_t req;
               req.opcode = opcode++;
@@ -777,7 +777,7 @@ int main(int argc, char *argv[])
 
               if(request.child("description"))
                 {
-                  xml_node description = request.child("description");
+                  auto description = request.child("description");
                   req.summary = description.attribute("summary").value();
                   req.description = description.text().get();
                 }
@@ -785,7 +785,7 @@ int main(int argc, char *argv[])
               // destruction takes place through the class destuctor
               if(req.name == "destroy")
                 iface.destroy_opcode = req.opcode;
-              for(xml_node &argument : request.children("arg"))
+              for(auto const& argument : request.children("arg"))
                 {
                   argument_t arg;
                   arg.type = argument.attribute("type").value();
@@ -824,7 +824,7 @@ int main(int argc, char *argv[])
               iface.requests.push_back(req);
             }
 
-          for(xml_node &event : interface.children("event"))
+          for(auto const& event : interface.children("event"))
             {
               event_t ev;
               ev.name = event.attribute("name").value();
@@ -836,12 +836,12 @@ int main(int argc, char *argv[])
 
               if(event.child("description"))
                 {
-                  xml_node description = event.child("description");
+                  auto description = event.child("description");
                   ev.summary = description.attribute("summary").value();
                   ev.description = description.text().get();
                 }
 
-              for(xml_node &argument : event.children("arg"))
+              for(auto const& argument : event.children("arg"))
                 {
                   argument_t arg;
                   arg.type = argument.attribute("type").value();
@@ -878,13 +878,13 @@ int main(int argc, char *argv[])
               iface.events.push_back(ev);
             }
 
-          for(xml_node &enumeration : interface.children("enum"))
+          for(auto const& enumeration : interface.children("enum"))
             {
               enumeration_t enu;
               enu.name = enumeration.attribute("name").value();
               if(enumeration.child("description"))
                 {
-                  xml_node description = enumeration.child("description");
+                  auto description = enumeration.child("description");
                   enu.summary = description.attribute("summary").value();
                   enu.description = description.text().get();
                 }
@@ -899,7 +899,7 @@ int main(int argc, char *argv[])
               enu.id = enum_id++;
               enu.width = 0;
 
-              for(xml_node entry = enumeration.child("entry"); entry;
+              for(auto entry = enumeration.child("entry"); entry;
                   entry = entry.next_sibling("entry"))
                 {
                   enum_entry_t enum_entry;
@@ -912,7 +912,7 @@ int main(int argc, char *argv[])
                   if(entry.attribute("summary"))
                     enum_entry.summary = entry.attribute("summary").value();
 
-                  uint32_t tmp = static_cast<uint32_t> (std::log2(stol(enum_entry.value, nullptr, 0))) + 1u;
+                  auto tmp = static_cast<uint32_t>(std::log2(stol(enum_entry.value, nullptr, 0))) + 1u;
                   if(tmp > enu.width)
                     enu.width = tmp;
 
