@@ -82,7 +82,7 @@ public:
 
     // create random filename
     std::stringstream ss;
-    std::srand(std::time(0));
+    std::srand(std::time(nullptr));
     ss << '/' << std::rand();
     name = ss.str();
 
@@ -96,7 +96,7 @@ public:
       throw std::runtime_error("ftruncate failed.");
 
     // map memory
-    mem = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    mem = mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if(mem == MAP_FAILED)
       throw std::runtime_error("mmap failed.");
   }

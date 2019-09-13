@@ -169,7 +169,7 @@ namespace wayland
     void marshal(uint32_t opcode, T...args)
     {
       std::vector<detail::argument_t> v = { detail::argument_t(args)... };
-      marshal_single(opcode, NULL, v);
+      marshal_single(opcode, nullptr, v);
     }
 
     // marshal a request that leads to a new proxy with inherited version

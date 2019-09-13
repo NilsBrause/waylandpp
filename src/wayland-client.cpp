@@ -166,7 +166,7 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
             if(args[c].o)
               {
                 wl_proxy *proxy = reinterpret_cast<wl_proxy*>(args[c].o);
-                wl_proxy_set_user_data(proxy, NULL); // Wayland leaves the user data uninitialized
+                wl_proxy_set_user_data(proxy, nullptr); // Wayland leaves the user data uninitialized
                 a = proxy_t(proxy);
               }
             else
@@ -209,7 +209,7 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
 
       if(!p)
         throw std::runtime_error("wl_proxy_marshal_array_constructor");
-      wl_proxy_set_user_data(p, NULL); // Wayland leaves the user data uninitialized
+      wl_proxy_set_user_data(p, nullptr); // Wayland leaves the user data uninitialized
       // libwayland-client inherits the queue, so we need to, too
       return proxy_t(p, wrapper_type::standard, data ? data->queue : wayland::event_queue_t());
     }
@@ -354,8 +354,8 @@ void proxy_t::proxy_release()
       }
   }
 
-  proxy = NULL;
-  data = NULL;
+  proxy = nullptr;
+  data = nullptr;
 }
 
 
@@ -452,7 +452,7 @@ display_t::display_t(int fd)
 }
 
 display_t::display_t(std::string name)
-  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect(name == "" ? NULL : name.c_str())), proxy_t::wrapper_type::display)
+  : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect(name.empty() ? nullptr : name.c_str())), proxy_t::wrapper_type::display)
 {
   if(!proxy_has_object())
     throw std::runtime_error("Could not connect to Wayland display server via name");

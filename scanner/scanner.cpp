@@ -610,7 +610,7 @@ struct interface_t : public element_t
           if(arg.interface != "")
             ss  << "  &" << arg.interface << "_interface," << std::endl;
           else
-            ss  << "  NULL," << std::endl;
+            ss  << "  nullptr," << std::endl;
         ss << "};" << std::endl
            << std::endl;
       }
@@ -621,7 +621,7 @@ struct interface_t : public element_t
           if(arg.interface != "")
             ss  << "  &" << arg.interface << "_interface," << std::endl;
           else
-            ss  << "  NULL," << std::endl;
+            ss  << "  nullptr," << std::endl;
         ss << "};" << std::endl
            << std::endl;
       }

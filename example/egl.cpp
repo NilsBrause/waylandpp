@@ -123,7 +123,7 @@ private:
     if(eglcontext == EGL_NO_CONTEXT)
       throw std::runtime_error("eglCreateContext");
 
-    eglsurface = eglCreateWindowSurface(egldisplay, config, egl_window, NULL);
+    eglsurface = eglCreateWindowSurface(egldisplay, config, egl_window, nullptr);
     if(eglsurface == EGL_NO_SURFACE)
       throw std::runtime_error("eglCreateWindowSurface");
 
