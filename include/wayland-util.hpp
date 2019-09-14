@@ -299,8 +299,7 @@ namespace wayland
       {
         if(val && typeid(T) == val->type_info())
           return static_cast<derived<T>*>(val)->val;
-        else
-          throw std::bad_cast();
+        throw std::bad_cast();
       }
     };
 

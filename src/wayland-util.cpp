@@ -39,13 +39,8 @@ namespace wayland
     int check_return_value(int return_value, const std::string &function_name)
     {
       if(return_value < 0)
-      {
         throw std::system_error(errno, std::generic_category(), function_name);
-      }
-      else
-      {
-        return return_value;
-      }
+      return return_value;
     }
   }
 }

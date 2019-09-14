@@ -560,18 +560,10 @@ std::tuple<int, bool> display_t::flush()
   if(bytes_written < 0)
   {
     if(errno == EAGAIN)
-    {
       return std::make_tuple(bytes_written, false);
-    }
-    else
-    {
-      throw std::system_error(errno, std::generic_category(), "wl_display_flush");
-    }
+    throw std::system_error(errno, std::generic_category(), "wl_display_flush");
   }
-  else
-  {
-    return std::make_tuple(bytes_written, true);
-  }
+  return std::make_tuple(bytes_written, true);
 }
 
 callback_t display_t::sync()

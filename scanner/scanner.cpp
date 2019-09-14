@@ -59,58 +59,55 @@ struct argument_t : public element_t
     // Enums can be int or uint on the wire, except for bitfields
     if(type == "int")
       return "int32_t";
-    else if(type == "uint")
+    if(type == "uint")
       return "uint32_t";
-    else
-      throw std::runtime_error("Enum type must be int or uint");
+    throw std::runtime_error("Enum type must be int or uint");
   }
 
   std::string print_type()
   {
     if(interface != "")
       return interface + "_t";
-    else if(enum_iface != "")
+    if(enum_iface != "")
       return enum_iface + "_" + enum_name;
-    else if(type == "int")
+    if(type == "int")
       return "int32_t";
-    else if(type == "uint")
+    if(type == "uint")
       return "uint32_t";
-    else if(type == "fixed")
+    if(type == "fixed")
       return "double";
-    else if(type == "string")
+    if(type == "string")
       return "std::string";
-    else if(type == "object")
+    if(type == "object")
       return "proxy_t";
-    else if(type == "new_id")
+    if(type == "new_id")
       return "proxy_t";
-    else if(type == "fd")
+    if(type == "fd")
       return "int";
-    else if(type == "array")
+    if(type == "array")
       return "array_t";
-    else
-      return type;
+    return type;
   }
 
   std::string print_short()
   {
     if(type == "int")
       return "i";
-    else if(type == "uint")
+    if(type == "uint")
       return "u";
-    else if(type == "fixed")
+    if(type == "fixed")
       return "f";
-    else if(type == "string")
+    if(type == "string")
       return "s";
-    else if(type == "object")
+    if(type == "object")
       return "o";
-    else if(type == "new_id")
+    if(type == "new_id")
       return "n";
-    else if(type == "array")
+    if(type == "array")
       return "a";
-    else if(type == "fd")
+    if(type == "fd")
       return "h";
-    else
-      return "x";
+    return "x";
   }
 
   std::string print_argument()
@@ -204,8 +201,7 @@ struct request_t : public event_t
   {
     if(since > 1)
       return std::string("can_") + name;
-    else
-      return "";
+    return "";
   }
 
   std::string since_version_constant_name()

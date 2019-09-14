@@ -73,34 +73,30 @@ private:
     };
     display.roundtrip_queue(queue);
     if(!seat)
-    {
       throw std::runtime_error("Did NOT get seat interface - thread-safety issue!");
-    }
-    else
+
+    // Now pretend that again another part of the application wants to use the
+    // seat and get the keyboard from it
+    // Note that it would not be necessary to do this in this example, but
+    // this code is useful for testing proxy wrappers with normal interface
+    // objects (display_t is special)
+    auto queue2 = display.create_queue();
+    if(safe)
     {
-      // Now pretend that again another part of the application wants to use the
-      // seat and get the keyboard from it
-      // Note that it would not be necessary to do this in this example, but
-      // this code is useful for testing proxy wrappers with normal interface
-      // objects (display_t is special)
-      auto queue2 = display.create_queue();
-      if(safe)
-      {
-        seat = seat.proxy_create_wrapper();
-      }
-      seat.set_queue(queue2);
-      keyboard_t kbd = seat.get_keyboard();
-      bool have_keymap = false;
-      kbd.on_keymap() = [&have_keymap](keyboard_keymap_format format, int fd, std::uint32_t size)
-      {
-        close(fd);
-        have_keymap = true;
-      };
-      display.roundtrip_queue(queue2);
-      if(!have_keymap)
-      {
-        throw std::runtime_error("Did NOT get keymap - thread-safety issue!");
-      }
+      seat = seat.proxy_create_wrapper();
+    }
+    seat.set_queue(queue2);
+    keyboard_t kbd = seat.get_keyboard();
+    bool have_keymap = false;
+    kbd.on_keymap() = [&have_keymap](keyboard_keymap_format format, int fd, std::uint32_t size)
+    {
+      close(fd);
+      have_keymap = true;
+    };
+    display.roundtrip_queue(queue2);
+    if(!have_keymap)
+    {
+      throw std::runtime_error("Did NOT get keymap - thread-safety issue!");
     }
   }
 
