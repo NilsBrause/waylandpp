@@ -245,12 +245,12 @@ namespace wayland
         derived(const T &t)
           : val(t) { }
 
-        virtual const std::type_info &type_info() const override
+        const std::type_info &type_info() const override
         {
           return typeid(T);
         }
 
-        virtual base *clone() const override
+        base *clone() const override
         {
           return new derived<T>(val);
         }
