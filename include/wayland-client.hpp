@@ -148,7 +148,7 @@ namespace wayland
 
     // marshal request
     proxy_t marshal_single(uint32_t opcode, const wl_interface *interface,
-                           std::vector<detail::argument_t> v, std::uint32_t version = 0);
+                           std::vector<detail::argument_t> args, std::uint32_t version = 0);
 
   protected:
     // Interface desctiption filled in by the each interface class
@@ -209,7 +209,7 @@ namespace wayland
 
     struct construct_proxy_wrapper_tag {};
     // Construct from proxy as wrapper
-    proxy_t(const proxy_t &wrapped_proxy, construct_proxy_wrapper_tag);
+    proxy_t(const proxy_t &wrapped_proxy, construct_proxy_wrapper_tag /*unused*/);
 
   public:
     /** \brief Cronstruct a proxy_t from a wl_proxy pointer
@@ -465,7 +465,7 @@ namespace wayland
   private:
     display_t(const display_t &d) { }
     // Construct as proxy wrapper
-    display_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag);
+    display_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag /*unused*/);
 
   public:
     /** \brief Connect to Wayland display on an already open fd.

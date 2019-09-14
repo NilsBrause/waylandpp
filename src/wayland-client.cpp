@@ -273,7 +273,7 @@ proxy_t::proxy_t(wl_proxy *p, wrapper_type t, event_queue_t const &queue)
     }
 }
 
-proxy_t::proxy_t(const proxy_t &wrapped_proxy, construct_proxy_wrapper_tag)
+proxy_t::proxy_t(const proxy_t &wrapped_proxy, construct_proxy_wrapper_tag /*unused*/)
   : proxy_t(static_cast<wl_proxy*> (wl_proxy_create_wrapper(wrapped_proxy.c_ptr())), wrapper_type::proxy_wrapper, wrapped_proxy.data->queue)
 {
   assert(data && !data->wrapped_proxy);
@@ -589,7 +589,7 @@ display_t::operator wl_display*() const
   return reinterpret_cast<wl_display*>(c_ptr());
 }
 
-display_t::display_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag)
+display_t::display_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag /*unused*/)
 : proxy_t(wrapped_proxy, construct_proxy_wrapper_tag())
 {
 }

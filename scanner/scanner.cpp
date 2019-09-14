@@ -475,7 +475,7 @@ struct interface_t : public element_t
        << std::endl
        << "  static int dispatcher(uint32_t opcode, std::vector<detail::any> args, std::shared_ptr<detail::events_base_t> e);" << std::endl
        << std::endl
-       << "  " << name << "_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag);" << std::endl
+       << "  " << name << "_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag /*unused*/);" << std::endl
        << std::endl;
 
     ss << "public:" << std::endl
@@ -548,7 +548,7 @@ struct interface_t : public element_t
        << set_interface.str()
        << "}" << std::endl
        << std::endl
-       << name << "_t::" << name << "_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag)" << std::endl
+       << name << "_t::" << name << "_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag /*unused*/)" << std::endl
        << "  : proxy_t(wrapped_proxy, construct_proxy_wrapper_tag())"
        << "{" << std::endl
        << set_interface.str()
