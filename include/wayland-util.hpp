@@ -35,9 +35,9 @@
 
 #include <wayland-client-core.h>
 
-#define wl_array_for_each_cpp(pos, array)                                   \
-  for (pos = (decltype(pos))(array)->data;                                  \
-       (const char *) pos < ((const char *) (array)->data + (array)->size); \
+#define wl_array_for_each_cpp(pos, array)                                                         \
+  for ((pos) = static_cast<decltype(pos)>((array)->data);                                         \
+       static_cast<const char*>(pos) < (static_cast<const char*>((array)->data) + (array)->size); \
        (pos)++)
 
 namespace wayland
