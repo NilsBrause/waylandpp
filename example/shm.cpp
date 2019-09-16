@@ -151,7 +151,7 @@ private:
   surface_t cursor_surface;
 
   std::shared_ptr<shared_mem_t> shared_mem;
-  buffer_t buffer[2];
+  std::array<buffer_t, 2> buffer;
   int cur_buf;
 
   bool running;
@@ -199,7 +199,7 @@ private:
       | static_cast<uint32_t>(b * 255.0);
 
     std::fill_n(static_cast<uint32_t*>(shared_mem->get_mem())+cur_buf*320*240, 320*240, pixel);
-    surface.attach(buffer[cur_buf], 0, 0);
+    surface.attach(buffer.at(cur_buf), 0, 0);
     surface.damage(0, 0, 320, 240);
     if(!cur_buf)
       cur_buf = 1;
@@ -275,7 +275,7 @@ public:
     shared_mem = std::shared_ptr<shared_mem_t>(new shared_mem_t(2*320*240*4));
     auto pool = shm.create_pool(shared_mem->get_fd(), 2*320*240*4);
     for(unsigned int c = 0; c < 2; c++)
-      buffer[c] = pool.create_buffer(c*320*240*4, 320, 240, 320*4, shm_format::argb8888);
+      buffer.at(c) = pool.create_buffer(c*320*240*4, 320, 240, 320*4, shm_format::argb8888);
     cur_buf = 0;
 
     // load cursor theme
