@@ -23,7 +23,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cassert>
 #include <cstdarg>
 #include <cstdio>
 #include <cerrno>
@@ -219,7 +218,8 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
 
 void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 {
-  assert(type != wrapper_type::display);
+  if(type == wrapper_type::display)
+    throw std::runtime_error("Cannot set destroy opcode on display.");
   if(data)
     {
       data->has_destroy_opcode = true;
@@ -276,7 +276,8 @@ proxy_t::proxy_t(wl_proxy *p, wrapper_type t, event_queue_t const &queue)
 proxy_t::proxy_t(const proxy_t &wrapped_proxy, construct_proxy_wrapper_tag /*unused*/)
   : proxy_t(static_cast<wl_proxy*> (wl_proxy_create_wrapper(wrapped_proxy.c_ptr())), wrapper_type::proxy_wrapper, wrapped_proxy.data->queue)
 {
-  assert(data && !data->wrapped_proxy);
+  if(!data || data->wrapped_proxy)
+    throw std::runtime_error("Error wrapping proxy.");
   // Need to retain a reference to the proxy this wrapper was created from:
   // It may only be deleted after the proxy wrapper.
   data->wrapped_proxy = wrapped_proxy;
@@ -299,7 +300,8 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
     data->counter++;
 
   // Allowed: nothing set (for standard wrapper, others may not be empty), proxy set & data unset (for foreign), proxy & data set (for everything but foreign)
-  assert((type == wrapper_type::standard && !data && !proxy) || (type == wrapper_type::foreign && !data && proxy) || ((type == wrapper_type::standard || type == wrapper_type::proxy_wrapper || type == wrapper_type::display) && data && proxy));
+  if(!((type == wrapper_type::standard && !data && !proxy) || (type == wrapper_type::foreign && !data && proxy) || ((type == wrapper_type::standard || type == wrapper_type::proxy_wrapper || type == wrapper_type::display) && data && proxy)))
+    throw std::runtime_error("Invalid proxy.");
 
   return *this;
 }
@@ -411,7 +413,8 @@ bool proxy_t::operator!=(const proxy_t &right) const
 read_intent::read_intent(wl_display *display, wl_event_queue *event_queue)
 : display(display), event_queue(event_queue)
 {
-  assert(display);
+  if (!display)
+    throw std::runtime_error("No display.");
 }
 
 read_intent::~read_intent()
