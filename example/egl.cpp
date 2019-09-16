@@ -136,7 +136,7 @@ private:
     float h = ((serial >> 4) & 0xFF)/255.0;
     float s = 1, v = 1;
 
-    int hi = h*6;
+    int hi = static_cast<int>(h*6);
     float f = h*6 - hi;
     float p = v*(1-s);
     float q = v*(1-s*f);
