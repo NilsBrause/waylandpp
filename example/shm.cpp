@@ -272,7 +272,7 @@ public:
     keyboard = seat.get_keyboard();
 
     // create shared memory
-    shared_mem = std::shared_ptr<shared_mem_t>(new shared_mem_t(2*320*240*4));
+    shared_mem = std::make_shared<shared_mem_t>(2*320*240*4);
     auto pool = shm.create_pool(shared_mem->get_fd(), 2*320*240*4);
     for(unsigned int c = 0; c < 2; c++)
       buffer.at(c) = pool.create_buffer(c*320*240*4, 320, 240, 320*4, shm_format::argb8888);
