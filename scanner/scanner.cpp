@@ -66,9 +66,9 @@ struct argument_t : public element_t
 
   std::string print_type()
   {
-    if(interface != "")
+    if(!interface.empty())
       return interface + "_t";
-    if(enum_iface != "")
+    if(!enum_iface.empty())
       return enum_iface + "_" + enum_name;
     if(type == "int")
       return "int32_t";
@@ -127,7 +127,7 @@ struct event_t : public element_t
     ss << "    std::function<void(";
     for(auto &arg : args)
       ss << arg.print_type() << ", ";
-    if(args.size())
+    if(!args.empty())
       ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
     ss << ")> " << sanitise(name) << ";";
@@ -142,13 +142,13 @@ struct event_t : public element_t
 
     int c = 0;
     for(auto &arg : args)
-      if(arg.enum_name != "" && arg.type != "array")
+      if(!arg.enum_name.empty() && arg.type != "array")
         ss << arg.print_type() << "(args[" << c++ << "].get<" << arg.print_enum_wire_type() << ">()), ";
-      else if(arg.interface != "")
+      else if(!arg.interface.empty())
         ss << arg.print_type() << "(args[" << c++ << "].get<proxy_t>()), ";
       else
         ss << "args[" << c++ << "].get<" << arg.print_type() << ">(), ";
-    if(args.size())
+    if(!args.empty())
       ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
     ss << ");" << std::endl
@@ -168,7 +168,7 @@ struct event_t : public element_t
     ss << "  std::function<void(";
     for(auto &arg : args)
       ss << arg.print_type() + ", ";
-    if(args.size())
+    if(!args.empty())
       ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
     ss << ")> &on_" <<  name << "();" << std::endl;
@@ -181,7 +181,7 @@ struct event_t : public element_t
     ss << "std::function<void(";
     for(auto &arg : args)
       ss << arg.print_type() << ", ";
-    if(args.size())
+    if(!args.empty())
       ss.str(ss.str().substr(0, ss.str().size()-2));
     ss.seekp(0, std::ios_base::end);
     ss << ")> &" + interface_name + "_t::on_" + name + "()" << std::endl
@@ -213,13 +213,13 @@ struct request_t : public event_t
   {
     std::stringstream ss;
     ss << "  /** \\brief " << summary << std::endl;
-    if(ret.summary != "")
+    if(!ret.summary.empty())
       ss << "      \\return " << ret.summary << std::endl;
     for(auto &arg : args)
       {
         if(arg.type == "new_id")
           {
-            if(arg.interface == "")
+            if(arg.interface.empty())
               ss << "      \\param interface Interface to bind" << std::endl
                  << "      \\param version Interface version" << std::endl;
           }
@@ -229,7 +229,7 @@ struct request_t : public event_t
     ss << description << std::endl
        << "  */" << std::endl;
 
-    if(ret.name == "")
+    if(ret.name.empty())
       ss << "  void ";
     else
       ss << "  " << ret.print_type() << " ";
@@ -238,7 +238,7 @@ struct request_t : public event_t
     for(auto &arg : args)
       if(arg.type == "new_id")
         {
-          if(arg.interface == "")
+          if(arg.interface.empty())
             ss << "proxy_t &interface, uint32_t version, ";
         }
       else
@@ -269,7 +269,7 @@ struct request_t : public event_t
   std::string print_body(std::string interface_name)
   {
     std::stringstream ss;
-    if(ret.name == "")
+    if(ret.name.empty())
       ss <<  "void ";
     else
       ss << ret.print_type() << " ";
@@ -279,7 +279,7 @@ struct request_t : public event_t
     for(auto &arg : args)
       if(arg.type == "new_id")
         {
-          if(arg.interface == "")
+          if(arg.interface.empty())
             {
               ss << "proxy_t &interface, uint32_t version, ";
               new_id_arg = true;
@@ -293,9 +293,9 @@ struct request_t : public event_t
     ss.seekp(0, std::ios_base::end);
     ss << ")\n{" << std::endl;
 
-    if(ret.name == "")
+    if(ret.name.empty())
       ss <<  "  marshal(" << opcode << "u, ";
-    else if(ret.interface == "")
+    else if(ret.interface.empty())
       {
         ss << "  proxy_t p = marshal_constructor_versioned(" << opcode << "u, interface.interface, version, ";
       }
@@ -308,7 +308,7 @@ struct request_t : public event_t
       {
         if(arg.type == "new_id")
           {
-            if(arg.interface == "")
+            if(arg.interface.empty())
               ss << "std::string(interface.interface->name), version, ";
             ss << "nullptr, ";
           }
@@ -316,7 +316,7 @@ struct request_t : public event_t
           ss << "argument_t::fd(" << sanitise(arg.name) << "), ";
         else if(arg.type == "object")
           ss << sanitise(arg.name) << ".proxy_has_object() ? reinterpret_cast<wl_object*>(" << sanitise(arg.name) << ".c_ptr()) : nullptr, ";
-        else if(arg.enum_name != "")
+        else if(!arg.enum_name.empty())
           ss << "static_cast<" << arg.print_enum_wire_type() << ">(" << sanitise(arg.name) + "), ";
         else
           ss << sanitise(arg.name) + ", ";
@@ -326,7 +326,7 @@ struct request_t : public event_t
     ss.seekp(0, std::ios_base::end);
     ss << ");" << std::endl;
 
-    if(ret.name != "")
+    if(!ret.name.empty())
       {
         if(new_id_arg)
           {
@@ -393,7 +393,7 @@ struct enumeration_t : public element_t
 
     for(auto &entry : entries)
       {
-        if(entry.summary != "")
+        if(!entry.summary.empty())
           ss << "  /** \\brief " << entry.summary << " */" << std::endl;
 
         if(!bitfield)
@@ -574,7 +574,7 @@ struct interface_t : public element_t
     ss << "int " << name << "_t::dispatcher(uint32_t opcode, std::vector<any> args, std::shared_ptr<detail::events_base_t> e)" << std::endl
        << "{" << std::endl;
 
-    if(events.size())
+    if(!events.empty())
       {
         ss << "  std::shared_ptr<events_t> events = std::static_pointer_cast<events_t>(e);" << std::endl
            << "  switch(opcode)" << std::endl
@@ -603,7 +603,7 @@ struct interface_t : public element_t
       {
         ss << "const wl_interface* " << name << "_interface_" << request.name << "_request[" << request.args.size() << "] = {" << std::endl;
         for(auto &arg : request.args)
-          if(arg.interface != "")
+          if(!arg.interface.empty())
             ss  << "  &" << arg.interface << "_interface," << std::endl;
           else
             ss  << "  nullptr," << std::endl;
@@ -614,7 +614,7 @@ struct interface_t : public element_t
       {
         ss << "const wl_interface* " << name << "_interface_" << event.name << "_event[" << event.args.size() << "] = {" << std::endl;
         for(auto &arg : event.args)
-          if(arg.interface != "")
+          if(!arg.interface.empty())
             ss  << "  &" << arg.interface << "_interface," << std::endl;
           else
             ss  << "  nullptr," << std::endl;
@@ -633,7 +633,7 @@ struct interface_t : public element_t
           {
             if(arg.allow_null)
               ss << "?";
-            if(arg.type == "new_id" && arg.interface == "")
+            if(arg.type == "new_id" && arg.interface.empty())
               ss << "su";
             ss << arg.print_short();
           }
@@ -655,7 +655,7 @@ struct interface_t : public element_t
           {
             if(arg.allow_null)
               ss << "?";
-            if(arg.type == "new_id" && arg.interface == "")
+            if(arg.type == "new_id" && arg.interface.empty())
               ss << "su";
             ss << arg.print_short();
           }
