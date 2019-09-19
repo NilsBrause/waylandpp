@@ -38,7 +38,7 @@ struct element_t
   std::string description;
   static const std::set<std::string> keywords;
 
-  std::string sanitise(std::string str)
+  std::string sanitise(std::string str) const
   {
     if(keywords.count(str))
       return "_" + str;
@@ -54,7 +54,7 @@ struct argument_t : public element_t
   std::string enum_name;
   bool allow_null;
 
-  std::string print_enum_wire_type()
+  std::string print_enum_wire_type() const
   {
     // Enums can be int or uint on the wire, except for bitfields
     if(type == "int")
@@ -64,7 +64,7 @@ struct argument_t : public element_t
     throw std::runtime_error("Enum type must be int or uint");
   }
 
-  std::string print_type()
+  std::string print_type() const
   {
     if(!interface.empty())
       return interface + "_t";
@@ -89,7 +89,7 @@ struct argument_t : public element_t
     return type;
   }
 
-  std::string print_short()
+  std::string print_short() const
   {
     if(type == "int")
       return "i";
@@ -110,7 +110,7 @@ struct argument_t : public element_t
     return "x";
   }
 
-  std::string print_argument()
+  std::string print_argument() const
   {
     return print_type() + " " + sanitise(name);
   }
@@ -121,11 +121,11 @@ struct event_t : public element_t
   std::list<argument_t> args;
   int since;
 
-  std::string print_functional()
+  std::string print_functional() const
   {
     std::stringstream ss;
     ss << "    std::function<void(";
-    for(auto &arg : args)
+    for(auto const& arg : args)
       ss << arg.print_type() << ", ";
     if(!args.empty())
       ss.str(ss.str().substr(0, ss.str().size()-2));
@@ -134,14 +134,14 @@ struct event_t : public element_t
     return ss.str();
   }
 
-  std::string print_dispatcher(int opcode)
+  std::string print_dispatcher(int opcode) const
   {
     std::stringstream ss;
     ss << "    case " << opcode << ":" << std::endl
        << "      if(events->" << sanitise(name) << ") events->" << sanitise(name) << "(";
 
     int c = 0;
-    for(auto &arg : args)
+    for(auto const& arg : args)
       if(!arg.enum_name.empty() && arg.type != "array")
         ss << arg.print_type() << "(args[" << c++ << "].get<" << arg.print_enum_wire_type() << ">()), ";
       else if(!arg.interface.empty())
@@ -156,17 +156,17 @@ struct event_t : public element_t
     return ss.str();
   }
 
-  std::string print_signal_header()
+  std::string print_signal_header() const
   {
     std::stringstream ss;
     ss << "  /** \\brief " << summary << std::endl;
-    for(auto &arg : args)
+    for(auto const& arg : args)
       ss << "      \\param " << arg.name << " " << arg.summary << std::endl;
     ss << description << std::endl
        << "  */" << std::endl;
 
     ss << "  std::function<void(";
-    for(auto &arg : args)
+    for(auto const& arg : args)
       ss << arg.print_type() + ", ";
     if(!args.empty())
       ss.str(ss.str().substr(0, ss.str().size()-2));
@@ -175,11 +175,11 @@ struct event_t : public element_t
     return ss.str();
   }
 
-  std::string print_signal_body(std::string interface_name)
+  std::string print_signal_body(std::string interface_name) const
   {
     std::stringstream ss;
     ss << "std::function<void(";
-    for(auto &arg : args)
+    for(auto const& arg : args)
       ss << arg.print_type() << ", ";
     if(!args.empty())
       ss.str(ss.str().substr(0, ss.str().size()-2));
@@ -197,25 +197,25 @@ struct request_t : public event_t
   argument_t ret;
   int opcode;
 
-  std::string availability_function_name()
+  std::string availability_function_name() const
   {
     if(since > 1)
       return std::string("can_") + name;
     return "";
   }
 
-  std::string since_version_constant_name()
+  std::string since_version_constant_name() const
   {
     return name + "_since_version";
   }
 
-  std::string print_header()
+  std::string print_header() const
   {
     std::stringstream ss;
     ss << "  /** \\brief " << summary << std::endl;
     if(!ret.summary.empty())
       ss << "      \\return " << ret.summary << std::endl;
-    for(auto &arg : args)
+    for(auto const& arg : args)
       {
         if(arg.type == "new_id")
           {
@@ -235,7 +235,7 @@ struct request_t : public event_t
       ss << "  " << ret.print_type() << " ";
     ss << sanitise(name) << "(";
 
-    for(auto &arg : args)
+    for(auto const& arg : args)
       if(arg.type == "new_id")
         {
           if(arg.interface.empty())
@@ -266,7 +266,7 @@ struct request_t : public event_t
     return ss.str();
   }
 
-  std::string print_body(std::string interface_name)
+  std::string print_body(std::string interface_name) const
   {
     std::stringstream ss;
     if(ret.name.empty())
@@ -276,7 +276,7 @@ struct request_t : public event_t
     ss << interface_name << "_t::" << sanitise(name) << "(";
 
     bool new_id_arg = false;
-    for(auto &arg : args)
+    for(auto const& arg : args)
       if(arg.type == "new_id")
         {
           if(arg.interface.empty())
@@ -304,7 +304,7 @@ struct request_t : public event_t
         ss << "  proxy_t p = marshal_constructor(" << opcode << "u, &" << ret.interface << "_interface, ";
       }
 
-    for(auto &arg : args)
+    for(auto const& arg : args)
       {
         if(arg.type == "new_id")
           {
@@ -363,7 +363,7 @@ struct enumeration_t : public element_t
   int id;
   uint32_t width;
 
-  std::string print_forward(std::string iface_name)
+  std::string print_forward(std::string iface_name) const
   {
     std::stringstream ss;
     if(!bitfield)
@@ -373,7 +373,7 @@ struct enumeration_t : public element_t
     return ss.str();
   }
 
-  std::string print_header(std::string iface_name)
+  std::string print_header(std::string iface_name) const
   {
     std::stringstream ss;
     ss << "/** \\brief " << summary << std::endl
@@ -391,7 +391,7 @@ struct enumeration_t : public element_t
          << "  " << iface_name << "_" << name << "(const uint32_t value)" << std::endl
          << "    : detail::bitfield<" << width << ", " << id << ">(value) {}" << std::endl;
 
-    for(auto &entry : entries)
+    for(auto const& entry : entries)
       {
         if(!entry.summary.empty())
           ss << "  /** \\brief " << entry.summary << " */" << std::endl;
@@ -413,11 +413,11 @@ struct enumeration_t : public element_t
     return ss.str();
   }
 
-  std::string print_body(std::string iface_name)
+  std::string print_body(std::string iface_name) const
   {
     std::stringstream ss;
     if(bitfield)
-      for(auto &entry : entries)
+      for(auto const& entry : entries)
         {
           ss << "const bitfield<" << width << ", " << id << "> " << iface_name << "_" << name
              << "::" << sanitise(entry.name) << "{" << entry.value << "};" << std::endl;
@@ -435,23 +435,23 @@ struct interface_t : public element_t
   std::list<event_t> events;
   std::list<enumeration_t> enums;
 
-  std::string print_forward()
+  std::string print_forward() const
   {
     std::stringstream ss;
     ss << "class " << name << "_t;" << std::endl;
-    for(auto &e : enums)
+    for(auto const& e : enums)
       ss << e.print_forward(name);
     return ss.str();
   }
 
-  std::string print_c_forward()
+  std::string print_c_forward() const
   {
     std::stringstream ss;
     ss << "struct " << orig_name << ";" << std::endl;
     return ss.str();
   }
 
-  std::string print_header()
+  std::string print_header() const
   {
     std::stringstream ss;
     ss << "/** \\brief " << summary << std::endl
@@ -464,7 +464,7 @@ struct interface_t : public element_t
        << "  struct events_t : public detail::events_base_t" << std::endl
        << "  {" << std::endl;
 
-    for(auto &event : events)
+    for(auto const& event : events)
       ss << event.print_functional() << std::endl;
 
     ss << "  };" << std::endl
@@ -486,30 +486,30 @@ struct interface_t : public element_t
        << "  operator " << orig_name << "*() const;" << std::endl
        << std::endl;
 
-    for(auto &request : requests)
+    for(auto const& request : requests)
       if(request.name != "destroy")
         ss << request.print_header() << std::endl;
 
-    for(auto &event : events)
+    for(auto const& event : events)
       ss << event.print_signal_header() << std::endl;
 
     ss << "};" << std::endl
        << std::endl;
 
-    for(auto &enumeration : enums)
+    for(auto const& enumeration : enums)
       ss << enumeration.print_header(name) << std::endl;
 
     return ss.str();
   }
 
-  std::string print_interface_header()
+  std::string print_interface_header() const
   {
     std::stringstream ss;
     ss << "  extern const wl_interface " << name << "_interface;" << std::endl;
     return ss.str();
   }
 
-  std::string print_body()
+  std::string print_body() const
   {
     std::stringstream set_events;
     set_events << "  if(proxy_has_object() && get_wrapper_type() == wrapper_type::standard)" << std::endl
@@ -563,12 +563,12 @@ struct interface_t : public element_t
        << "}" << std::endl
        << std::endl;
 
-    for(auto &request : requests)
+    for(auto const& request : requests)
       if(request.name != "destroy")
         ss << request.print_body(name) << std::endl
            << std::endl;
 
-    for(auto &event : events)
+    for(auto const& event : events)
       ss << event.print_signal_body(name) << std::endl;
 
     ss << "int " << name << "_t::dispatcher(uint32_t opcode, std::vector<any> args, std::shared_ptr<detail::events_base_t> e)" << std::endl
@@ -581,7 +581,7 @@ struct interface_t : public element_t
            << "    {" << std::endl;
 
         int opcode = 0;
-        for(auto &event : events)
+        for(auto const& event : events)
           ss << event.print_dispatcher(opcode++) << std::endl;
 
         ss << "    }" << std::endl;
@@ -590,19 +590,19 @@ struct interface_t : public element_t
     ss << "  return 0;" << std::endl
        << "}" << std::endl;
 
-    for(auto &enumeration : enums)
+    for(auto const& enumeration : enums)
       ss << enumeration.print_body(name) << std::endl;
 
     return ss.str();
   }
 
-  std::string print_interface_body()
+  std::string print_interface_body() const
   {
     std::stringstream ss;
-    for(auto &request : requests)
+    for(auto const& request : requests)
       {
         ss << "const wl_interface* " << name << "_interface_" << request.name << "_request[" << request.args.size() << "] = {" << std::endl;
-        for(auto &arg : request.args)
+        for(auto const& arg : request.args)
           if(!arg.interface.empty())
             ss  << "  &" << arg.interface << "_interface," << std::endl;
           else
@@ -610,10 +610,10 @@ struct interface_t : public element_t
         ss << "};" << std::endl
            << std::endl;
       }
-    for(auto &event : events)
+    for(auto const& event : events)
       {
         ss << "const wl_interface* " << name << "_interface_" << event.name << "_event[" << event.args.size() << "] = {" << std::endl;
-        for(auto &arg : event.args)
+        for(auto const& arg : event.args)
           if(!arg.interface.empty())
             ss  << "  &" << arg.interface << "_interface," << std::endl;
           else
@@ -622,14 +622,14 @@ struct interface_t : public element_t
            << std::endl;
       }
     ss << "const wl_message " << name << "_interface_requests[" << requests.size() << "] = {" << std::endl;
-    for(auto &request : requests)
+    for(auto const& request : requests)
       {
         ss << "  {" << std::endl
            << "    \"" << request.name << "\"," << std::endl
            << "    \"";
         if(request.since > 1)
           ss << request.since;
-        for(auto &arg : request.args)
+        for(auto const& arg : request.args)
           {
             if(arg.allow_null)
               ss << "?";
@@ -644,14 +644,14 @@ struct interface_t : public element_t
     ss << "};" << std::endl
        << std::endl;
     ss << "const wl_message " << name << "_interface_events[" << events.size() << "] = {" << std::endl;
-    for(auto &event : events)
+    for(auto const& event : events)
       {
         ss << "  {" << std::endl
            << "    \"" << event.name << "\"," << std::endl
            << "    \"";
         if(event.since > 1)
           ss << event.since;
-        for(auto &arg : event.args)
+        for(auto const& arg : event.args)
           {
             if(arg.allow_null)
               ss << "?";
@@ -943,7 +943,7 @@ int main(int argc, char *argv[])
   wayland_hpp << std::endl;
 
   // C forward declarations
-  for(auto &iface : interfaces)
+  for(auto const& iface : interfaces)
     if(iface.name != "display")
       wayland_hpp << iface.print_c_forward();
   wayland_hpp << std::endl;
@@ -952,7 +952,7 @@ int main(int argc, char *argv[])
               << "{" << std::endl;
 
   // C++ forward declarations
-  for(auto &iface : interfaces)
+  for(auto const& iface : interfaces)
     if(iface.name != "display")
       wayland_hpp << iface.print_forward();
   wayland_hpp << std::endl;
@@ -960,13 +960,13 @@ int main(int argc, char *argv[])
   // interface headers
   wayland_hpp << "namespace detail" << std::endl
               << "{" << std::endl;
-  for(auto &iface : interfaces)
+  for(auto const& iface : interfaces)
     wayland_hpp << iface.print_interface_header();
   wayland_hpp  << "}" << std::endl
   << std::endl;
 
   // class declarations
-  for(auto &iface : interfaces)
+  for(auto const& iface : interfaces)
     if(iface.name != "display")
       wayland_hpp << iface.print_header() << std::endl;
   wayland_hpp << std::endl
@@ -982,11 +982,11 @@ int main(int argc, char *argv[])
               << std::endl;
 
   // interface bodys
-  for(auto &iface : interfaces)
+  for(auto const& iface : interfaces)
     wayland_cpp << iface.print_interface_body();
 
   // class member definitions
-  for(auto &iface : interfaces)
+  for(auto const& iface : interfaces)
     if(iface.name != "display")
       wayland_cpp << iface.print_body() << std::endl;
   wayland_cpp << std::endl;
