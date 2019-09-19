@@ -682,7 +682,7 @@ struct interface_t : public element_t
 
 std::string unprefix(const std::string &name)
 {
-  auto prefix_len = name.find("_");
+  auto prefix_len = name.find('_');
   if(prefix_len != std::string::npos)
     {
       auto prefix = name.substr(0, prefix_len);
