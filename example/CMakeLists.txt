@@ -34,7 +34,7 @@ add_executable(dump dump.cpp)
 target_link_libraries(dump wayland-client++)
 
 add_executable(egl egl.cpp)
-target_link_libraries(egl wayland-client++ wayland-client-extra++ wayland-cursor++ wayland-egl++ "${OPENGL_gl_LIBRARY}" ${EGL_LDFLAGS})
+target_link_libraries(egl wayland-client++ wayland-client-extra++ wayland-cursor++ wayland-egl++ "${OPENGL_LIBRARY}" ${EGL_LDFLAGS})
 target_include_directories(egl PUBLIC "${OPENGL_INCLUDE_DIR}")
 target_compile_options(egl PUBLIC ${EGL_CFLAGS})
 
