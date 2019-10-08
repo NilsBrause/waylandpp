@@ -58,7 +58,7 @@ To build the documentation manually, `doxygen` needs to be executed
 in the root directory of the repository. The resulting documentation
 can then be found in the `doc` directory. The required Doxyfile is
 available after the library has been built. The documentaion is also
-online availabe [here](http://nilsbrause.de/waylandpp/).
+online availabe [here](https://nilsbrause.github.io/waylandpp_docs/).
 
 ## Example programs
 
