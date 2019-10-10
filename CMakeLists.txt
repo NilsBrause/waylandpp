@@ -49,7 +49,9 @@ cmake_dependent_option(BUILD_EXAMPLES
   "BUILD_LIBRARIES" OFF)
 
 # Do not report undefined references in libraries, since the protocol libraries cannot be used on their own.
-string(REPLACE "-Wl,--no-undefined" "" CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS})
+if(CMAKE_SHARED_LINKER_FLAGS)
+  string(REPLACE "-Wl,--no-undefined" " " CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS})
+endif()
 
 # variables for .pc.in files
 set(prefix "${CMAKE_INSTALL_PREFIX}")
