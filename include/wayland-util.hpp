@@ -37,7 +37,7 @@
 
 #define wl_array_for_each_cpp(pos, array)                                                         \
   for ((pos) = static_cast<decltype(pos)>((array)->data);                                         \
-       static_cast<const char*>(pos) < (static_cast<const char*>((array)->data) + (array)->size); \
+       reinterpret_cast<const char*>(pos) < (reinterpret_cast<const char*>((array)->data) + (array)->size); \
        (pos)++)
 
 namespace wayland
