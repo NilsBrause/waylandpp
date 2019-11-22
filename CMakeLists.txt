@@ -21,7 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.4)
 project(waylandpp VERSION 0.2.7 LANGUAGES CXX)
 
 # packages
@@ -160,7 +160,9 @@ if(BUILD_LIBRARIES)
     "include/wayland-client.hpp;include/wayland-util.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-version.hpp"
     src/wayland-client.cpp src/wayland-util.cpp wayland-client-protocol.cpp wayland-client-protocol.hpp)
   # Report undefined references only for the base library.
-  target_link_options(wayland-client++ PRIVATE "-Wl,--no-undefined")
+  if(${CMAKE_VERSION} VERSION_GREATER "3.14.0")
+    target_link_options(wayland-client++ PRIVATE "-Wl,--no-undefined")
+  endif()
   define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
     wayland-client-protocol-extra.cpp wayland-client-protocol-extra.hpp wayland-client-protocol.hpp)
