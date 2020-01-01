@@ -43,13 +43,12 @@ private:
   registry_t registry;
 
 public:
-  dumper()
-  {
-  }
-
-  ~dumper()
-  {
-  }
+  dumper() = default;
+  dumper(const dumper&) = delete;
+  dumper(dumper&&) noexcept = delete;
+  ~dumper() noexcept = default;
+  dumper& operator=(const dumper&) = delete;
+  dumper& operator=(dumper&&) noexcept = delete;
 
   void run()
   {

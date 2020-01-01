@@ -106,6 +106,13 @@ private:
   }
 
 public:
+  binder() = default;
+  binder(const binder&) = delete;
+  binder(binder&&) noexcept = delete;
+  ~binder() noexcept = default;
+  binder& operator=(const binder&) = delete;
+  binder& operator=(binder&&) noexcept = delete;
+
   void run(int thread_count, int round_count, bool safe)
   {
     std::atomic<bool> stop{false};

@@ -42,7 +42,8 @@ namespace wayland
   class egl_window_t : public detail::refcounted_wrapper<wl_egl_window>
   {
   public:
-    egl_window_t();
+    egl_window_t() = default;
+
     /** \brief Create a native egl window for use with eglCreateWindowSurface
         \param surface The Wayland surface to use
         \param width Width of the EGL buffer

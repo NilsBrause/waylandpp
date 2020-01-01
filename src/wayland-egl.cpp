@@ -38,10 +38,6 @@ egl_window_t::egl_window_t(surface_t const &surface, int width, int height)
     throw std::runtime_error("Failed to create native wl_egl_window");
 }
 
-egl_window_t::egl_window_t()
-{
-}
-
 void egl_window_t::resize(int width, int height, int dx, int dy)
 {
   wl_egl_window_resize(c_ptr(), width, height, dx, dy);

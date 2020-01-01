@@ -43,7 +43,7 @@ namespace wayland
     std::shared_ptr<wl_cursor_theme> cursor_theme;
 
   public:
-    cursor_image_t();
+    cursor_image_t() = default;
     uint32_t width() const;
     uint32_t height() const;
     uint32_t hotspot_x() const;
@@ -62,7 +62,7 @@ namespace wayland
     std::shared_ptr<wl_cursor_theme> cursor_theme;
 
   public:
-    cursor_t();
+    cursor_t() = default;
     unsigned int image_count() const;
     std::string name() const;
     cursor_image_t image(unsigned int n) const;

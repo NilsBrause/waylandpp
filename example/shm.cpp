@@ -67,9 +67,11 @@ private:
   void *mem = nullptr;
 
 public:
-  shared_mem_t()
-  {
-  }
+  shared_mem_t() = default;
+  shared_mem_t(const shared_mem_t&) = delete;
+  shared_mem_t(shared_mem_t&&) noexcept = delete;
+  shared_mem_t& operator=(const shared_mem_t&) = delete;
+  shared_mem_t& operator=(shared_mem_t&&) noexcept = delete;
 
   shared_mem_t(size_t size)
   : len(size)
@@ -213,6 +215,12 @@ private:
   }
 
 public:
+  example(const example&) = delete;
+  example(example&&) noexcept = delete;
+  ~example() noexcept = default;
+  example& operator=(const example&) = delete;
+  example& operator=(example&&) noexcept = delete;
+
   example()
   {
     // retrieve global objects
@@ -317,10 +325,6 @@ public:
 
     // draw stuff
     draw();
-  }
-
-  ~example()
-  {
   }
 
   void run()

@@ -73,11 +73,7 @@ argument_t &argument_t::operator=(const argument_t &arg)
   return *this;
 }
 
-argument_t::argument_t()
-{
-}
-
-argument_t::~argument_t()
+argument_t::~argument_t() noexcept
 {
   if(is_array)
     {
@@ -156,7 +152,7 @@ array_t::array_t(const array_t &arr)
   wl_array_copy(&a, const_cast<wl_array*>(&arr.a));
 }
 
-array_t::array_t(array_t &&arr)
+array_t::array_t(array_t &&arr) noexcept
 {
   wl_array_init(&a);
   std::swap(a, arr.a);
@@ -175,7 +171,7 @@ array_t &array_t::operator=(const array_t &arr)
   return *this;
 }
 
-array_t &array_t::operator=(array_t &&arr)
+array_t &array_t::operator=(array_t &&arr) noexcept
 {
   std::swap(a, arr.a);
   return *this;

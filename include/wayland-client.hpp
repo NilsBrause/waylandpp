@@ -65,7 +65,12 @@ namespace wayland
     event_queue_t(wl_event_queue *q);
     friend class display_t;
   public:
-    event_queue_t();
+    event_queue_t() = default;
+    event_queue_t(const event_queue_t&) = default;
+    event_queue_t(event_queue_t&&) noexcept = default;
+    event_queue_t& operator=(const event_queue_t&) = default;
+    event_queue_t& operator=(event_queue_t&&) noexcept = default;
+    ~event_queue_t() noexcept = default;
   };
 
   class display_t;
@@ -76,7 +81,12 @@ namespace wayland
     // base class for event listener storage.
     struct events_base_t
     {
-      virtual ~events_base_t() { }
+      events_base_t() = default;
+      events_base_t(const events_base_t&) = default;
+      events_base_t(events_base_t&&) noexcept = default;
+      events_base_t& operator=(const events_base_t&) = default;
+      events_base_t& operator=(events_base_t&&) noexcept = default;
+      virtual ~events_base_t() noexcept = default;
     };
   }
 
@@ -205,7 +215,7 @@ namespace wayland
     std::shared_ptr<detail::events_base_t> get_events();
 
     // Constructs NULL proxies.
-    proxy_t();
+    proxy_t() = default;
 
     struct construct_proxy_wrapper_tag {};
     // Construct from proxy as wrapper
@@ -239,14 +249,14 @@ namespace wayland
         Transfers the contents of the proxy_t object on the right
         to the proxy_t object being constructed.
     */
-    proxy_t(proxy_t &&p);
+    proxy_t(proxy_t &&p) noexcept;
 
     /** \brief Move Asignment operator
         \param p A proxy_t object
 
         Swaps the contents of both proxy_t objects.
     */
-    proxy_t &operator=(proxy_t &&p);
+    proxy_t &operator=(proxy_t &&p) noexcept;
 
     /** \brief Destructor
 
@@ -357,7 +367,10 @@ namespace wayland
   class read_intent
   {
   public:
-    read_intent(read_intent &&other) = default;
+    read_intent(read_intent &&other) noexcept = default;
+    read_intent(read_intent const &other) = delete;
+    read_intent& operator=(read_intent const &other) = delete;
+    read_intent& operator=(read_intent &&other) noexcept = delete;
     ~read_intent();
 
     /** \brief Check whether this intent was already finalized with \ref cancel
@@ -389,8 +402,6 @@ namespace wayland
   private:
     read_intent(wl_display *display, wl_event_queue *event_queue = nullptr);
     friend class display_t;
-    read_intent(read_intent const &other) = delete;
-    read_intent& operator=(read_intent const &other) = delete;
 
     wl_display *display;
     wl_event_queue *event_queue = nullptr;
@@ -463,7 +474,6 @@ namespace wayland
   class display_t : public proxy_t
   {
   private:
-    display_t(const display_t &d) { }
     // Construct as proxy wrapper
     display_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag /*unused*/);
 
@@ -477,8 +487,10 @@ namespace wayland
     */
     display_t(int fd);
 
-    display_t(display_t &&d);
-    display_t &operator=(display_t &&d);
+    display_t(display_t &&d) noexcept;
+    display_t(const display_t &d) = delete;
+    display_t &operator=(const display_t &d) = delete;
+    display_t &operator=(display_t &&d) noexcept;
 
     /**  \brief Connect to a Wayland display.
          \param name Optional name of the Wayland display to connect to
@@ -521,7 +533,7 @@ namespace wayland
         This does not apply to display_t instances that are wrappers for
         a pre-established C wl_display.
     */
-    ~display_t();
+    ~display_t() noexcept = default;
 
     /** \brief Create a new event queue for this display.
         \return A new event queue associated with this display or NULL

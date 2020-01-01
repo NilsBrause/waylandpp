@@ -76,9 +76,8 @@ namespace wayland
       }
 
     public:
-      basic_wrapper()
-      {
-      }
+      basic_wrapper() = default;
+      ~basic_wrapper() noexcept = default;
 
       basic_wrapper(basic_wrapper const &other)
       {
@@ -161,9 +160,8 @@ namespace wayland
       }
 
     public:
-      refcounted_wrapper()
-      {
-      }
+      refcounted_wrapper() = default;
+      ~refcounted_wrapper() noexcept = default;
 
       refcounted_wrapper(refcounted_wrapper const &other)
       {
@@ -229,7 +227,12 @@ namespace wayland
       class base
       {
       public:
-        virtual ~base() { }
+        base() = default;
+        base(const base&) = default;
+        base(base&&) noexcept = default;
+        base& operator=(const base&) = default;
+        base& operator=(base&&) noexcept = default;
+        virtual ~base() noexcept = default;
         virtual const std::type_info &type_info() const = 0;
         virtual base *clone() const = 0;
       };
@@ -259,17 +262,21 @@ namespace wayland
       base *val;
 
     public:
-      any()
-        : val(nullptr) { }
+      any() = default;
 
       any(const any &a)
         : val(a.val ? a.val->clone() : nullptr) { }
+
+      any(any &&a) noexcept
+      {
+        operator=(std::move(a));
+      }
 
       template <typename T>
       any(const T &t)
         : val(new derived<T>(t)) { }
 
-      ~any()
+      ~any() noexcept
       {
         delete val;
       }
@@ -278,6 +285,12 @@ namespace wayland
       {
         delete val;
         val = a.val ? a.val->clone() : nullptr;
+        return *this;
+      }
+
+      any &operator=(any &&a) noexcept
+      {
+        std::swap(val, a.val);
         return *this;
       }
 
@@ -330,6 +343,10 @@ namespace wayland
         operator=(b);
       }
 
+      bitfield(bitfield<size, id>&&) noexcept = default;
+
+      ~bitfield() noexcept = default;
+
       bool operator==(const bitfield<size, id> &b)
       {
         return v == b.v;
@@ -345,6 +362,8 @@ namespace wayland
         v = static_cast<uint32_t>(b);
         return *this;
       }
+
+      bitfield<size, id> &operator=(bitfield<size, id> &&) noexcept = default;
 
       bitfield<size, id> operator|(const bitfield<size, id> &b) const
       {
@@ -390,14 +409,16 @@ namespace wayland
     private:
       bool is_array{false};
       // Uninitialized argument - only for internal use
-      argument_t();
+      argument_t() = default;
 
     public:
       wl_argument argument;
 
       argument_t(const argument_t &arg);
+      argument_t(argument_t &&) noexcept = default;
       argument_t &operator=(const argument_t &arg);
-      ~argument_t();
+      argument_t &operator=(argument_t&&) noexcept = default;
+      ~argument_t() noexcept;
 
       // handles integers
       argument_t(uint32_t i);
@@ -437,7 +458,7 @@ namespace wayland
   public:
     array_t();
     array_t(const array_t &arr);
-    array_t(array_t &&arr);
+    array_t(array_t &&arr) noexcept;
 
     template <typename T> array_t(const std::vector<T> &v)
     {
@@ -451,7 +472,7 @@ namespace wayland
 
     ~array_t();
     array_t &operator=(const array_t &arr);
-    array_t &operator=(array_t &&arr);
+    array_t &operator=(array_t &&arr) noexcept;
 
     template <typename T> array_t &operator=(const std::vector<T> &v)
     {

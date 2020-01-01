@@ -43,9 +43,12 @@ private:
   registry_t registry;
 
 public:
-  foreign_display()
-  {
-  }
+  foreign_display() = default;
+  foreign_display(const foreign_display&) = delete;
+  foreign_display(foreign_display&&) noexcept = delete;
+  foreign_display& operator=(const foreign_display&) = delete;
+  foreign_display& operator=(foreign_display&&) noexcept = delete;
+
 
   ~foreign_display()
   {

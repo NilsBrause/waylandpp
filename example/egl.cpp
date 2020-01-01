@@ -179,6 +179,11 @@ private:
   }
 
 public:
+  example(const example&) = delete;
+  example(example&&) noexcept = delete;
+  example& operator=(const example&) = delete;
+  example& operator=(example&&) noexcept = delete;
+
   example()
   {
     // retrieve global objects

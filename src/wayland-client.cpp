@@ -93,10 +93,6 @@ void wayland::set_log_handler(log_handler handler)
   wl_log_set_handler_client(_c_log_handler);
 }
 
-event_queue_t::event_queue_t()
-{
-}
-
 event_queue_t::event_queue_t(wl_event_queue *q)
   : detail::refcounted_wrapper<wl_event_queue>({q, wl_event_queue_destroy})
 {
@@ -247,10 +243,6 @@ std::shared_ptr<events_base_t> proxy_t::get_events()
   return std::shared_ptr<events_base_t>();
 }
 
-proxy_t::proxy_t()
-{
-}
-
 proxy_t::proxy_t(wl_proxy *p, wrapper_type t, event_queue_t const &queue)
   : proxy(p), type(t)
 {
@@ -306,12 +298,12 @@ proxy_t &proxy_t::operator=(const proxy_t& p)
   return *this;
 }
 
-proxy_t::proxy_t(proxy_t &&p)
+proxy_t::proxy_t(proxy_t &&p) noexcept
 {
   operator=(std::move(p));
 }
 
-proxy_t &proxy_t::operator=(proxy_t &&p)
+proxy_t &proxy_t::operator=(proxy_t &&p) noexcept
 {
   std::swap(proxy, p.proxy);
   std::swap(data, p.data);
@@ -323,7 +315,13 @@ proxy_t &proxy_t::operator=(proxy_t &&p)
 
 proxy_t::~proxy_t()
 {
-  proxy_release();
+  try
+  {
+    proxy_release();
+  }
+  catch(...)
+  {
+  }
 }
 
 void proxy_t::proxy_release()
@@ -420,7 +418,13 @@ read_intent::read_intent(wl_display *display, wl_event_queue *event_queue)
 read_intent::~read_intent()
 {
   if(!finalized)
-    cancel();
+    try
+    {
+      cancel();
+    }
+    catch(...)
+    {
+    }
 }
 
 bool read_intent::is_finalized() const
@@ -470,19 +474,15 @@ display_t::display_t(wl_display* display)
   interface = &display_interface;
 }
 
-display_t::display_t(display_t &&d)
+display_t::display_t(display_t &&d) noexcept
 {
   operator=(std::move(d));
 }
 
-display_t &display_t::operator=(display_t &&d)
+display_t &display_t::operator=(display_t &&d) noexcept
 {
   proxy_t::operator=(std::move(d));
   return *this;
-}
-
-display_t::~display_t()
-{
 }
 
 event_queue_t display_t::create_queue()
