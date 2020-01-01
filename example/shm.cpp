@@ -99,7 +99,7 @@ public:
 
     // map memory
     mem = mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if(mem == MAP_FAILED)
+    if(mem == MAP_FAILED) // NOLINT
       throw std::runtime_error("mmap failed.");
   }
 
