@@ -72,9 +72,9 @@ namespace wayland
   class cursor_theme_t : public detail::refcounted_wrapper<wl_cursor_theme>
   {
   public:
-    cursor_theme_t();
-    cursor_theme_t(std::string name, int size, shm_t shm);
-    cursor_t get_cursor(std::string name) const;
+    cursor_theme_t() = default;
+    cursor_theme_t(const std::string& name, int size, const shm_t& shm);
+    cursor_t get_cursor(const std::string& name) const;
   };
 }
 

@@ -188,7 +188,7 @@ public:
   {
     // retrieve global objects
     registry = display.get_registry();
-    registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
+    registry.on_global() = [&] (uint32_t name, const std::string& interface, uint32_t version)
       {
         if(interface == compositor_t::interface_name)
           registry.bind(name, compositor, version);
@@ -203,7 +203,7 @@ public:
       };
     display.roundtrip();
 
-    seat.on_capabilities() = [&] (seat_capability capability)
+    seat.on_capabilities() = [&] (const seat_capability& capability)
       {
         has_keyboard = capability & seat_capability::keyboard;
         has_pointer = capability & seat_capability::pointer;
@@ -252,7 +252,7 @@ public:
     cursor_surface = compositor.create_surface();
 
     // draw cursor
-    pointer.on_enter() = [&] (uint32_t serial, surface_t, int32_t, int32_t)
+    pointer.on_enter() = [&] (uint32_t serial, const surface_t& /*unused*/, int32_t /*unused*/, int32_t /*unused*/)
       {
         cursor_surface.attach(cursor_buffer, 0, 0);
         cursor_surface.damage(0, 0, cursor_image.width(), cursor_image.height());

@@ -113,7 +113,7 @@ argument_t::argument_t(std::nullptr_t)
   argument.n = 0;
 }
 
-argument_t::argument_t(array_t a)
+argument_t::argument_t(const array_t& a)
 {
   argument.a = new wl_array;
   a.get(argument.a);

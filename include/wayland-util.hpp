@@ -314,6 +314,14 @@ namespace wayland
           return static_cast<derived<T>*>(val)->val;
         throw std::bad_cast();
       }
+
+      template <typename T>
+      const T &get() const
+      {
+        if(val && typeid(T) == val->type_info())
+          return static_cast<derived<T>*>(val)->val;
+        throw std::bad_cast();
+      }
     };
 
     template<unsigned int size, int id = 0>
@@ -434,7 +442,7 @@ namespace wayland
       argument_t(wl_object *o);
 
       // handles arrays
-      argument_t(array_t a);
+      argument_t(const array_t& a);
 
       // handles null objects, for example for new-id arguments
       argument_t(std::nullptr_t);

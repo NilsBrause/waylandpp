@@ -55,7 +55,7 @@ public:
     std::vector<output_t> outputs;
     // retrieve global objects
     registry = display.get_registry();
-    registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
+    registry.on_global() = [&] (uint32_t name, const std::string& interface, uint32_t version)
       {
         std::cout << "* Global interface " << interface << " (name " << name << " version " << version << ")" << std::endl;
         if(interface == output_t::interface_name)
@@ -63,7 +63,7 @@ public:
           outputs.emplace_back();
           auto& output = outputs.back();
           registry.bind(name, output, version);
-          output.on_geometry() = [=](int32_t x, int32_t y, int32_t physw, int32_t physh, output_subpixel subp, std::string make, std::string model, output_transform transform)
+          output.on_geometry() = [=](int32_t x, int32_t y, int32_t physw, int32_t physh, output_subpixel subp, const std::string& make, const std::string& model, const output_transform& transform)
           {
             std::cout << "* Output geometry for " << output.get_id() << ":" << std::endl
               << "   Maker:   " << make << std::endl

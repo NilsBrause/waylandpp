@@ -112,7 +112,7 @@ struct argument_t : public element_t
 
   std::string print_argument() const
   {
-    return print_type() + " " + sanitise(name);
+    return print_type() + (!interface.empty() || !enum_iface.empty() || type == "string" || type == "array" ? " const& " : " ") + sanitise(name);
   }
 };
 
@@ -175,7 +175,7 @@ struct event_t : public element_t
     return ss.str();
   }
 
-  std::string print_signal_body(std::string interface_name) const
+  std::string print_signal_body(const std::string& interface_name) const
   {
     std::stringstream ss;
     ss << "std::function<void(";
@@ -266,7 +266,7 @@ struct request_t : public event_t
     return ss.str();
   }
 
-  std::string print_body(std::string interface_name) const
+  std::string print_body(const std::string& interface_name) const
   {
     std::stringstream ss;
     if(ret.name.empty())
@@ -363,7 +363,7 @@ struct enumeration_t : public element_t
   int id;
   uint32_t width;
 
-  std::string print_forward(std::string iface_name) const
+  std::string print_forward(const std::string& iface_name) const
   {
     std::stringstream ss;
     if(!bitfield)
@@ -373,7 +373,7 @@ struct enumeration_t : public element_t
     return ss.str();
   }
 
-  std::string print_header(std::string iface_name) const
+  std::string print_header(const std::string& iface_name) const
   {
     std::stringstream ss;
     ss << "/** \\brief " << summary << std::endl
@@ -413,7 +413,7 @@ struct enumeration_t : public element_t
     return ss.str();
   }
 
-  std::string print_body(std::string iface_name) const
+  std::string print_body(const std::string& iface_name) const
   {
     std::stringstream ss;
     if(bitfield)
@@ -469,7 +469,7 @@ struct interface_t : public element_t
 
     ss << "  };" << std::endl
        << std::endl
-       << "  static int dispatcher(uint32_t opcode, std::vector<detail::any> args, std::shared_ptr<detail::events_base_t> e);" << std::endl
+       << "  static int dispatcher(uint32_t opcode, const std::vector<detail::any>& args, const std::shared_ptr<detail::events_base_t>& e);" << std::endl
        << std::endl
        << "  " << name << "_t(proxy_t const &wrapped_proxy, construct_proxy_wrapper_tag /*unused*/);" << std::endl
        << std::endl;
@@ -571,7 +571,7 @@ struct interface_t : public element_t
     for(auto const& event : events)
       ss << event.print_signal_body(name) << std::endl;
 
-    ss << "int " << name << "_t::dispatcher(uint32_t opcode, std::vector<any> args, std::shared_ptr<detail::events_base_t> e)" << std::endl
+    ss << "int " << name << "_t::dispatcher(uint32_t opcode, const std::vector<any>& args, const std::shared_ptr<detail::events_base_t>& e)" << std::endl
        << "{" << std::endl;
 
     if(!events.empty())

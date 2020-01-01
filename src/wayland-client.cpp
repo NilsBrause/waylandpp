@@ -183,12 +183,12 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
       c++;
     }
   proxy_t p(reinterpret_cast<wl_proxy*>(target), wrapper_type::standard);
-  using dispatcher_func = int(*)(std::uint32_t, std::vector<any>, std::shared_ptr<events_base_t>);
+  using dispatcher_func = int(*)(std::uint32_t, const std::vector<any>&, const std::shared_ptr<events_base_t>&);
   auto dispatcher = reinterpret_cast<dispatcher_func>(const_cast<void*>(implementation));
   return dispatcher(opcode, vargs, p.get_events());
 }
 
-proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, std::vector<argument_t> args, std::uint32_t version)
+proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, const std::vector<argument_t>& args, std::uint32_t version)
 {
   std::vector<wl_argument> v;
   v.reserve(args.size());
@@ -224,7 +224,7 @@ void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 }
 
 void proxy_t::set_events(std::shared_ptr<events_base_t> events,
-                         int(*dispatcher)(uint32_t, std::vector<any>, std::shared_ptr<events_base_t>))
+                         int(*dispatcher)(uint32_t, const std::vector<any>&, const std::shared_ptr<events_base_t> &))
 {
   // set only one time
   if(data && !data->events)
@@ -458,7 +458,7 @@ display_t::display_t(int fd)
   interface = &display_interface;
 }
 
-display_t::display_t(std::string name)
+display_t::display_t(const std::string& name)
   : proxy_t(reinterpret_cast<wl_proxy*>(wl_display_connect(name.empty() ? nullptr : name.c_str())), proxy_t::wrapper_type::display)
 {
   if(!proxy_has_object())
@@ -503,7 +503,7 @@ int display_t::roundtrip()
   return check_return_value(wl_display_roundtrip(*this), "wl_display_roundtrip");
 }
 
-int display_t::roundtrip_queue(event_queue_t queue)
+int display_t::roundtrip_queue(const event_queue_t& queue)
 {
   return check_return_value(wl_display_roundtrip_queue(*this, queue), "wl_display_roundtrip_queue");
 }
@@ -520,7 +520,7 @@ read_intent display_t::obtain_read_intent()
   return read_intent(*this);
 }
 
-read_intent display_t::obtain_queue_read_intent(event_queue_t queue)
+read_intent display_t::obtain_queue_read_intent(const event_queue_t& queue)
 {
   while (wl_display_prepare_read_queue(*this, queue) != 0)
   {
@@ -532,12 +532,12 @@ read_intent display_t::obtain_queue_read_intent(event_queue_t queue)
   return read_intent(*this, queue);
 }
 
-int display_t::dispatch_queue(event_queue_t queue)
+int display_t::dispatch_queue(const event_queue_t& queue)
 {
   return check_return_value(wl_display_dispatch_queue(*this, queue), "wl_display_dispatch_queue");
 }
 
-int display_t::dispatch_queue_pending(event_queue_t queue)
+int display_t::dispatch_queue_pending(const event_queue_t& queue)
 {
   return check_return_value(wl_display_dispatch_queue_pending(*this, queue), "wl_display_dispatch_queue_pending");
 }

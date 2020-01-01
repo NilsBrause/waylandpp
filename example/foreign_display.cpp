@@ -67,7 +67,7 @@ public:
       throw std::runtime_error("Cannot connect to Wayland display");
     display.reset(new display_t(c_display));
     registry = display->get_registry();
-    registry.on_global() = [&] (uint32_t name, std::string interface, uint32_t version)
+    registry.on_global() = [&] (uint32_t name, const std::string& interface, uint32_t version)
       {
         std::cout << "* Global interface " << interface << " (name " << name << " version " << version << ")" << std::endl;
       };

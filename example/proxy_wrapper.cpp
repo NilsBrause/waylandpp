@@ -66,7 +66,7 @@ private:
       registry.set_queue(queue);
     }
 
-    registry.on_global() = [&seat, &registry](std::uint32_t name, std::string interface, std::uint32_t version)
+    registry.on_global() = [&seat, &registry](std::uint32_t name, const std::string& interface, std::uint32_t version)
     {
       if(interface == seat_t::interface_name)
         registry.bind(name, seat, version);

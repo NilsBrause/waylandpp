@@ -158,7 +158,7 @@ namespace wayland
 
     // marshal request
     proxy_t marshal_single(uint32_t opcode, const wl_interface *interface,
-                           std::vector<detail::argument_t> args, std::uint32_t version = 0);
+                           const std::vector<detail::argument_t>& args, std::uint32_t version = 0);
 
   protected:
     // Interface desctiption filled in by the each interface class
@@ -176,7 +176,7 @@ namespace wayland
     // - std::string
     // - array_t
     template <typename...T>
-    void marshal(uint32_t opcode, T...args)
+    void marshal(uint32_t opcode, const T& ...args)
     {
       std::vector<detail::argument_t> v = { detail::argument_t(args)... };
       marshal_single(opcode, nullptr, v);
@@ -185,7 +185,7 @@ namespace wayland
     // marshal a request that leads to a new proxy with inherited version
     template <typename...T>
     proxy_t marshal_constructor(uint32_t opcode, const wl_interface *interface,
-                                T...args)
+                                const T& ...args)
     {
       std::vector<detail::argument_t> v = { detail::argument_t(args)... };
       return marshal_single(opcode, interface, v);
@@ -194,7 +194,7 @@ namespace wayland
     // marshal a request that leads to a new proxy with specific version
     template <typename...T>
     proxy_t marshal_constructor_versioned(uint32_t opcode, const wl_interface *interface,
-                                          uint32_t version, T...args)
+                                          uint32_t version, const T& ...args)
     {
       std::vector<detail::argument_t> v = { detail::argument_t(args)... };
       return marshal_single(opcode, interface, v, version);
@@ -209,7 +209,7 @@ namespace wayland
       new. Will automatically be deleted upon destruction.
     */
     void set_events(std::shared_ptr<detail::events_base_t> events,
-                    int(*dispatcher)(uint32_t, std::vector<detail::any>, std::shared_ptr<detail::events_base_t>));
+                    int(*dispatcher)(uint32_t, const std::vector<detail::any>&, const std::shared_ptr<detail::events_base_t>&));
 
     // Retrieve the previously set user data
     std::shared_ptr<detail::events_base_t> get_events();
@@ -500,7 +500,7 @@ namespace wayland
          variable if it is set, otherwise display "wayland-0" will be
          used.
     */
-    display_t(std::string name = "");
+    display_t(const std::string& name = {});
 
     /** \brief Use an existing connection to a Wayland display to
                construct a waylandpp display_t
@@ -570,7 +570,7 @@ namespace wayland
          that calling roundtrip_queue() doesn't interfere with calling
          prepare_read() and read_events())
     */
-    int roundtrip_queue(event_queue_t queue);
+    int roundtrip_queue(const event_queue_t& queue);
 
     /** \brief Announce calling thread's intention to read events from the
      * Wayland display file descriptor
@@ -615,7 +615,7 @@ namespace wayland
      *
      * See \ref obtain_read_intent for details.
      */
-    read_intent obtain_queue_read_intent(event_queue_t queue);
+    read_intent obtain_queue_read_intent(const event_queue_t& queue);
 
     /** \brief Dispatch events in an event queue.
         \param queue The event queue to dispatch
@@ -631,7 +631,7 @@ namespace wayland
         the display fd. For other threads this will block until the main
         thread queues events on the queue passed as argument.
     */
-    int dispatch_queue(event_queue_t queue);
+    int dispatch_queue(const event_queue_t& queue);
 
     /** \brief Dispatch pending events in an event queue.
         \param queue The event queue to dispatch
@@ -643,7 +643,7 @@ namespace wayland
         appropriately. If there are no events queued, this function
         returns immediately.
     */
-    int dispatch_queue_pending(event_queue_t queue);
+    int dispatch_queue_pending(const event_queue_t& queue);
 
     /** \brief Process incoming events.
         \return The number of dispatched events
