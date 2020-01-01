@@ -418,12 +418,12 @@ namespace wayland
     class argument_t
     {
     private:
+      wl_argument argument = { .i = 0 };
       bool is_array{false};
+
       // Uninitialized argument - only for internal use
       argument_t() = default;
-
     public:
-      wl_argument argument = { .i = 0 };
 
       argument_t(const argument_t &arg);
       argument_t(argument_t &&) noexcept = default;
@@ -452,6 +452,11 @@ namespace wayland
 
       // handles file descriptors (have same type as signed integers, so extra function)
       static argument_t fd(int fileno);
+
+      /**
+       * Get the contained wl_argument.
+       */
+      wl_argument get_c_argument() const;
     };
   }
 

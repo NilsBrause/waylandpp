@@ -129,6 +129,11 @@ argument_t argument_t::fd(int fileno)
   return arg;
 }
 
+wl_argument argument_t::get_c_argument() const
+{
+  return argument;
+}
+
 array_t::array_t(wl_array *arr)
 {
   wl_array_init(&a);

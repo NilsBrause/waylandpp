@@ -193,7 +193,7 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
   std::vector<wl_argument> v;
   v.reserve(args.size());
   for(auto const& arg : args)
-    v.push_back(arg.argument);
+    v.push_back(arg.get_c_argument());
   if(interface)
     {
       wl_proxy *p = nullptr;
