@@ -45,8 +45,8 @@ cursor_t cursor_theme_t::get_cursor(const std::string& name) const
 }
 
 
-cursor_t::cursor_t(wl_cursor *c, std::shared_ptr<wl_cursor_theme> const& t)
-  : detail::basic_wrapper<wl_cursor>(c), cursor_theme(t)
+cursor_t::cursor_t(wl_cursor *c, std::shared_ptr<wl_cursor_theme> t)
+  : detail::basic_wrapper<wl_cursor>(c), cursor_theme(std::move(t))
 {
 }
 
@@ -73,8 +73,8 @@ int cursor_t::frame(uint32_t time) const
 }
 
 
-cursor_image_t::cursor_image_t(wl_cursor_image *image, std::shared_ptr<wl_cursor_theme> const& t)
-  : detail::basic_wrapper<wl_cursor_image>(image), cursor_theme(t)
+cursor_image_t::cursor_image_t(wl_cursor_image *image, std::shared_ptr<wl_cursor_theme> t)
+  : detail::basic_wrapper<wl_cursor_image>(image), cursor_theme(std::move(t))
 {
 }
 

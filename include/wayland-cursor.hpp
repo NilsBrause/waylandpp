@@ -37,7 +37,7 @@ namespace wayland
   class cursor_image_t : public detail::basic_wrapper<wl_cursor_image>
   {
   private:
-    cursor_image_t(wl_cursor_image *image, std::shared_ptr<wl_cursor_theme> const& t);
+    cursor_image_t(wl_cursor_image *image, std::shared_ptr<wl_cursor_theme> t);
     friend class cursor_t;
     // Extend lifetime of wl_cursor_theme
     std::shared_ptr<wl_cursor_theme> cursor_theme;
@@ -56,7 +56,7 @@ namespace wayland
   class cursor_t : public detail::basic_wrapper<wl_cursor>
   {
   private:
-    cursor_t(wl_cursor *c, std::shared_ptr<wl_cursor_theme> const& t);
+    cursor_t(wl_cursor *c, std::shared_ptr<wl_cursor_theme> t);
     friend class cursor_theme_t;
     // Extend lifetime of wl_cursor_theme
     std::shared_ptr<wl_cursor_theme> cursor_theme;

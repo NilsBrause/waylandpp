@@ -89,7 +89,7 @@ struct wayland::detail::proxy_data_t
 
 void wayland::set_log_handler(log_handler handler)
 {
-  g_log_handler = handler;
+  g_log_handler = std::move(handler);
   wl_log_set_handler_client(_c_log_handler);
 }
 
@@ -229,7 +229,7 @@ void proxy_t::set_events(std::shared_ptr<events_base_t> events,
   // set only one time
   if(data && !data->events)
     {
-      data->events = events;
+      data->events = std::move(events);
       // the dispatcher gets 'implementation'
       if(wl_proxy_add_dispatcher(c_ptr(), c_dispatcher, reinterpret_cast<void*>(dispatcher), data) < 0)
         throw std::runtime_error("wl_proxy_add_dispatcher failed.");
@@ -376,9 +376,9 @@ uint32_t proxy_t::get_version() const
 
 void proxy_t::set_queue(event_queue_t queue)
 {
-  if(data)
-    data->queue = queue;
   wl_proxy_set_queue(c_ptr(), queue ? queue.c_ptr() : nullptr);
+  if(data)
+    data->queue = std::move(queue);
 }
 
 wl_proxy *proxy_t::c_ptr() const

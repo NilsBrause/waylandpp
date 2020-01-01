@@ -149,8 +149,8 @@ namespace wayland
       std::shared_ptr<native_t> object;
 
     protected:
-      refcounted_wrapper(std::shared_ptr<native_t> const &object)
-      : object{object}
+      refcounted_wrapper(std::shared_ptr<native_t> object)
+        : object{std::move(object)}
       {
       }
 
@@ -245,8 +245,8 @@ namespace wayland
         friend class any;
 
       public:
-        derived(const T &t)
-          : val(t) { }
+        derived(T t)
+          : val(std::move(t)) { }
 
         const std::type_info &type_info() const override
         {
