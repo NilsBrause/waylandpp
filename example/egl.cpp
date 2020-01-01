@@ -290,13 +290,13 @@ public:
     draw();
   }
 
-  ~example() noexcept(false)
+  ~example() noexcept
   {
     // finialize EGL
     if(eglDestroyContext(egldisplay, eglcontext) == EGL_FALSE)
-      throw std::runtime_error("eglDestroyContext");
+      std::cerr << "eglDestroyContext failed.";
     if(eglTerminate(egldisplay) == EGL_FALSE)
-      throw std::runtime_error("eglTerminate");
+      std::cerr << "eglTerminate failed.";
   }
 
   void run()

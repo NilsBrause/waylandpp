@@ -103,16 +103,16 @@ public:
       throw std::runtime_error("mmap failed.");
   }
 
-  ~shared_mem_t() noexcept(false)
+  ~shared_mem_t() noexcept
   {
     if(fd)
       {
         if(munmap(mem, len) < 0)
-          throw std::runtime_error("munmap failed.");
+          std::cerr << "munmap failed.";
         if(close(fd) < 0)
-          throw std::runtime_error("close failed.");
+          std::cerr << "close failed.";
         if(shm_unlink(name.c_str()) < 0)
-          throw std::runtime_error("shm_unlink failed");
+          std::cerr << "shm_unlink failed";
       }
   }
 

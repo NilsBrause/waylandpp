@@ -50,7 +50,7 @@ public:
   foreign_display& operator=(foreign_display&&) noexcept = delete;
 
 
-  ~foreign_display()
+  ~foreign_display() noexcept
   {
     // wl_display_disconnect destroys all remaining proxy instances implicitly,
     // so we have to make sure this is already gone in order to not run into a
@@ -64,7 +64,11 @@ public:
   {
     c_display = wl_display_connect(nullptr);
     if(!c_display)
-      throw std::runtime_error("Cannot connect to Wayland display");
+    {
+        std::cerr << "Cannot connect to Wayland display";
+        return;
+    }
+
     display.reset(new display_t(c_display));
     registry = display->get_registry();
     registry.on_global() = [&] (uint32_t name, const std::string& interface, uint32_t version)
