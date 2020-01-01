@@ -320,7 +320,7 @@ public:
       };
 
     // press 'q' to exit
-    keyboard.on_key() = [&] (uint32_t, uint32_t, uint32_t key, keyboard_key_state state)
+    keyboard.on_key() = [&] (uint32_t /*unused*/, uint32_t /*unused*/, uint32_t key, keyboard_key_state state)
       {
         if(key == KEY_Q && state == keyboard_key_state::pressed)
           running = false;
