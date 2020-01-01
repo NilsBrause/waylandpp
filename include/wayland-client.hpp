@@ -151,6 +151,12 @@ namespace wayland
     friend class detail::argument_t;
     friend struct detail::proxy_data_t;
 
+    // Interface desctiption filled in by the each interface class
+    const wl_interface *interface = nullptr;
+
+    // copy constructor filled in by the each interface class
+    std::function<proxy_t(proxy_t)> copy_constructor;
+
     // universal dispatcher
     static int c_dispatcher(const void *implementation, void *target,
                             uint32_t opcode, const wl_message *message,
@@ -161,11 +167,8 @@ namespace wayland
                            const std::vector<detail::argument_t>& args, std::uint32_t version = 0);
 
   protected:
-    // Interface desctiption filled in by the each interface class
-    const wl_interface *interface = nullptr;
-
-    // copy constructor filled in by the each interface class
-    std::function<proxy_t(proxy_t)> copy_constructor;
+    void set_interface(const wl_interface *iface);
+    void set_copy_constructor(const std::function<proxy_t(proxy_t)>& func);
 
     friend class registry_t;
     // marshal a request, that doesn't lead a new proxy

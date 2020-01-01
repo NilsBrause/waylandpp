@@ -520,9 +520,9 @@ struct interface_t : public element_t
     set_events << "    }" << std::endl;
 
     std::stringstream set_interface;
-    set_interface << "  interface = &" << name << "_interface;" << std::endl
-                  << "  copy_constructor = [] (const proxy_t &p) -> proxy_t" << std::endl
-                  << "    { return " << name << "_t(p); };" << std::endl;
+    set_interface << "  set_interface(&" << name << "_interface);" << std::endl
+                  << "  set_copy_constructor([] (const proxy_t &p) -> proxy_t" << std::endl
+                  << "    { return " << name << "_t(p); });" << std::endl;
 
     std::stringstream ss;
     ss << name << "_t::" << name << "_t(const proxy_t &p)" << std::endl
@@ -808,10 +808,7 @@ int main(int argc, char *argv[])
                         }
                     }
 
-                  if(argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true")
-                    arg.allow_null = true;
-                  else
-                    arg.allow_null = false;
+                  arg.allow_null = argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true";
 
                   if(arg.type == "new_id")
                     req.ret = arg;
@@ -864,10 +861,7 @@ int main(int argc, char *argv[])
                         }
                     }
 
-                  if(argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true")
-                    arg.allow_null = true;
-                  else
-                    arg.allow_null = false;
+                  arg.allow_null = argument.attribute("allow-null") && std::string(argument.attribute("allow-null").value()) == "true";
 
                   ev.args.push_back(arg);
                 }
@@ -921,7 +915,8 @@ int main(int argc, char *argv[])
         }
     }
 
-  std::string hpp_file(extra[extra.size()-2]), cpp_file(extra[extra.size()-1]);
+  std::string hpp_file(extra[extra.size()-2]);
+  std::string cpp_file(extra[extra.size()-1]);
   std::fstream wayland_hpp(hpp_file, std::ios_base::out | std::ios_base::trunc);
   std::fstream wayland_cpp(cpp_file, std::ios_base::out | std::ios_base::trunc);
 

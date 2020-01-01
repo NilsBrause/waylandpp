@@ -212,6 +212,16 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
   return proxy_t();
 }
 
+void proxy_t::set_interface(const wl_interface *iface)
+{
+  interface = iface;
+}
+
+void proxy_t::set_copy_constructor(const std::function<proxy_t(proxy_t)>& func)
+{
+  copy_constructor = func;
+}
+
 void proxy_t::set_destroy_opcode(uint32_t destroy_opcode)
 {
   if(type == wrapper_type::display)
@@ -458,7 +468,7 @@ display_t::display_t(int fd)
 {
   if(!proxy_has_object())
     throw std::runtime_error("Could not connect to Wayland display server via file-descriptor");
-  interface = &display_interface;
+  set_interface(&display_interface);
 }
 
 display_t::display_t(const std::string& name)
@@ -466,7 +476,7 @@ display_t::display_t(const std::string& name)
 {
   if(!proxy_has_object())
     throw std::runtime_error("Could not connect to Wayland display server via name");
-  interface = &display_interface;
+  set_interface(&display_interface);
 }
 
 display_t::display_t(wl_display* display)
@@ -474,7 +484,7 @@ display_t::display_t(wl_display* display)
 {
   if(!proxy_has_object())
     throw std::runtime_error("Cannot construct display_t wrapper from nullptr");
-  interface = &display_interface;
+  set_interface(&display_interface);
 }
 
 display_t::display_t(display_t &&d) noexcept
