@@ -282,6 +282,9 @@ proxy_t::proxy_t(const proxy_t &p)
 
 proxy_t &proxy_t::operator=(const proxy_t& p)
 {
+  if(&p == this)
+    return *this;
+
   proxy = p.proxy;
   data = p.data;
   interface = p.interface;

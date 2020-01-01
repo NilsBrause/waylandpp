@@ -283,8 +283,11 @@ namespace wayland
 
       any &operator=(const any &a)
       {
-        delete val;
-        val = a.val ? a.val->clone() : nullptr;
+        if (&a != this)
+        {
+          delete val;
+          val = a.val ? a.val->clone() : nullptr;
+        }
         return *this;
       }
 
