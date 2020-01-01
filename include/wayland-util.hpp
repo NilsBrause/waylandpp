@@ -259,7 +259,7 @@ namespace wayland
         }
       };
 
-      base *val;
+      base *val = nullptr;
 
     public:
       any() = default;
@@ -327,7 +327,7 @@ namespace wayland
     template<unsigned int size, int id = 0>
     class bitfield
     {
-      uint32_t v;
+      uint32_t v = 0;
       static const uint32_t mask = (1 << size) - 1;
 
     public:
@@ -420,7 +420,7 @@ namespace wayland
       argument_t() = default;
 
     public:
-      wl_argument argument;
+      wl_argument argument = { .i = 0 };
 
       argument_t(const argument_t &arg);
       argument_t(argument_t &&) noexcept = default;
@@ -455,7 +455,7 @@ namespace wayland
   class array_t
   {
   private:
-    wl_array a;
+    wl_array a = { 0, 0, nullptr };
 
     array_t(wl_array *arr);
     void get(wl_array *arr) const;
@@ -472,7 +472,7 @@ namespace wayland
     {
       wl_array_init(&a);
       wl_array_add(&a, v.size()*sizeof(T));
-      T *p;
+      T *p = nullptr;
       unsigned int c = 0;
       wl_array_for_each_cpp(p, &a)
         *p = v.at(c++);
@@ -487,7 +487,7 @@ namespace wayland
       wl_array_release(&a);
       wl_array_init(&a);
       wl_array_add(&a, v.size()*sizeof(T));
-      T *p;
+      T *p = nullptr;
       unsigned int c = 0;
       wl_array_for_each_cpp(p, &a)
         *p = v.at(c++);
@@ -497,7 +497,7 @@ namespace wayland
     template <typename T> operator std::vector<T>() const
     {
       std::vector<T> v;
-      T *p;
+      T *p = nullptr;
       wl_array_for_each_cpp(p, &a)
         v.push_back(*p);
       return v;

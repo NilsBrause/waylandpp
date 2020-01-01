@@ -196,7 +196,7 @@ proxy_t proxy_t::marshal_single(uint32_t opcode, const wl_interface *interface, 
     v.push_back(arg.argument);
   if(interface)
     {
-      wl_proxy *p;
+      wl_proxy *p = nullptr;
       if(version > 0)
         p = wl_proxy_marshal_array_constructor_versioned(c_ptr(), opcode, v.data(), interface, version);
       else

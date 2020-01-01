@@ -52,7 +52,7 @@ struct argument_t : public element_t
   std::string interface;
   std::string enum_iface;
   std::string enum_name;
-  bool allow_null;
+  bool allow_null = false;
 
   std::string print_enum_wire_type() const
   {
@@ -119,7 +119,7 @@ struct argument_t : public element_t
 struct event_t : public element_t
 {
   std::list<argument_t> args;
-  int since;
+  int since = 0;
 
   std::string print_functional() const
   {
@@ -195,7 +195,7 @@ struct event_t : public element_t
 struct request_t : public event_t
 {
   argument_t ret;
-  int opcode;
+  int opcode = 0;
 
   std::string availability_function_name() const
   {
@@ -359,9 +359,9 @@ struct enum_entry_t : public element_t
 struct enumeration_t : public element_t
 {
   std::list<enum_entry_t> entries;
-  bool bitfield;
-  int id;
-  uint32_t width;
+  bool bitfield = false;
+  int id = 0;
+  uint32_t width = 0;
 
   std::string print_forward(const std::string& iface_name) const
   {
@@ -428,9 +428,9 @@ struct enumeration_t : public element_t
 
 struct interface_t : public element_t
 {
-  int version;
+  int version = 0;
   std::string orig_name;
-  int destroy_opcode;
+  int destroy_opcode = 0;
   std::list<request_t> requests;
   std::list<event_t> events;
   std::list<enumeration_t> enums;

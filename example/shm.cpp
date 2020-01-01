@@ -170,7 +170,9 @@ private:
     float p = v*(1-s);
     float q = v*(1-s*f);
     float t = v*(1-s*(1-f));
-    float r, g, b;
+    float r = 0;
+    float g = 0;
+    float b = 0;
 
     switch(hi)
       {

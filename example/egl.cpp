@@ -76,9 +76,9 @@ private:
 
   // EGL
   egl_window_t egl_window;
-  EGLDisplay egldisplay;
-  EGLSurface eglsurface;
-  EGLContext eglcontext;
+  EGLDisplay egldisplay = nullptr;
+  EGLSurface eglsurface = nullptr;
+  EGLContext eglcontext = nullptr;
 
   bool running;
   bool has_pointer;
@@ -90,7 +90,8 @@ private:
     if(egldisplay == EGL_NO_DISPLAY)
       throw std::runtime_error("eglGetDisplay");
 
-    EGLint major, minor;
+    EGLint major = 0;
+    EGLint minor = 0;
     if(eglInitialize(egldisplay, &major, &minor) == EGL_FALSE)
       throw std::runtime_error("eglInitialize");
     if(!((major == 1 && minor >= 4) || major >= 2))
@@ -109,8 +110,8 @@ private:
       EGL_NONE
       }};
 
-    EGLConfig config;
-    EGLint num;
+    EGLConfig config = nullptr;
+    EGLint num = 0;
     if(eglChooseConfig(egldisplay, config_attribs.data(), &config, 1, &num) == EGL_FALSE || num == 0)
       throw std::runtime_error("eglChooseConfig");
 
@@ -141,7 +142,9 @@ private:
     float p = v*(1-s);
     float q = v*(1-s*f);
     float t = v*(1-s*(1-f));
-    float r, g, b;
+    float r = 0;
+    float g = 0;
+    float b = 0;
 
     switch(hi)
       {
