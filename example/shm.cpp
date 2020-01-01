@@ -162,7 +162,7 @@ private:
 
   void draw(uint32_t serial = 0)
   {
-    float h = static_cast<float>((serial >> 4) & 0xFF)/255.0;
+    float h = static_cast<float>((serial >> 4) & 0xFF)/255.0F;
     float s = 1;
     float v = 1;
 

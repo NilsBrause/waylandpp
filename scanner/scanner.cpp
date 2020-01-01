@@ -294,14 +294,14 @@ struct request_t : public event_t
     ss << ")\n{" << std::endl;
 
     if(ret.name.empty())
-      ss <<  "  marshal(" << opcode << "u, ";
+      ss <<  "  marshal(" << opcode << "U, ";
     else if(ret.interface.empty())
       {
-        ss << "  proxy_t p = marshal_constructor_versioned(" << opcode << "u, interface.interface, version, ";
+        ss << "  proxy_t p = marshal_constructor_versioned(" << opcode << "U, interface.interface, version, ";
       }
     else
       {
-        ss << "  proxy_t p = marshal_constructor(" << opcode << "u, &" << ret.interface << "_interface, ";
+        ss << "  proxy_t p = marshal_constructor(" << opcode << "U, &" << ret.interface << "_interface, ";
       }
 
     for(auto const& arg : args)
@@ -516,7 +516,7 @@ struct interface_t : public element_t
                << "    {" << std::endl
                << "      set_events(std::shared_ptr<detail::events_base_t>(new events_t), dispatcher);" << std::endl;
     if(destroy_opcode != -1)
-      set_events << "      set_destroy_opcode(" << destroy_opcode << "u);" << std::endl;
+      set_events << "      set_destroy_opcode(" << destroy_opcode << "U);" << std::endl;
     set_events << "    }" << std::endl;
 
     std::stringstream set_interface;
@@ -908,7 +908,7 @@ int main(int argc, char *argv[])
                   if(entry.attribute("summary"))
                     enum_entry.summary = entry.attribute("summary").value();
 
-                  auto tmp = static_cast<uint32_t>(std::log2(stol(enum_entry.value, nullptr, 0))) + 1u;
+                  auto tmp = static_cast<uint32_t>(std::log2(stol(enum_entry.value, nullptr, 0))) + 1U;
                   if(tmp > enu.width)
                     enu.width = tmp;
 

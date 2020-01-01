@@ -60,7 +60,7 @@ void _c_log_handler(const char *format, va_list args)
   }
 
   // check for possible overflow - could be done at runtime but the following should hold on all usual platforms
-  static_assert(std::numeric_limits<std::vector<char>::size_type>::max() >= std::numeric_limits<int>::max() + 1u /* NUL */, "vector constructor must allow size big enough for vsnprintf return value");
+  static_assert(std::numeric_limits<std::vector<char>::size_type>::max() >= std::numeric_limits<int>::max() + 1U /* NUL */, "vector constructor must allow size big enough for vsnprintf return value");
 
   // for terminating NUL
   length++;
