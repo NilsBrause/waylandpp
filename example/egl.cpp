@@ -134,11 +134,12 @@ private:
 
   void draw(uint32_t serial = 0)
   {
-    float h = ((serial >> 4) & 0xFF)/255.0;
-    float s = 1, v = 1;
+    float h = static_cast<float>((serial >> 4) & 0xFF)/255.0;
+    float s = 1;
+    float v = 1;
 
     int hi = static_cast<int>(h*6);
-    float f = h*6 - hi;
+    float f = h*6 - static_cast<float>(hi);
     float p = v*(1-s);
     float q = v*(1-s*f);
     float t = v*(1-s*(1-f));
