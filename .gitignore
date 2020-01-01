@@ -1,9 +1,9 @@
 *~
 *.o
-*.os
 *.so*
 *.pc
 *-protocol.*pp
+.ccls-cache
 compile_commands.json
 .clang_complete
 scanner/wayland-scanner++
