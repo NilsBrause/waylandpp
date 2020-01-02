@@ -493,7 +493,7 @@ event_queue_t display_t::create_queue()
   return queue;
 }
 
-int display_t::get_fd()
+int display_t::get_fd() const
 {
   return wl_display_get_fd(*this);
 }

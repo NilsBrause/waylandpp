@@ -38,7 +38,7 @@ struct element_t
   std::string description;
   static const std::set<std::string> keywords;
 
-  std::string sanitise(std::string str) const
+  static std::string sanitise(std::string str)
   {
     if(keywords.count(str))
       return "_" + str;

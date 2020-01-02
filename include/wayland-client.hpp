@@ -547,7 +547,7 @@ namespace wayland
         Return the file descriptor associated with a display so it can
         be integrated into the client's main loop.
     */
-    int get_fd();
+    int get_fd() const;
 
     /** \brief Block until all pending request are processed by the server.
         \return The number of dispatched events
