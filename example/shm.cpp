@@ -308,7 +308,7 @@ public:
       };
 
     // window movement
-    pointer.on_button() = [&] (uint32_t serial, uint32_t time, uint32_t button, pointer_button_state state)
+    pointer.on_button() = [&] (uint32_t serial, uint32_t /*unused*/, uint32_t button, pointer_button_state state)
       {
         if(button == BTN_LEFT && state == pointer_button_state::pressed)
           {

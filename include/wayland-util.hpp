@@ -371,7 +371,9 @@ namespace wayland
 
       bitfield<size, id> &operator=(const bitfield<size, id> &b)
       {
-        v = static_cast<uint32_t>(b);
+        // Check for self-assignment
+        if(this != &b)
+          v = static_cast<uint32_t>(b);
         return *this;
       }
 

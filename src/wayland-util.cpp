@@ -52,6 +52,10 @@ argument_t::argument_t(const argument_t &arg)
 
 argument_t &argument_t::operator=(const argument_t &arg)
 {
+  // Check for self-assignment
+  if(this == &arg)
+    return *this;
+
   if(is_array)
     {
       wl_array_release(argument.a);
@@ -170,6 +174,10 @@ array_t::~array_t()
 
 array_t &array_t::operator=(const array_t &arr)
 {
+  // Check for self-assignment
+  if(this == &arr)
+    return *this;
+
   wl_array_release(&a);
   wl_array_init(&a);
   wl_array_copy(&a, const_cast<wl_array*>(&arr.a));

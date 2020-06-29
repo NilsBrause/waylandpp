@@ -88,7 +88,7 @@ private:
     seat.set_queue(queue2);
     keyboard_t kbd = seat.get_keyboard();
     bool have_keymap = false;
-    kbd.on_keymap() = [&have_keymap](keyboard_keymap_format format, int fd, std::uint32_t size)
+    kbd.on_keymap() = [&have_keymap](keyboard_keymap_format  /*unused*/, int fd, std::uint32_t  /*unused*/)
     {
       close(fd);
       have_keymap = true;
