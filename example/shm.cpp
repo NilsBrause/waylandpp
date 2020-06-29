@@ -34,6 +34,7 @@
 #include <sstream>
 #include <ctime>
 #include <algorithm>
+#include <random>
 
 #include <wayland-client.hpp>
 #include <wayland-client-protocol-extra.hpp>
@@ -76,20 +77,16 @@ public:
   shared_mem_t(size_t size)
   : len(size)
   {
-    // Very simple shared memory wrapper - do not use this in production code!
-    // The generated memory regions are visible in the file system and can be
-    // stolen by other running processes.
-    // Linux code should use memfd_create when possible (ommited here for
-    // simplicity).
-
     // create random filename
     std::stringstream ss;
-    std::srand(std::time(nullptr));
-    ss << '/' << std::rand();
+    std::random_device device;
+    std::default_random_engine engine(device());
+    std::uniform_int_distribution<unsigned int> distribution(0, std::numeric_limits<unsigned int>::max());
+    ss << distribution(engine);
     name = ss.str();
 
     // open shared memory file
-    fd = shm_open(name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
+    fd = memfd_create(name.c_str(), 0);
     if(fd < 0)
       throw std::runtime_error("shm_open failed.");
 
