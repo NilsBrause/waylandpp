@@ -77,7 +77,7 @@
 	corresponding interface and event for details.
 
 	A surface may be exported multiple times, and each exported handle may
-	be used to create a xdg_imported multiple times. Only xdg_toplevel
+	be used to create an xdg_imported multiple times. Only xdg_toplevel
 	equivalent surfaces may be exported.
       </description>
       <arg name="id" type="new_id" interface="zxdg_exported_v2"
@@ -118,7 +118,7 @@
 
   <interface name="zxdg_exported_v2" version="1">
     <description summary="an exported surface handle">
-      A xdg_exported object represents an exported reference to a surface. The
+      An xdg_exported object represents an exported reference to a surface. The
       exported surface may be referenced as long as the xdg_exported object not
       destroyed. Destroying the xdg_exported invalidates any relationship the
       importer may have established using xdg_imported.
@@ -145,7 +145,7 @@
 
   <interface name="zxdg_imported_v2" version="1">
     <description summary="an imported surface handle">
-      A xdg_imported object represents an imported reference to surface exported
+      An xdg_imported object represents an imported reference to surface exported
       by some client. A client can use this interface to manipulate
       relationships between its own surfaces and the imported surface.
     </description>
@@ -161,7 +161,7 @@
     <request name="set_parent_of">
       <description summary="set as the parent of some surface">
 	Set the imported surface as the parent of some surface of the client.
-	The passed surface must be a xdg_toplevel equivalent. Calling this
+	The passed surface must be an xdg_toplevel equivalent. Calling this
 	function sets up a surface to surface relation with the same stacking
 	and positioning semantics as xdg_toplevel.set_parent.
       </description>
