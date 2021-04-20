@@ -145,6 +145,30 @@ if(BUILD_LIBRARIES)
     COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_UNSTABLE} "-x" "wayland-client-protocol-extra.hpp"
     DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_EXTRA})
 
+  if(BUILD_SERVER)
+    set(PROTO_FILES
+      "wayland-server-protocol.hpp"
+      "wayland-server-protocol.cpp")
+    set(PROTO_FILES_EXTRA
+      "wayland-server-protocol-extra.hpp"
+      "wayland-server-protocol-extra.cpp")
+    set(PROTO_FILES_UNSTABLE
+      "wayland-server-protocol-unstable.hpp"
+      "wayland-server-protocol-unstable.cpp")
+    add_custom_command(
+      OUTPUT ${PROTO_FILES}
+      COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS} ${PROTO_FILES}
+      DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS})
+    add_custom_command(
+      OUTPUT ${PROTO_FILES_EXTRA}
+      COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS_EXTRA} ${PROTO_FILES_EXTRA} "-x" "wayland-server-protocol.hpp"
+      DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_EXTRA})
+    add_custom_command(
+      OUTPUT ${PROTO_FILES_UNSTABLE}
+      COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_UNSTABLE} "-x" "wayland-server-protocol-extra.hpp"
+      DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_EXTRA})
+  endif()
+
   # library building helper functions
   function(define_library TARGET CFLAGS LIBRARIES HEADERS)
     add_library("${TARGET}" ${ARGN})
@@ -173,12 +197,20 @@ if(BUILD_LIBRARIES)
   endif()
   if(BUILD_SERVER)
     define_library(wayland-server++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
-      "include/wayland-server.hpp;include/wayland-util.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-version.hpp"
-      src/wayland-server.cpp src/wayland-util.cpp)
+      "include/wayland-server.hpp;include/wayland-util.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol.hpp"
+      src/wayland-server.cpp src/wayland-util.cpp wayland-server-protocol.cpp wayland-server-protocol.hpp)
     # Report undefined references only for the base library.
     if(${CMAKE_VERSION} VERSION_GREATER "3.14.0")
       target_link_options(wayland-server++ PRIVATE "-Wl,--no-undefined")
     endif()
+    define_library(wayland-server-extra++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+      "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-extra.hpp"
+      wayland-server-protocol-extra.cpp wayland-server-protocol-extra.hpp wayland-server-protocol.hpp)
+    target_link_libraries(wayland-server-extra++ INTERFACE wayland-server++)
+    define_library(wayland-server-unstable++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+      "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-unstable.hpp"
+      wayland-server-protocol-unstable.cpp wayland-server-protocol-unstable.hpp wayland-server-protocol.hpp)
+    target_link_libraries(wayland-server-unstable++ INTERFACE wayland-server-extra++)
   endif()
   define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
@@ -198,9 +230,12 @@ if(BUILD_LIBRARIES)
   list(APPEND INSTALL_TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++)
   if (INSTALL_UNSTABLE_PROTOCOLS)
 	  list(APPEND INSTALL_TARGETS wayland-client-unstable++)
+    if(BUILD_SERVER)
+	    list(APPEND INSTALL_TARGETS wayland-server-unstable++)
+    endif()
   endif()
   if(BUILD_SERVER)
-    list(APPEND INSTALL_TARGETS wayland-server++)
+    list(APPEND INSTALL_TARGETS wayland-server++ wayland-server-extra++)
   endif()
   install(TARGETS ${INSTALL_TARGETS} EXPORT ${CMAKE_PROJECT_NAME}-targets
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
