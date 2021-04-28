@@ -80,6 +80,10 @@ function(pkg_libs_full_path PREFIX)
   endif()
 endfunction()
 
+# AdressSanitizer support
+set(CMAKE_C_FLAGS_ASAN "-fsanitize=address -fno-optimize-sibling-calls -fsanitize-address-use-after-scope -fno-omit-frame-pointer -g -O0")
+set(CMAKE_CXX_FLAGS_ASAN "-fsanitize=address -fno-optimize-sibling-calls -fsanitize-address-use-after-scope -fno-omit-frame-pointer -g -O0")
+
 # build scanner
 if(BUILD_SCANNER)
   pkg_check_modules(PUGIXML REQUIRED "pugixml>=1.4")
