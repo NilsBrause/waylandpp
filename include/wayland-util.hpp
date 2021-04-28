@@ -36,10 +36,10 @@
 
 #include <wayland-client-core.h>
 
-#define wl_array_for_each_cpp(pos, array)                                                         \
-  for ((pos) = static_cast<decltype(pos)>((array)->data);                                         \
-       reinterpret_cast<const char*>(pos) < (reinterpret_cast<const char*>((array)->data) + (array)->size); \
-       (pos)++)
+#define wl_array_for_each_cpp(pos, array)                                                                  \
+  for((pos) = static_cast<decltype(pos)>((array)->data);                                                   \
+      reinterpret_cast<const char*>(pos) < (reinterpret_cast<const char*>((array)->data) + (array)->size); \
+      (pos)++)
 
 namespace wayland
 {
@@ -72,7 +72,7 @@ namespace wayland
 
     protected:
       basic_wrapper(native_t *object)
-      : object{object}
+        : object{object}
       {
       }
 
@@ -284,7 +284,7 @@ namespace wayland
 
       any &operator=(const any &a)
       {
-        if (&a != this)
+        if(&a != this)
         {
           delete val;
           val = a.val ? a.val->clone() : nullptr;
@@ -304,10 +304,10 @@ namespace wayland
         if(val && typeid(T) == val->type_info())
           static_cast<derived<T>*>(val)->val = t;
         else
-          {
-            delete val;
-            val = new derived<T>(t);
-          }
+        {
+          delete val;
+          val = new derived<T>(t);
+        }
         return *this;
       }
 

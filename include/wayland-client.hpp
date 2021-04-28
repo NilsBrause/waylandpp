@@ -506,7 +506,7 @@ namespace wayland
     display_t(const std::string& name = {});
 
     /** \brief Use an existing connection to a Wayland display to
-               construct a waylandpp display_t
+        construct a waylandpp display_t
         \param display C wl_display pointer to use; must not be nullptr
 
         A wl_display* that was already established using the C wayland-client
@@ -526,7 +526,7 @@ namespace wayland
         or have their owned objects released before the wl_display is destroyed.
         Otherwise, the proxy_t destructor will try to free the underlying wl_proxy
         that was already destroyed together with the wl_display.
-     */
+    */
     explicit display_t(wl_display* display);
 
     /** \brief Close a connection to a Wayland display.
@@ -565,13 +565,13 @@ namespace wayland
         \return The number of dispatched events
         \exception std::system_error on failure
 
-         Blocks until the server processes all currently issued requests
-         and sends out pending events on the event queue.
+        Blocks until the server processes all currently issued requests
+        and sends out pending events on the event queue.
 
-         Note: This function uses dispatch_queue() internally. If you are using
-         read_events() from more threads, don't use this function (or make sure
-         that calling roundtrip_queue() doesn't interfere with calling
-         prepare_read() and read_events())
+        Note: This function uses dispatch_queue() internally. If you are using
+        read_events() from more threads, don't use this function (or make sure
+        that calling roundtrip_queue() doesn't interfere with calling
+        prepare_read() and read_events())
     */
     int roundtrip_queue(const event_queue_t& queue);
 
@@ -722,7 +722,7 @@ namespace wayland
 
     /** \brief Send all buffered requests on the display to the server.
         \return Tuple of the number of bytes sent and whether all data
-                was sent.
+        was sent.
         \exception std::system_error on failure
 
         Send all buffered data on the client side to the server. Clients
@@ -760,7 +760,7 @@ namespace wayland
     operator wl_display*() const;
 
     /** \brief create proxy wrapper for this display
-    */
+     */
     display_t proxy_create_wrapper();
   };
 }

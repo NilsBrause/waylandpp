@@ -29,8 +29,8 @@ using namespace wayland;
 
 cursor_theme_t::cursor_theme_t(const std::string& name, int size, const shm_t& shm)
   : detail::refcounted_wrapper<wl_cursor_theme>({wl_cursor_theme_load(name.empty() ? nullptr : name.c_str(),
-                                                                      size, reinterpret_cast<wl_shm*>(shm.c_ptr())),
-                                                 wl_cursor_theme_destroy})
+        size, reinterpret_cast<wl_shm*>(shm.c_ptr())),
+      wl_cursor_theme_destroy})
 {
   if(!c_ptr())
     throw std::runtime_error("wl_cursor_theme_load failed.");

@@ -65,16 +65,16 @@ public:
     c_display = wl_display_connect(nullptr);
     if(!c_display)
     {
-        std::cerr << "Cannot connect to Wayland display";
-        return;
+      std::cerr << "Cannot connect to Wayland display";
+      return;
     }
 
     display.reset(new display_t(c_display));
     registry = display->get_registry();
     registry.on_global() = [&] (uint32_t name, const std::string& interface, uint32_t version)
-      {
-        std::cout << "* Global interface " << interface << " (name " << name << " version " << version << ")" << std::endl;
-      };
+    {
+      std::cout << "* Global interface " << interface << " (name " << name << " version " << version << ")" << std::endl;
+    };
     display->roundtrip();
   }
 };

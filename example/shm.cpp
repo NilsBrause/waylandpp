@@ -53,9 +53,9 @@ template <typename R, typename T, typename... Args>
 std::function<R(Args...)> bind_mem_fn(R(T::* func)(Args...), T *t)
 {
   return [func, t] (Args... args)
-    {
-      return (t->*func)(args...);
-    };
+  {
+    return (t->*func)(args...);
+  };
 }
 
 // shared memory helper class
@@ -75,7 +75,7 @@ public:
   shared_mem_t& operator=(shared_mem_t&&) noexcept = delete;
 
   shared_mem_t(size_t size)
-  : len(size)
+    : len(size)
   {
     // create random filename
     std::stringstream ss;
@@ -103,14 +103,14 @@ public:
   ~shared_mem_t() noexcept
   {
     if(fd)
-      {
-        if(munmap(mem, len) < 0)
-          std::cerr << "munmap failed.";
-        if(close(fd) < 0)
-          std::cerr << "close failed.";
-        if(shm_unlink(name.c_str()) < 0)
-          std::cerr << "shm_unlink failed";
-      }
+    {
+      if(munmap(mem, len) < 0)
+        std::cerr << "munmap failed.";
+      if(close(fd) < 0)
+        std::cerr << "close failed.";
+      if(shm_unlink(name.c_str()) < 0)
+        std::cerr << "shm_unlink failed";
+    }
   }
 
   int get_fd() const
@@ -173,26 +173,26 @@ private:
     float b = 0;
 
     switch(hi)
-      {
-      case 1:
-        r = q; g = v; b = p;
-        break;
-      case 2:
-        r = p; g = v; b = t;
-        break;
-      case 3:
-        r = p; g = q; b = v;
-        break;
-      case 4:
-        r = t; g = p; b = v;
-        break;
-      case 5:
-        r = v; g = p; b = q;
-        break;
-      default: // 0,6
-        r = v; g = t; b = p;
-        break;
-      }
+    {
+    case 1:
+      r = q; g = v; b = p;
+      break;
+    case 2:
+      r = p; g = v; b = t;
+      break;
+    case 3:
+      r = p; g = q; b = v;
+      break;
+    case 4:
+      r = t; g = p; b = v;
+      break;
+    case 5:
+      r = v; g = p; b = q;
+      break;
+    default: // 0,6
+      r = v; g = t; b = p;
+      break;
+    }
 
     // draw stuff
     uint32_t pixel = (0x80 << 24)
@@ -226,46 +226,46 @@ public:
     // retrieve global objects
     registry = display.get_registry();
     registry.on_global() = [&] (uint32_t name, const std::string& interface, uint32_t version)
-      {
-        if(interface == compositor_t::interface_name)
-          registry.bind(name, compositor, version);
-        else if(interface == shell_t::interface_name)
-          registry.bind(name, shell, version);
-        else if(interface == xdg_wm_base_t::interface_name)
-          registry.bind(name, xdg_wm_base, version);
-        else if(interface == seat_t::interface_name)
-          registry.bind(name, seat, version);
-        else if(interface == shm_t::interface_name)
-          registry.bind(name, shm, version);
-      };
+    {
+      if(interface == compositor_t::interface_name)
+        registry.bind(name, compositor, version);
+      else if(interface == shell_t::interface_name)
+        registry.bind(name, shell, version);
+      else if(interface == xdg_wm_base_t::interface_name)
+        registry.bind(name, xdg_wm_base, version);
+      else if(interface == seat_t::interface_name)
+        registry.bind(name, seat, version);
+      else if(interface == shm_t::interface_name)
+        registry.bind(name, shm, version);
+    };
     display.roundtrip();
 
     seat.on_capabilities() = [&] (const seat_capability& capability)
-      {
-        has_keyboard = capability & seat_capability::keyboard;
-        has_pointer = capability & seat_capability::pointer;
-      };
+    {
+      has_keyboard = capability & seat_capability::keyboard;
+      has_pointer = capability & seat_capability::pointer;
+    };
 
     // create a surface
     surface = compositor.create_surface();
 
     // create a shell surface
     if(xdg_wm_base)
-      {
-        xdg_wm_base.on_ping() = [&] (uint32_t serial) { xdg_wm_base.pong(serial); };
-        xdg_surface = xdg_wm_base.get_xdg_surface(surface);
-        xdg_surface.on_configure() = [&] (uint32_t serial) { xdg_surface.ack_configure(serial); };
-        xdg_toplevel = xdg_surface.get_toplevel();
-        xdg_toplevel.set_title("Window");
-        xdg_toplevel.on_close() = [&] () { running = false; };
-      }
+    {
+      xdg_wm_base.on_ping() = [&] (uint32_t serial) { xdg_wm_base.pong(serial); };
+      xdg_surface = xdg_wm_base.get_xdg_surface(surface);
+      xdg_surface.on_configure() = [&] (uint32_t serial) { xdg_surface.ack_configure(serial); };
+      xdg_toplevel = xdg_surface.get_toplevel();
+      xdg_toplevel.set_title("Window");
+      xdg_toplevel.on_close() = [&] () { running = false; };
+    }
     else
-      {
-        shell_surface = shell.get_shell_surface(surface);
-        shell_surface.on_ping() = [&] (uint32_t serial) { shell_surface.pong(serial); };
-        shell_surface.set_title("Window");
-        shell_surface.set_toplevel();
-      }
+    {
+      shell_surface = shell.get_shell_surface(surface);
+      shell_surface.on_ping() = [&] (uint32_t serial) { shell_surface.pong(serial); };
+      shell_surface.set_title("Window");
+      shell_surface.set_toplevel();
+    }
     surface.commit();
 
     display.roundtrip();
@@ -297,31 +297,31 @@ public:
 
     // draw cursor
     pointer.on_enter() = [&] (uint32_t serial, const surface_t& /*unused*/, int32_t /*unused*/, int32_t /*unused*/)
-      {
-        cursor_surface.attach(cursor_buffer, 0, 0);
-        cursor_surface.damage(0, 0, cursor_image.width(), cursor_image.height());
-        cursor_surface.commit();
-        pointer.set_cursor(serial, cursor_surface, 0, 0);
-      };
+    {
+      cursor_surface.attach(cursor_buffer, 0, 0);
+      cursor_surface.damage(0, 0, cursor_image.width(), cursor_image.height());
+      cursor_surface.commit();
+      pointer.set_cursor(serial, cursor_surface, 0, 0);
+    };
 
     // window movement
     pointer.on_button() = [&] (uint32_t serial, uint32_t /*unused*/, uint32_t button, pointer_button_state state)
+    {
+      if(button == BTN_LEFT && state == pointer_button_state::pressed)
       {
-        if(button == BTN_LEFT && state == pointer_button_state::pressed)
-          {
-            if(xdg_toplevel)
-              xdg_toplevel.move(seat, serial);
-            else
-              shell_surface.move(seat, serial);
-          }
-      };
+        if(xdg_toplevel)
+          xdg_toplevel.move(seat, serial);
+        else
+          shell_surface.move(seat, serial);
+      }
+    };
 
     // press 'q' to exit
     keyboard.on_key() = [&] (uint32_t /*unused*/, uint32_t /*unused*/, uint32_t key, keyboard_key_state state)
-      {
-        if(key == KEY_Q && state == keyboard_key_state::pressed)
-          running = false;
-      };
+    {
+      if(key == KEY_Q && state == keyboard_key_state::pressed)
+        running = false;
+    };
 
     // draw stuff
     draw();

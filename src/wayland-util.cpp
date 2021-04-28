@@ -57,20 +57,20 @@ argument_t &argument_t::operator=(const argument_t &arg)
     return *this;
 
   if(is_array)
-    {
-      wl_array_release(argument.a);
-      delete argument.a;
-    }
+  {
+    wl_array_release(argument.a);
+    delete argument.a;
+  }
 
   is_array = arg.is_array;
 
   if(arg.is_array)
-    {
-      argument.a = new wl_array;
-      wl_array_init(argument.a);
-      if(wl_array_copy(argument.a, arg.argument.a) < 0)
-        throw std::runtime_error("wl_array_copy failed.");
-    }
+  {
+    argument.a = new wl_array;
+    wl_array_init(argument.a);
+    if(wl_array_copy(argument.a, arg.argument.a) < 0)
+      throw std::runtime_error("wl_array_copy failed.");
+  }
   else
     argument = arg.argument;
 
@@ -80,10 +80,10 @@ argument_t &argument_t::operator=(const argument_t &arg)
 argument_t::~argument_t() noexcept
 {
   if(is_array)
-    {
-      wl_array_release(argument.a);
-      delete argument.a;
-    }
+  {
+    wl_array_release(argument.a);
+    delete argument.a;
+  }
 }
 
 argument_t::argument_t(uint32_t i)
