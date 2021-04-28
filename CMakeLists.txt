@@ -44,6 +44,7 @@ option(BUILD_LIBRARIES "whether to build the libraries" ON)
 cmake_dependent_option(BUILD_SHARED_LIBS "Build shared libraries" ON
   "BUILD_LIBRARIES" OFF)
 option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
+option(INSTALL_UNSTABLE_PROTOCOLS "whether to install the unstable protocols" ON)
 cmake_dependent_option(BUILD_EXAMPLES
   "whether to build the examples (requires BUILD_LIBRARIES to be ON)" OFF
   "BUILD_LIBRARIES" OFF)
@@ -178,7 +179,11 @@ if(BUILD_LIBRARIES)
 
   # Install libraries
   install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
-  install(TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++ EXPORT ${CMAKE_PROJECT_NAME}-targets
+  list(APPEND INSTALL_TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++)
+  if (INSTALL_UNSTABLE_PROTOCOLS)
+	  list(APPEND INSTALL_TARGETS wayland-client-unstable++)
+  endif()
+  install(TARGETS ${INSTALL_TARGETS} EXPORT ${CMAKE_PROJECT_NAME}-targets
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
