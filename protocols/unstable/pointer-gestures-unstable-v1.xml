@@ -6,7 +6,7 @@
       A global interface to provide semantic touchpad gestures for a given
       pointer.
 
-      Two gestures are currently supported: swipe and zoom/rotate.
+      Two gestures are currently supported: swipe and pinch.
       All gestures follow a three-stage cycle: begin, update, end and
       are identified by a unique id.
 

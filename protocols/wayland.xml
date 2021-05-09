@@ -179,7 +179,7 @@
       the related request is done.
     </description>
 
-    <event name="done">
+    <event name="done" type="destructor">
       <description summary="done event">
 	Notify the client when the related request is done.
       </description>
@@ -399,6 +399,10 @@
       <entry name="p010" value="0x30313050" summary="2x2 subsampled Cr:Cb plane 10 bits per channel"/>
       <entry name="p012" value="0x32313050" summary="2x2 subsampled Cr:Cb plane 12 bits per channel"/>
       <entry name="p016" value="0x36313050" summary="2x2 subsampled Cr:Cb plane 16 bits per channel"/>
+      <entry name="axbxgxrx106106106106" value="0x30314241" summary="[63:0] A:x:B:x:G:x:R:x 10:6:10:6:10:6:10:6 little endian"/>
+      <entry name="nv15" value="0x3531564e" summary="2x2 subsampled Cr:Cb plane"/>
+      <entry name="q410" value="0x30313451"/>
+      <entry name="q401" value="0x31303451"/>
     </enum>
 
     <request name="create_pool">
@@ -829,7 +833,8 @@
 	for the eventual data transfer. If source is NULL, enter, leave
 	and motion events are sent only to the client that initiated the
 	drag and the client is expected to handle the data passing
-	internally.
+	internally. If source is destroyed, the drag-and-drop session will be
+	cancelled.
 
 	The origin surface is the surface where the drag originates and
 	the client must have an active implicit grab that matches the
@@ -1608,6 +1613,12 @@
 	This is emitted whenever a surface's creation, movement, or resizing
 	results in it no longer having any part of it within the scanout region
 	of an output.
+
+	Clients should not use the number of outputs the surface is on for frame
+	throttling purposes. The surface might be hidden even if no leave event
+	has been sent, and the compositor might expect new surface content
+	updates even if no enter event has been sent. The frame event should be
+	used instead.
       </description>
       <arg name="output" type="object" interface="wl_output" summary="output left by the surface"/>
     </event>
@@ -1894,6 +1905,10 @@
 	wl_surface is no longer used as the cursor. When the use as a
 	cursor ends, the current and pending input regions become
 	undefined, and the wl_surface is unmapped.
+
+	The serial parameter must match the latest wl_pointer.enter
+	serial number sent to the client. Otherwise the request will be
+	ignored.
       </description>
       <arg name="serial" type="uint" summary="serial number of the enter event"/>
       <arg name="surface" type="object" interface="wl_surface" allow-null="true"
@@ -2540,6 +2555,10 @@
 	current.  In other words, the current mode is always the last
 	mode that was received with the current flag set.
 
+	Non-current modes are deprecated. A compositor can decide to only
+	advertise the current mode and never send other modes. Clients
+	should not rely on non-current modes.
+
 	The size of a mode is given in physical hardware units of
 	the output device. This is not necessarily the same as
 	the output size in the global compositor space. For instance,
@@ -2732,7 +2751,7 @@
       wl_surface state directly. A sub-surface is initially in the
       synchronized mode.
 
-      Sub-surfaces have also other kind of state, which is managed by
+      Sub-surfaces also have another kind of state, which is managed by
       wl_subsurface requests, as opposed to wl_surface requests. This
       state includes the sub-surface position relative to the parent
       surface (wl_subsurface.set_position), and the stacking order of
