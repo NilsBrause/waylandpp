@@ -75,7 +75,9 @@
       <description summary="create a shell surface from a surface">
 	This creates an xdg_surface for the given surface. While xdg_surface
 	itself is not a role, the corresponding surface may only be assigned
-	a role extending xdg_surface, such as xdg_toplevel or xdg_popup.
+	a role extending xdg_surface, such as xdg_toplevel or xdg_popup. It is
+	illegal to create an xdg_surface for a wl_surface which already has an
+	assigned role and this will result in a protocol error.
 
 	This creates an xdg_surface for the given surface. An xdg_surface is
 	used as basis to define a role to a given surface, such as xdg_toplevel
@@ -336,7 +338,7 @@
 
 	The default adjustment is none.
       </description>
-      <arg name="constraint_adjustment" type="uint" enum="constraint_adjustment"
+      <arg name="constraint_adjustment" type="uint"
 	   summary="bit mask of constraint adjustments"/>
     </request>
 
@@ -709,7 +711,7 @@
       <arg name="serial" type="uint" summary="the serial of the user event"/>
     </request>
 
-    <enum name="resize_edge" bitfield="true">
+    <enum name="resize_edge">
       <description summary="edge values for resizing">
 	These values are used to indicate which edge of a surface
 	is being dragged in a resize operation.
@@ -807,25 +809,25 @@
 	</description>
       </entry>
       <entry name="tiled_left" value="5" since="2">
-	<description summary="the surface is tiled">
+	<description summary="the surface’s left edge is tiled">
 	  The window is currently in a tiled layout and the left edge is
 	  considered to be adjacent to another part of the tiling grid.
 	</description>
       </entry>
       <entry name="tiled_right" value="6" since="2">
-	<description summary="the surface is tiled">
+	<description summary="the surface’s right edge is tiled">
 	  The window is currently in a tiled layout and the right edge is
 	  considered to be adjacent to another part of the tiling grid.
 	</description>
       </entry>
       <entry name="tiled_top" value="7" since="2">
-	<description summary="the surface is tiled">
+	<description summary="the surface’s top edge is tiled">
 	  The window is currently in a tiled layout and the top edge is
 	  considered to be adjacent to another part of the tiling grid.
 	</description>
       </entry>
       <entry name="tiled_bottom" value="8" since="2">
-	<description summary="the surface is tiled">
+	<description summary="the surface’s bottom edge is tiled">
 	  The window is currently in a tiled layout and the bottom edge is
 	  considered to be adjacent to another part of the tiling grid.
 	</description>

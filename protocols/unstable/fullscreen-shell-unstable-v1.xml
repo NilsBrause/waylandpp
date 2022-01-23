@@ -112,7 +112,7 @@
 	wl_display.sync request immediately after binding to ensure that they
 	receive all the capability events.
       </description>
-      <arg name="capabilty" type="uint" enum="capability"/>
+      <arg name="capability" type="uint" enum="capability" />
     </event>
 
     <enum name="present_method">
@@ -147,9 +147,13 @@
 	operation on the surface.  This will override any kind of output
 	scaling, so the buffer_scale property of the surface is effectively
 	ignored.
+
+	This request gives the surface the role of a fullscreen shell surface.
+	If the surface already has another role, it raises a role protocol
+	error.
       </description>
       <arg name="surface" type="object" interface="wl_surface" allow-null="true"/>
-      <arg name="method" type="uint" enum="present_method"/>
+      <arg name="method" type="uint" enum="present_method" />
       <arg name="output" type="object" interface="wl_output" allow-null="true"/>
     </request>
 
@@ -192,6 +196,10 @@
 	then the compositor may choose a mode that matches either the buffer
 	size or the surface size.  In either case, the surface will fill the
 	output.
+
+	This request gives the surface the role of a fullscreen shell surface.
+	If the surface already has another role, it raises a role protocol
+	error.
       </description>
       <arg name="surface" type="object" interface="wl_surface"/>
       <arg name="output" type="object" interface="wl_output"/>
@@ -204,6 +212,7 @@
 	These errors can be emitted in response to wl_fullscreen_shell requests.
       </description>
       <entry name="invalid_method" value="0" summary="present_method is not known"/>
+      <entry name="role" value="1" summary="given wl_surface has another role"/>
     </enum>
   </interface>
 

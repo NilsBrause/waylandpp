@@ -338,7 +338,7 @@
 
 	The default adjustment is none.
       </description>
-      <arg name="constraint_adjustment" type="uint" enum="constraint_adjustment"
+      <arg name="constraint_adjustment" type="uint"
 	   summary="bit mask of constraint adjustments"/>
     </request>
 
@@ -625,7 +625,7 @@
       <arg name="serial" type="uint" summary="the serial of the user event"/>
     </request>
 
-    <enum name="resize_edge" bitfield="true">
+    <enum name="resize_edge">
       <description summary="edge values for resizing">
 	These values are used to indicate which edge of a surface
 	is being dragged in a resize operation.
@@ -676,7 +676,7 @@
       </description>
       <arg name="seat" type="object" interface="wl_seat" summary="the wl_seat of the user event"/>
       <arg name="serial" type="uint" summary="the serial of the user event"/>
-      <arg name="edges" type="uint" enum="resize_edge" summary="which edge or corner is being dragged"/>
+      <arg name="edges" type="uint" summary="which edge or corner is being dragged"/>
     </request>
 
     <enum name="state">

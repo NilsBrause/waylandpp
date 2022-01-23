@@ -69,6 +69,14 @@
       </description>
     </request>
 
+    <enum name="error">
+      <description summary="error values">
+        These errors can be emitted in response to invalid xdg_exporter
+        requests.
+      </description>
+      <entry name="invalid_surface" value="0" summary="surface is not an xdg_toplevel"/>
+    </enum>
+
     <request name="export_toplevel">
       <description summary="export a toplevel surface">
 	The export_toplevel request exports the passed surface so that it can later be
@@ -78,7 +86,8 @@
 
 	A surface may be exported multiple times, and each exported handle may
 	be used to create an xdg_imported multiple times. Only xdg_toplevel
-	equivalent surfaces may be exported.
+        equivalent surfaces may be exported, otherwise an invalid_surface
+        protocol error is sent.
       </description>
       <arg name="id" type="new_id" interface="zxdg_exported_v2"
 	   summary="the new xdg_exported object"/>
@@ -150,6 +159,14 @@
       relationships between its own surfaces and the imported surface.
     </description>
 
+    <enum name="error">
+      <description summary="error values">
+        These errors can be emitted in response to invalid xdg_imported
+        requests.
+      </description>
+      <entry name="invalid_surface" value="0" summary="surface is not an xdg_toplevel"/>
+    </enum>
+
     <request name="destroy" type="destructor">
       <description summary="destroy the xdg_imported object">
 	Notify the compositor that it will no longer use the xdg_imported
@@ -160,10 +177,11 @@
 
     <request name="set_parent_of">
       <description summary="set as the parent of some surface">
-	Set the imported surface as the parent of some surface of the client.
-	The passed surface must be an xdg_toplevel equivalent. Calling this
-	function sets up a surface to surface relation with the same stacking
-	and positioning semantics as xdg_toplevel.set_parent.
+        Set the imported surface as the parent of some surface of the client.
+        The passed surface must be an xdg_toplevel equivalent, otherwise an
+        invalid_surface protocol error is sent. Calling this function sets up
+        a surface to surface relation with the same stacking and positioning
+        semantics as xdg_toplevel.set_parent.
       </description>
       <arg name="surface" type="object" interface="wl_surface"
 	   summary="the child surface"/>
