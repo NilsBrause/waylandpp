@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019, Nils Christopher Brause, Philipp Kerling
+ * Copyright (c) 2014-2022, Nils Christopher Brause, Philipp Kerling
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
