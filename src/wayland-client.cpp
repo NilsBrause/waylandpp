@@ -497,7 +497,7 @@ display_t &display_t::operator=(display_t &&d) noexcept
   return *this;
 }
 
-event_queue_t display_t::create_queue() const
+event_queue_t display_t::create_queue()
 {
   wl_event_queue *queue = wl_display_create_queue(*this);
   if(!queue)
@@ -510,17 +510,17 @@ int display_t::get_fd() const
   return wl_display_get_fd(*this);
 }
 
-int display_t::roundtrip() const
+int display_t::roundtrip()
 {
   return check_return_value(wl_display_roundtrip(*this), "wl_display_roundtrip");
 }
 
-int display_t::roundtrip_queue(const event_queue_t& queue) const
+int display_t::roundtrip_queue(const event_queue_t& queue)
 {
   return check_return_value(wl_display_roundtrip_queue(*this, queue), "wl_display_roundtrip_queue");
 }
 
-read_intent display_t::obtain_read_intent() const
+read_intent display_t::obtain_read_intent()
 {
   while(wl_display_prepare_read(*this) != 0)
   {
@@ -532,7 +532,7 @@ read_intent display_t::obtain_read_intent() const
   return read_intent(*this);
 }
 
-read_intent display_t::obtain_queue_read_intent(const event_queue_t& queue) const
+read_intent display_t::obtain_queue_read_intent(const event_queue_t& queue)
 {
   while(wl_display_prepare_read_queue(*this, queue) != 0)
   {
@@ -544,22 +544,22 @@ read_intent display_t::obtain_queue_read_intent(const event_queue_t& queue) cons
   return read_intent(*this, queue);
 }
 
-int display_t::dispatch_queue(const event_queue_t& queue) const
+int display_t::dispatch_queue(const event_queue_t& queue)
 {
   return check_return_value(wl_display_dispatch_queue(*this, queue), "wl_display_dispatch_queue");
 }
 
-int display_t::dispatch_queue_pending(const event_queue_t& queue) const
+int display_t::dispatch_queue_pending(const event_queue_t& queue)
 {
   return check_return_value(wl_display_dispatch_queue_pending(*this, queue), "wl_display_dispatch_queue_pending");
 }
 
-int display_t::dispatch() const
+int display_t::dispatch()
 {
   return check_return_value(wl_display_dispatch(*this), "wl_display_dispatch");
 }
 
-int display_t::dispatch_pending() const
+int display_t::dispatch_pending()
 {
   return check_return_value(wl_display_dispatch_pending(*this), "wl_display_dispatch_pending");
 }
@@ -569,7 +569,7 @@ int display_t::get_error() const
   return wl_display_get_error(*this);
 }
 
-std::tuple<int, bool> display_t::flush() const
+std::tuple<int, bool> display_t::flush()
 {
   int bytes_written = wl_display_flush(*this);
   if(bytes_written < 0)
