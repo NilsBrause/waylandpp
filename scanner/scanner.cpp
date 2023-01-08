@@ -23,6 +23,7 @@
 #include <vector>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <stdexcept>
 
 #include "pugixml.hpp"
@@ -1106,6 +1107,7 @@ int main(int argc, char *argv[])
   wayland_hpp << "#pragma once" << std::endl
               << std::endl
               << "#include <array>" << std::endl
+              << "#include <cstdint>" << std::endl
               << "#include <functional>" << std::endl
               << "#include <memory>" << std::endl
               << "#include <string>" << std::endl
@@ -1125,6 +1127,7 @@ int main(int argc, char *argv[])
     wayland_server_hpp << "#pragma once" << std::endl
                        << std::endl
                        << "#include <array>" << std::endl
+                       << "#include <cstdint>" << std::endl
                        << "#include <functional>" << std::endl
                        << "#include <memory>" << std::endl
                        << "#include <string>" << std::endl
