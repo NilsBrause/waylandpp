@@ -120,9 +120,34 @@ if(BUILD_LIBRARIES)
   pkg_libs_full_path(WAYLAND_CURSOR)
 
   # generate protocol source/headers from protocol XMLs
-  set(PROTO_XMLS "${CMAKE_SOURCE_DIR}/protocols/wayland.xml")
-  file(GLOB PROTO_XMLS_EXTRA "${CMAKE_SOURCE_DIR}/protocols/extra/*.xml")
-  file(GLOB PROTO_XMLS_UNSTABLE "${CMAKE_SOURCE_DIR}/protocols/unstable/*.xml")
+  set(PROTO_XMLS "${CMAKE_SOURCE_DIR}/protocols/wayland/protocol/wayland.xml")
+  file(GLOB PROTO_XMLS_EXTRA "${CMAKE_SOURCE_DIR}/protocols/wayland-protocols/stable/*/*.xml")
+  # when the same unstable interface has several postfixed versions, only the most recent is kept
+  file(GLOB TMP_FILES "${CMAKE_SOURCE_DIR}/protocols/wayland-protocols/unstable/*/*.xml")
+  list(REVERSE TMP_FILES)
+  set(_tmp_list)
+  set(PROTO_XMLS_UNSTABLE)
+  set(PROTO_XMLS_UNSTABLE_REJECTED)
+  foreach(file ${TMP_FILES})
+    get_filename_component(basename ${file} NAME_WE)
+    string(REGEX REPLACE "-v[0-9]+" "" basename "${basename}")
+    list(FIND _tmp_list "${basename}" idx)
+    if (idx EQUAL "-1")
+      list(APPEND _tmp_list ${basename})
+      list(APPEND PROTO_XMLS_UNSTABLE ${file})
+    else()
+      list(APPEND PROTO_XMLS_UNSTABLE_REJECTED ${file})
+    endif()
+  endforeach()
+
+  list(LENGTH PROTO_XMLS_UNSTABLE_REJECTED length)
+  if(length GREATER 0)
+    message("List of rejected protocol files:")
+  endif()
+  foreach(file ${PROTO_XMLS_UNSTABLE_REJECTED})
+    message("- ${file}")
+  endforeach()
+
   set(PROTO_FILES
     "wayland-client-protocol.hpp"
     "wayland-client-protocol.cpp")
