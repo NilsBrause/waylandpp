@@ -39,16 +39,6 @@
 
 using namespace wayland;
 
-// helper to create a std::function out of a member function and an object
-template <typename R, typename T, typename... Args>
-std::function<R(Args...)> bind_mem_fn(R(T::* func)(Args...), T *t)
-{
-  return [func, t] (Args... args)
-  {
-    return (t->*func)(args...);
-  };
-}
-
 // example Wayland client
 class example
 {
@@ -175,7 +165,7 @@ private:
 
     // schedule next draw
     frame_cb = surface.frame();
-    frame_cb.on_done() = bind_mem_fn(&example::draw, this);
+    frame_cb.on_done() = std::bind(&example::draw, this, std::placeholders::_1);
 
     // swap buffers
     if(eglSwapBuffers(egldisplay, eglsurface) == EGL_FALSE)
