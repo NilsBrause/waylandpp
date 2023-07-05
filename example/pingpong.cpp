@@ -79,7 +79,7 @@ int main()
   {
     std::cout << "Found global: " << interface << std::endl;
     if(interface == wayland::pingpong_t::interface_name)
-      registry.bind(name, pingpong, version);
+      registry.bind(name, pingpong, std::min(wayland::pingpong_t::interface_version, version));
   };
   display.roundtrip();
 

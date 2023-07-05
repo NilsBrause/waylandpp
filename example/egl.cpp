@@ -39,16 +39,6 @@
 
 using namespace wayland;
 
-// helper to create a std::function out of a member function and an object
-template <typename R, typename T, typename... Args>
-std::function<R(Args...)> bind_mem_fn(R(T::* func)(Args...), T *t)
-{
-  return [func, t] (Args... args)
-  {
-    return (t->*func)(args...);
-  };
-}
-
 // example Wayland client
 class example
 {
@@ -175,7 +165,7 @@ private:
 
     // schedule next draw
     frame_cb = surface.frame();
-    frame_cb.on_done() = bind_mem_fn(&example::draw, this);
+    frame_cb.on_done() = std::bind(&example::draw, this, std::placeholders::_1);
 
     // swap buffers
     if(eglSwapBuffers(egldisplay, eglsurface) == EGL_FALSE)
@@ -195,15 +185,15 @@ public:
     registry.on_global() = [&] (uint32_t name, const std::string& interface, uint32_t version)
     {
       if(interface == compositor_t::interface_name)
-        registry.bind(name, compositor, version);
+        registry.bind(name, compositor, std::min(compositor_t::interface_version, version));
       else if(interface == shell_t::interface_name)
-        registry.bind(name, shell, version);
+        registry.bind(name, shell, std::min(shell_t::interface_version, version));
       else if(interface == xdg_wm_base_t::interface_name)
-        registry.bind(name, xdg_wm_base, version);
+        registry.bind(name, xdg_wm_base, std::min(xdg_wm_base_t::interface_version, version));
       else if(interface == seat_t::interface_name)
-        registry.bind(name, seat, version);
+        registry.bind(name, seat, std::min(seat_t::interface_version, version));
       else if(interface == shm_t::interface_name)
-        registry.bind(name, shm, version);
+        registry.bind(name, shm, std::min(shm_t::interface_version, version));
     };
     display.roundtrip();
 

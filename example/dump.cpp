@@ -62,7 +62,7 @@ public:
       {
         outputs.emplace_back();
         auto& output = outputs.back();
-        registry.bind(name, output, version);
+        registry.bind(name, output, std::min(output_t::interface_version, version));
       }
     };
     // Print global information

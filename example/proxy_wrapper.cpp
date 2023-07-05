@@ -69,7 +69,7 @@ private:
     registry.on_global() = [&seat, &registry](std::uint32_t name, const std::string& interface, std::uint32_t version)
     {
       if(interface == seat_t::interface_name)
-        registry.bind(name, seat, version);
+        registry.bind(name, seat, std::min(seat_t::interface_version, version));
     };
     display.roundtrip_queue(queue);
     if(!seat)
