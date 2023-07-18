@@ -36,6 +36,7 @@
 #include <wayland-version.hpp>
 #include <wayland-client-core.h>
 #include <wayland-util.hpp>
+#include <cstdint>
 
 namespace wayland
 {
