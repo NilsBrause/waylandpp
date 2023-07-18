@@ -24,6 +24,7 @@
 #include <cctype>
 #include <cmath>
 #include <stdexcept>
+#include <stdint.h>
 
 #include "pugixml.hpp"
 
