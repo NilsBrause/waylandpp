@@ -26,6 +26,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cerrno>
+#include <cstring>
 
 #include <iostream>
 #include <limits>
@@ -73,6 +74,8 @@ namespace
     g_log_handler(buf.data());
   }
 
+  constexpr const char kLidecorProxyTag[] = "libdecor";
+  constexpr const size_t kLibdecorProxyTagSize = sizeof kLidecorProxyTag - 1;
 }
 
 // stored in the proxy user data
@@ -148,12 +151,21 @@ int proxy_t::c_dispatcher(const void *implementation, void *target, uint32_t opc
         a = std::string("");
       break;
       // proxy
-    case 'o':
+    case 'o': {
+      wayland::proxy_t::wrapper_type type = wayland::proxy_t::wrapper_type::standard;
+      wl_proxy* p = reinterpret_cast<wl_proxy*>(args[c].o);
+      if(p) {
+        char const* const* t = wl_proxy_get_tag(p);
+        if(t && strncmp(*t, kLidecorProxyTag, kLibdecorProxyTagSize) == 0) {
+          type = wayland::proxy_t::wrapper_type::foreign;
+        }
+      }
       if(args[c].o)
-        a = proxy_t(reinterpret_cast<wl_proxy*>(args[c].o));
+        a = proxy_t(p, type);
       else
         a = proxy_t();
       break;
+    }
       // new id
     case 'n':
     {
