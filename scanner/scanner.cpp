@@ -523,6 +523,8 @@ struct interface_t : public element_t
        << std::endl
        << "  static const std::string interface_name;" << std::endl
        << std::endl
+       << "  static const uint32_t interface_version;" << std::endl
+       << std::endl
        << "  operator " << orig_name << "*() const;" << std::endl
        << std::endl;
 
@@ -577,6 +579,8 @@ struct interface_t : public element_t
        << "  " << name << "_t(const resource_t &resource);" << std::endl
        << std::endl
        << "  static const std::string interface_name;" << std::endl
+       << std::endl
+       << "  static const uint32_t interface_version;" << std::endl
        << std::endl
        << "  operator " << orig_name << "*() const;" << std::endl
        << std::endl;
@@ -656,6 +660,8 @@ struct interface_t : public element_t
        << std::endl
        << "const std::string " << name << "_t::interface_name = \"" << orig_name << "\";" << std::endl
        << std::endl
+       << "const uint32_t " << name << "_t::interface_version = static_cast<uint32_t>(" << name << "_interface.version);" << std::endl
+       << std::endl
        << name << "_t::operator " << orig_name << "*() const" << std::endl
        << "{" << std::endl
        << "  return reinterpret_cast<" << orig_name << "*> (c_ptr());" << std::endl
@@ -711,6 +717,8 @@ struct interface_t : public element_t
        << "}" << std::endl
        << std::endl
        << "const std::string " << name << "_t::interface_name = \"" << orig_name << "\";" << std::endl
+       << std::endl
+       << "const uint32_t " << name << "_t::interface_version = static_cast<uint32_t>(" << name << "_interface.version);" << std::endl
        << std::endl
        << name << "_t::operator " << orig_name << "*() const" << std::endl
        << "{" << std::endl
