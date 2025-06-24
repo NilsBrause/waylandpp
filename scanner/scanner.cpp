@@ -67,10 +67,11 @@ struct argument_t : public element_t
 
   std::string print_type(bool server) const
   {
+    auto name_space = server ? "wayland::server::" : "wayland::";
     if(!interface.empty())
       return interface + "_t";
     if(!enum_iface.empty())
-      return enum_iface + "_" + enum_name;
+      return name_space +  enum_iface + "_" + enum_name;
     if(type == "int")
       return "int32_t";
     if(type == "uint")
