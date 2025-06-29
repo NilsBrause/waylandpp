@@ -275,6 +275,8 @@ namespace wayland
         wayland::detail::any user_data;
         std::atomic<unsigned int> counter{1};
         bool destroyed = false;
+        std::function<void()> destroy_late;
+        detail::listener_t destroy_late_listener;
       };
 
       wl_client *client = nullptr;
@@ -283,6 +285,7 @@ namespace wayland
       static void destroy_func(wl_listener *listener, void *data);
       static wl_iterator_result resource_iterator(wl_resource *resource, void *data);
       static data_t *wl_client_get_user_data(wl_client *client);
+      static void destroy_late_func(wl_listener *listener, void *data);
 
     protected:
       client_t(wl_client *c);
@@ -381,6 +384,12 @@ namespace wayland
        * request with the contexts and make a decision whether it permits or deny it.
        */
       int get_fd() const;
+
+      /** Add a callback to be called at the beginning of client destruction.
+       *
+       * The callback provided will be called when client destroy has begun,
+       * before any of that client's resources have been destroyed.
+       */
       std::function<void()> &on_destroy();
 
       /** Look up an object in the client name space
@@ -450,6 +459,13 @@ namespace wayland
        * \return A list of resources used by the clienzt
        */
       std::list<resource_t> get_resource_list() const;
+
+      /** Add a callback to be called at the end of wl_client destruction.
+       *
+       * The callback provided will be called when wl_client destroy is nearly complete,
+       * after all of that client's resources have been destroyed.
+       */
+      std::function<void()> &on_destroy_late();
     };
 
     class resource_t
