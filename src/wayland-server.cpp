@@ -302,6 +302,14 @@ void client_t::destroy_late_func(wl_listener *listener, void */*unused*/)
     delete data;
 }
 
+void client_t::resource_created_func(wl_listener *listener, void *resource_ptr)
+{
+  auto *data = reinterpret_cast<data_t*>(reinterpret_cast<listener_t*>(listener)->user);
+  resource_t resource(static_cast<wl_resource*>(resource_ptr));
+  if(data->resource_created)
+    data->resource_created(resource);
+}
+
 void client_t::init()
 {
   data = new data_t;
@@ -312,8 +320,11 @@ void client_t::init()
   data->destroy_listener.listener.notify = destroy_func;
   data->destroy_late_listener.user = data;
   data->destroy_late_listener.listener.notify = destroy_late_func;
+  data->resource_created_listener.user = data;
+  data->resource_created_listener.listener.notify = resource_created_func;
   wl_client_add_destroy_listener(client, reinterpret_cast<wl_listener*>(&data->destroy_listener));
   wl_client_add_destroy_late_listener(client, reinterpret_cast<wl_listener*>(&data->destroy_late_listener));
+  wl_client_add_resource_created_listener(client, reinterpret_cast<wl_listener*>(&data->resource_created_listener));
 }
 
 void client_t::fini()
@@ -455,6 +466,11 @@ void client_t::set_max_buffer_size(size_t max_buffer_size)
 std::function<void()> &client_t::on_destroy_late()
 {
   return data->destroy_late;
+}
+
+std::function<void(resource_t&)> &client_t::on_resource_created()
+{
+  return data->resource_created;
 }
 
 //-----------------------------------------------------------------------------

@@ -277,6 +277,8 @@ namespace wayland
         bool destroyed = false;
         std::function<void()> destroy_late;
         detail::listener_t destroy_late_listener;
+        std::function<void(resource_t&)> resource_created;
+        detail::listener_t resource_created_listener;
       };
 
       wl_client *client = nullptr;
@@ -286,6 +288,7 @@ namespace wayland
       static wl_iterator_result resource_iterator(wl_resource *resource, void *data);
       static data_t *wl_client_get_user_data(wl_client *client);
       static void destroy_late_func(wl_listener *listener, void *data);
+      static void resource_created_func(wl_listener *listener, void *data);
 
     protected:
       client_t(wl_client *c);
@@ -466,6 +469,13 @@ namespace wayland
        * after all of that client's resources have been destroyed.
        */
       std::function<void()> &on_destroy_late();
+
+      /** Add a callback for the client's resource creation signal
+       *
+       * When a new resource is created for this client the listener will be notified,
+       * carrying the new resource as its argument.
+       */
+      std::function<void(resource_t&)> &on_resource_created();
     };
 
     class resource_t
