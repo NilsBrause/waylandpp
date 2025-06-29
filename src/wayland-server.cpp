@@ -270,6 +270,11 @@ void display_t::set_global_filter(const std::function<bool(client_t, global_base
   wl_display_set_global_filter(c_ptr(), c_filter_func, data);
 }
 
+void display_t::set_default_max_buffer_size(size_t max_buffer_size)
+{
+  wl_display_set_default_max_buffer_size(c_ptr(), max_buffer_size);
+}
+
 //-----------------------------------------------------------------------------
 
 client_t::data_t *client_t::wl_client_get_user_data(wl_client *client)
@@ -430,6 +435,11 @@ std::list<resource_t> client_t::get_resource_list() const
   std::list<resource_t> resources;
   wl_client_for_each_resource(c_ptr(), resource_iterator, &resources);
   return resources;
+}
+
+void client_t::set_max_buffer_size(size_t max_buffer_size)
+{
+  wl_client_set_max_buffer_size(client, max_buffer_size);
 }
 
 //-----------------------------------------------------------------------------

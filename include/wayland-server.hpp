@@ -249,6 +249,17 @@ namespace wayland
        * have an error raised.
        */
       void set_global_filter(const std::function<bool(client_t, global_base_t)>& filter);
+
+      /** Sets the default maximum size for connection buffers of new clients.
+       *  This function sets the default size of the internal connection buffers for new clients. It doesn't change the buffer size for existing clients.
+       *
+       * The connection buffer size of an existing client can be adjusted using @see client_t::set_max_buffer_size().
+       *
+       * The actual size of the connection buffers is a power of two, the requested max_buffer_size is therefore rounded up to the nearest power of two value.
+       *
+       * The minimum buffer size is 4096.
+       */
+      void set_default_max_buffer_size(size_t max_buffer_size);
     };
 
     class resource_t;
@@ -418,6 +429,21 @@ namespace wayland
        * \return The display object the client is associated with.
        */
       display_t get_display() const;
+
+      /** Adjust the maximum size of the client connection buffers
+       *
+       * \param max_buffer_size The maximum size of the connection buffers
+       *
+       * The actual size of the connection buffers is a power of two, the requested
+       * max_buffer_size is therefore rounded up to the nearest power of two value.
+       *
+       * Lowering the maximum size may not take effect immediately if the current
+       *  content of the buffer does not fit within the new size limit.
+       *
+       * The minimum buffer size is 4096. The default buffers size can be set using
+       * @see display_t::set_default_max_buffer_size().
+       */
+      void set_max_buffer_size(size_t max_buffer_size);
 
       /** Get a list of the clients resources.
        *
