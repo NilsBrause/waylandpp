@@ -499,7 +499,6 @@ namespace wayland
         detail::listener_t destroy_listener;
         wayland::detail::any user_data;
         std::atomic<unsigned int> counter{1};
-        bool destroyed = false;
       };
 
       wl_resource *resource = nullptr;
@@ -558,7 +557,6 @@ namespace wayland
 
       resource_t(wl_resource *c);
       void init();
-      void fini();
 
       friend class client_t;
 

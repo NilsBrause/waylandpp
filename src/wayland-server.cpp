@@ -466,9 +466,8 @@ void resource_t::destroy_func(wl_listener *listener, void */*unused*/)
   auto *data = reinterpret_cast<resource_t::data_t*>(reinterpret_cast<listener_t*>(listener)->user);
   if(data->destroy)
     data->destroy();
-  data->destroyed = true;
-  if(data->counter == 0)
-    delete data;
+  reinterpret_cast<listener_t*>(listener)->user = nullptr;
+  delete data;
 }
 
 int resource_t::dummy_dispatcher(int /*opcode*/, const std::vector<wayland::detail::any>& /*args*/, const std::shared_ptr<resource_t::events_base_t>& /*events*/)
@@ -480,23 +479,11 @@ void resource_t::init()
 {
   data = new data_t;
   data->counter = 1;
-  data->destroyed = false;
   data->destroy_listener.user = data;
   data->destroy_listener.listener.notify = destroy_func;
   wl_resource_set_user_data(resource, data);
   wl_resource_add_destroy_listener(resource, reinterpret_cast<wl_listener*>(&data->destroy_listener));
   wl_resource_set_dispatcher(resource, c_dispatcher, reinterpret_cast<void*>(dummy_dispatcher), data, nullptr); // dummy dispatcher
-}
-
-void resource_t::fini()
-{
-  // If data is nullptr, this is a empty dummy resource created by the c_dispatcher.
-  if(data)
-  {
-    data->counter--;
-    if(data->counter == 0 && data->destroyed)
-      delete data;
-  }
 }
 
 resource_t::resource_t(const client_t& client, const wl_interface *interface, int version, uint32_t id)
@@ -517,7 +504,6 @@ resource_t::resource_t(wl_resource *c)
 
 resource_t::~resource_t()
 {
-  fini();
 }
 
 resource_t::resource_t(const resource_t &r)
@@ -539,7 +525,6 @@ resource_t &resource_t::operator=(const resource_t& r)
 {
   if(&r == this)
     return *this;
-  fini();
   resource = r.resource;
 
   // If data is nullptr, this is a empty dummy resource created by the c_dispatcher.
