@@ -286,14 +286,13 @@ namespace wayland
 
       static void destroy_func(wl_listener *listener, void *data);
       static wl_iterator_result resource_iterator(wl_resource *resource, void *data);
-      static data_t *wl_client_get_user_data(wl_client *client);
       static void destroy_late_func(wl_listener *listener, void *data);
       static void resource_created_func(wl_listener *listener, void *data);
+      static void user_data_destroy_func(void *data);
 
     protected:
       client_t(wl_client *c);
       void init();
-      void fini();
 
       friend class display_t;
       friend class resource_t;

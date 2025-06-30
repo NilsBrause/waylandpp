@@ -277,14 +277,6 @@ void display_t::set_default_max_buffer_size(size_t max_buffer_size)
 
 //-----------------------------------------------------------------------------
 
-client_t::data_t *client_t::wl_client_get_user_data(wl_client *client)
-{
-  wl_listener *listener = wl_client_get_destroy_listener(client, destroy_func);
-  if(listener)
-    return reinterpret_cast<data_t*>(reinterpret_cast<listener_t*>(listener)->user);
-  return nullptr;
-}
-
 void client_t::destroy_func(wl_listener *listener, void */*unused*/)
 {
   auto *data = reinterpret_cast<data_t*>(reinterpret_cast<listener_t*>(listener)->user);
@@ -295,11 +287,8 @@ void client_t::destroy_func(wl_listener *listener, void */*unused*/)
 void client_t::destroy_late_func(wl_listener *listener, void */*unused*/)
 {
   auto *data = reinterpret_cast<data_t*>(reinterpret_cast<listener_t*>(listener)->user);
-  if(data->destroy_late)
-    data->destroy_late();
-  data->destroyed = true;
-  if(data->counter == 0)
-    delete data;
+    if(data->destroy_late)
+      data->destroy_late();
 }
 
 void client_t::resource_created_func(wl_listener *listener, void *resource_ptr)
@@ -308,6 +297,11 @@ void client_t::resource_created_func(wl_listener *listener, void *resource_ptr)
   resource_t resource(static_cast<wl_resource*>(resource_ptr));
   if(data->resource_created)
     data->resource_created(resource);
+}
+
+void client_t::user_data_destroy_func(void *data)
+{
+  delete static_cast<data_t*>(data);
 }
 
 void client_t::init()
@@ -322,16 +316,10 @@ void client_t::init()
   data->destroy_late_listener.listener.notify = destroy_late_func;
   data->resource_created_listener.user = data;
   data->resource_created_listener.listener.notify = resource_created_func;
+  wl_client_set_user_data(client, data, user_data_destroy_func);
   wl_client_add_destroy_listener(client, reinterpret_cast<wl_listener*>(&data->destroy_listener));
   wl_client_add_destroy_late_listener(client, reinterpret_cast<wl_listener*>(&data->destroy_late_listener));
   wl_client_add_resource_created_listener(client, reinterpret_cast<wl_listener*>(&data->resource_created_listener));
-}
-
-void client_t::fini()
-{
-  data->counter--;
-  if(data->counter == 0 && data->destroyed)
-    delete data;
 }
 
 client_t::client_t(display_t &d, int fd)
@@ -343,7 +331,7 @@ client_t::client_t(display_t &d, int fd)
 client_t::client_t(wl_client *c)
 {
   client = c;
-  data = wl_client_get_user_data(c_ptr());
+  data = static_cast<data_t*>(wl_client_get_user_data(c_ptr()));
   if(!data)
     init();
   else
@@ -352,7 +340,6 @@ client_t::client_t(wl_client *c)
 
 client_t::~client_t()
 {
-  fini();
 }
 
 client_t::client_t(const client_t &c)
@@ -371,7 +358,6 @@ client_t &client_t::operator=(const client_t& c)
 {
   if(&c == this)
     return *this;
-  fini();
   client = c.client;
   data = c.data;
   data->counter++;
