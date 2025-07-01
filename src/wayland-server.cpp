@@ -739,6 +739,7 @@ void global_base_t::fini()
     data->counter--;
     if(data->counter == 0)
     {
+      wl_global_set_user_data(global, nullptr);
       wl_global_destroy(c_ptr());
       delete data;
     }
@@ -754,14 +755,17 @@ global_base_t::global_base_t(wl_global *g)
 {
   global = g;
   data = static_cast<data_t*>(wl_global_get_user_data(c_ptr()));
-  data->counter++;
+  // If the globlal has already been destroyed, data is nullptr.
+  if (data)
+    data->counter++;
 }
 
 global_base_t::global_base_t(const global_base_t& g)
 {
   global = g.global;
   data = g.data;
-  data->counter++;
+  if (data)
+    data->counter++;
 }
 
 global_base_t::global_base_t(global_base_t&& g) noexcept
@@ -776,7 +780,8 @@ global_base_t &global_base_t::operator=(const global_base_t& g)
   fini();
   global = g.global;
   data = g.data;
-  data->counter++;
+  if (data)
+    data->counter++;
   return *this;
 }
 
@@ -801,7 +806,10 @@ wl_global *global_base_t::c_ptr() const
 
 wayland::detail::any &global_base_t::user_data()
 {
-  return data->user_data;
+  static wayland::detail::any dummy;
+  if (data)
+    return data->user_data;
+  return dummy;
 }
 
 //-----------------------------------------------------------------------------
