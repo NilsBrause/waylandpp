@@ -100,6 +100,7 @@ namespace wayland
       void fini();
 
       friend class client_t;
+      friend class global_base_t;
 
     public:
       /** Create Wayland display object.
@@ -638,6 +639,7 @@ namespace wayland
       {
         wayland::detail::any user_data;
         std::atomic<unsigned int> counter{1};
+        bool removed = false;
       } *data = nullptr;
 
       global_base_t(display_t &display, const wl_interface* interface, int version, data_t *dat, wl_global_bind_func_t func);
@@ -663,6 +665,36 @@ namespace wayland
       {
         return has_interface(resource::interface);
       }
+
+      /** Broadcast a global remove event to all clients without destroying the global.
+       *
+       * This can be used by compositors to mitigate clients being disconnected
+       * because a global has been added and destroyed too quickly.
+       * Note that the destruction of a global is still racy, since clients have
+       * no way to acknowledge that they received the remove event.
+       *
+       * This function can only be called once per global.
+       */
+      void remove();
+
+      /** Get the name of the global.
+       *
+       * \param client Client for which to look up the global.
+       * \return The name of the global, or 0 if the global is not visible to the client.
+       */
+      uint32_t get_name(const client_t& client);
+
+      /** Get the version of the given global.
+       *
+       * \return The version advertised by the global.
+       */
+      uint32_t get_version();
+
+      /** Get the display object for the given global
+       *
+       * \return The display object the global is associated with.
+       */
+      display_t get_display();
     };
 
     /** Global object.

@@ -812,6 +812,30 @@ wayland::detail::any &global_base_t::user_data()
   return dummy;
 }
 
+void global_base_t::remove()
+{
+  if(data && !data->removed)
+  {
+    wl_global_remove(global);
+    data->removed = true;
+  }
+}
+
+uint32_t global_base_t::get_name(const client_t& client)
+{
+  return wl_global_get_name(global, client.c_ptr());
+}
+
+uint32_t global_base_t::get_version()
+{
+  return wl_global_get_version(global);
+}
+
+display_t global_base_t::get_display()
+{
+  return wl_global_get_display(global);
+}
+
 //-----------------------------------------------------------------------------
 
 const bitfield<2, -1> fd_event_mask_t::readable{WL_EVENT_READABLE};
