@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022, Nils Christopher Brause, Philipp Kerling, Zsolt Bölöny
+ * Copyright (c) 2014-2025, Nils Christopher Brause, Philipp Kerling, Zsolt Bölöny
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 
 #include <wayland-client.hpp>
 #include <wayland-client-protocol-extra.hpp>
+#include <wayland-client-protocol-unstable.hpp>
 #include <linux/input.h>
 #include <wayland-cursor.hpp>
 
@@ -47,16 +48,6 @@
 #include <unistd.h>
 
 using namespace wayland;
-
-// helper to create a std::function out of a member function and an object
-template <typename R, typename T, typename... Args>
-std::function<R(Args...)> bind_mem_fn(R(T::* func)(Args...), T *t)
-{
-  return [func, t] (Args... args)
-  {
-    return (t->*func)(args...);
-  };
-}
 
 // shared memory helper class
 class shared_mem_t
@@ -108,8 +99,6 @@ public:
         std::cerr << "munmap failed.";
       if(close(fd) < 0)
         std::cerr << "close failed.";
-      if(shm_unlink(name.c_str()) < 0)
-        std::cerr << "shm_unlink failed";
     }
   }
 
@@ -134,6 +123,7 @@ private:
   compositor_t compositor;
   shell_t shell;
   xdg_wm_base_t xdg_wm_base;
+  zxdg_decoration_manager_v1_t xdg_decoration_manager;
   seat_t seat;
   shm_t shm;
 
@@ -142,6 +132,7 @@ private:
   shell_surface_t shell_surface;
   xdg_surface_t xdg_surface;
   xdg_toplevel_t xdg_toplevel;
+  zxdg_toplevel_decoration_v1_t xdg_toplevel_decoration;
   pointer_t pointer;
   keyboard_t keyboard;
   callback_t frame_cb;
@@ -156,6 +147,21 @@ private:
   bool running;
   bool has_pointer;
   bool has_keyboard;
+  int width = 640;
+  int height = 480;
+
+  void create_buffers(int w, int h)
+  {
+    if (w != 0)
+      width = w;
+    if (h != 0)
+      height = h;
+    shared_mem.reset(new shared_mem_t(2 * width * height * 4));
+    auto pool = shm.create_pool(shared_mem->get_fd(), 2 * width * height * 4);
+    for(unsigned int c = 0; c < 2; c++)
+      buffer.at(c) = pool.create_buffer(c * width * height * 4, width, height, width * 4, shm_format::argb8888);
+    cur_buf = 0;
+  }
 
   void draw(uint32_t serial = 0)
   {
@@ -200,9 +206,9 @@ private:
       | (static_cast<uint32_t>(g * 255.0) << 8)
       | static_cast<uint32_t>(b * 255.0);
 
-    std::fill_n(static_cast<uint32_t*>(shared_mem->get_mem())+cur_buf*320*240, 320*240, pixel);
+    std::fill_n(static_cast<uint32_t*>(shared_mem->get_mem())+cur_buf*width*height, width*height, pixel);
     surface.attach(buffer.at(cur_buf), 0, 0);
-    surface.damage(0, 0, 320, 240);
+    surface.damage(0, 0, width, height);
     if(!cur_buf)
       cur_buf = 1;
     else
@@ -210,7 +216,7 @@ private:
 
     // schedule next draw
     frame_cb = surface.frame();
-    frame_cb.on_done() = bind_mem_fn(&example::draw, this);
+    frame_cb.on_done() = [this] (uint32_t serial) { draw(serial); };
     surface.commit();
   }
 
@@ -233,6 +239,8 @@ public:
         registry.bind(name, shell, std::min(shell_t::interface_version, version));
       else if(interface == xdg_wm_base_t::interface_name)
         registry.bind(name, xdg_wm_base, std::min(xdg_wm_base_t::interface_version, version));
+      else if(interface == zxdg_decoration_manager_v1_t::interface_name)
+        registry.bind(name, xdg_decoration_manager, std::min(zxdg_decoration_manager_v1_t::interface_version, version));
       else if(interface == seat_t::interface_name)
         registry.bind(name, seat, std::min(seat_t::interface_version, version));
       else if(interface == shm_t::interface_name)
@@ -258,6 +266,18 @@ public:
       xdg_toplevel = xdg_surface.get_toplevel();
       xdg_toplevel.set_title("Window");
       xdg_toplevel.on_close() = [&] () { running = false; };
+      xdg_toplevel.on_configure() = [&] (int32_t w, int32_t h, array_t)
+      {
+        create_buffers(w, h);
+        // Don't immediately redraw, as this would slow down resizes considerably.
+      };
+
+      if(xdg_decoration_manager)
+      {
+        xdg_toplevel_decoration = xdg_decoration_manager.get_toplevel_decoration(xdg_toplevel);
+        xdg_toplevel_decoration.on_configure() = [] (zxdg_toplevel_decoration_v1_mode) {};
+        xdg_toplevel_decoration.set_mode(zxdg_toplevel_decoration_v1_mode::server_side);
+      }
     }
     else
     {
@@ -265,6 +285,11 @@ public:
       shell_surface.on_ping() = [&] (uint32_t serial) { shell_surface.pong(serial); };
       shell_surface.set_title("Window");
       shell_surface.set_toplevel();
+      shell_surface.on_configure() = [&] (wayland::shell_surface_resize, int32_t w, int32_t h)
+      {
+        create_buffers(w, h);
+        // Don't immediately redraw, as this would slow down resizes considerably.
+      };
     }
     surface.commit();
 
@@ -280,11 +305,7 @@ public:
     keyboard = seat.get_keyboard();
 
     // create shared memory
-    shared_mem = std::make_shared<shared_mem_t>(2*320*240*4);
-    auto pool = shm.create_pool(shared_mem->get_fd(), 2*320*240*4);
-    for(unsigned int c = 0; c < 2; c++)
-      buffer.at(c) = pool.create_buffer(c*320*240*4, 320, 240, 320*4, shm_format::argb8888);
-    cur_buf = 0;
+    create_buffers(width, height);
 
     // load cursor theme
     cursor_theme_t cursor_theme = cursor_theme_t("default", 16, shm);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022, Nils Christopher Brause, Philipp Kerling, Zsolt Bölöny
+ * Copyright (c) 2014-2025, Nils Christopher Brause, Philipp Kerling, Zsolt Bölöny
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <array>
 #include <wayland-client.hpp>
 #include <wayland-client-protocol-extra.hpp>
+#include <wayland-client-protocol-unstable.hpp>
 #include <wayland-egl.hpp>
 #include <GL/gl.h>
 #include <linux/input.h>
@@ -49,6 +50,7 @@ private:
   compositor_t compositor;
   shell_t shell;
   xdg_wm_base_t xdg_wm_base;
+  zxdg_decoration_manager_v1_t xdg_decoration_manager;
   seat_t seat;
   shm_t shm;
 
@@ -57,6 +59,7 @@ private:
   shell_surface_t shell_surface;
   xdg_surface_t xdg_surface;
   xdg_toplevel_t xdg_toplevel;
+  zxdg_toplevel_decoration_v1_t xdg_toplevel_decoration;
   pointer_t pointer;
   keyboard_t keyboard;
   callback_t frame_cb;
@@ -73,6 +76,10 @@ private:
   bool running;
   bool has_pointer;
   bool has_keyboard;
+  int new_width = 0;
+  int new_height = 0;
+  int width = 640;
+  int height = 480;
 
   void init_egl()
   {
@@ -165,7 +172,7 @@ private:
 
     // schedule next draw
     frame_cb = surface.frame();
-    frame_cb.on_done() = std::bind(&example::draw, this, std::placeholders::_1);
+    frame_cb.on_done() = [this] (uint32_t serial) { draw(serial); };
 
     // swap buffers
     if(eglSwapBuffers(egldisplay, eglsurface) == EGL_FALSE)
@@ -190,6 +197,8 @@ public:
         registry.bind(name, shell, std::min(shell_t::interface_version, version));
       else if(interface == xdg_wm_base_t::interface_name)
         registry.bind(name, xdg_wm_base, std::min(xdg_wm_base_t::interface_version, version));
+      else if(interface == zxdg_decoration_manager_v1_t::interface_name)
+        registry.bind(name, xdg_decoration_manager, std::min(zxdg_decoration_manager_v1_t::interface_version, version));
       else if(interface == seat_t::interface_name)
         registry.bind(name, seat, std::min(seat_t::interface_version, version));
       else if(interface == shm_t::interface_name)
@@ -206,15 +215,36 @@ public:
     // create a surface
     surface = compositor.create_surface();
 
+    // intitialize egl
+    egl_window = egl_window_t(surface, 320, 240);
+    init_egl();
+
     // create a shell surface
     if(xdg_wm_base)
     {
       xdg_wm_base.on_ping() = [&] (uint32_t serial) { xdg_wm_base.pong(serial); };
       xdg_surface = xdg_wm_base.get_xdg_surface(surface);
-      xdg_surface.on_configure() = [&] (uint32_t serial) { xdg_surface.ack_configure(serial); };
+      xdg_surface.on_configure() = [&] (uint32_t serial)
+      {
+        egl_window.resize(new_width, new_height);
+        xdg_surface.ack_configure(serial);
+      };
       xdg_toplevel = xdg_surface.get_toplevel();
       xdg_toplevel.set_title("Window");
       xdg_toplevel.on_close() = [&] () { running = false; };
+      xdg_toplevel.on_configure() = [&] (int32_t w, int32_t h, array_t)
+      {
+        new_width = w;
+        new_height = h;
+        // Don't immediately redraw, as this would slow down resizes considerably.
+      };
+
+      if(xdg_decoration_manager)
+      {
+        xdg_toplevel_decoration = xdg_decoration_manager.get_toplevel_decoration(xdg_toplevel);
+        xdg_toplevel_decoration.on_configure() = [] (zxdg_toplevel_decoration_v1_mode) {};
+        xdg_toplevel_decoration.set_mode(zxdg_toplevel_decoration_v1_mode::server_side);
+      }
     }
     else
     {
@@ -222,6 +252,12 @@ public:
       shell_surface.on_ping() = [&] (uint32_t serial) { shell_surface.pong(serial); };
       shell_surface.set_title("Window");
       shell_surface.set_toplevel();
+      shell_surface.on_configure() = [&] (wayland::shell_surface_resize, int32_t w, int32_t h)
+      {
+        new_width = w;
+        new_height = h;
+        // Don't immediately redraw, as this would slow down resizes considerably.
+      };
     }
     surface.commit();
 
@@ -272,10 +308,6 @@ public:
       if(key == KEY_Q && state == keyboard_key_state::pressed)
         running = false;
     };
-
-    // intitialize egl
-    egl_window = egl_window_t(surface, 320, 240);
-    init_egl();
 
     // draw stuff
     draw();
