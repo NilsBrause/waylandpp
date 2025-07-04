@@ -215,6 +215,8 @@ namespace wayland
       /** Registers a listener for the client connection signal.
        *  When a new client object is created, \a listener will
        *  be notified, carrying the new client_t object.
+       *
+       *  The client is a temporary object. Don't save its address.
        */
       std::function<void(client_t&)> &on_client_created();
 
@@ -474,6 +476,8 @@ namespace wayland
        *
        * When a new resource is created for this client the listener will be notified,
        * carrying the new resource as its argument.
+       *
+       * The resource is a temporary object. Don't save it's address.
        */
       std::function<void(resource_t&)> &on_resource_created();
     };

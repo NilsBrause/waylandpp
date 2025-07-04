@@ -50,6 +50,32 @@ int main()
     {
       std::cout << "Server received: " << msg << std::endl;
       server_pingpong.pong(msg);
+      global_pingpong.remove();
+    };
+  };
+
+  server_display.on_client_created() = [&] (wayland::server::client_t client)
+  {
+    std::cerr << "Client create: " << client.get_fd() << std::endl;
+
+    client.on_destroy() = [=] ()
+    {
+      std::cerr << "Client destroy: " << client.get_fd() << std::endl;
+    };
+
+    client.on_destroy_late() = [=] ()
+    {
+      std::cerr << "Client destroy late: " << client.c_ptr() << std::endl;
+    };
+
+    client.on_resource_created() = [=] (wayland::server::resource_t resource)
+    {
+      std::cerr << "Client " << client.get_fd() << " created resource: " << resource.get_id() << std::endl;
+
+      resource.on_destroy() = [=] ()
+      {
+        std::cerr << "Client " << client.get_fd() << " destoyed resource: " << resource.get_id() << std::endl;
+      };
     };
   };
 
