@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022 Philipp Kerling, Nils Christopher Brause
+# Copyright (c) 2014-2025 Philipp Kerling, Nils Christopher Brause
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,16 @@ target_link_libraries(foreign_display wayland-client++)
 add_executable(proxy_wrapper proxy_wrapper.cpp)
 target_link_libraries(proxy_wrapper wayland-client++ Threads::Threads)
 
-add_executable(shm shm.cpp)
+add_executable(shm shm.cpp shm_common.cpp)
 target_link_libraries(shm wayland-client++ wayland-client-extra++ wayland-client-unstable++ wayland-cursor++)
+
+pkg_check_modules(LIBDECOR libdecor-0)
+if(LIBDECOR_FOUND)
+  add_executable(decor decor.cpp shm_common.cpp)
+  target_link_libraries(decor PRIVATE wayland-client++ wayland-client-extra++ wayland-cursor++ ${LIBDECOR_LIBRARIES})
+  target_include_directories(decor PRIVATE ${LIBDECOR_INCLUDE_DIRS})
+  target_compile_options(decor PRIVATE ${LIBDECOR_CFLAGS_OTHER})
+endif()
 
 if(BUILD_SERVER)
   set(WAYLAND_SCANNERPP wayland-scanner++)

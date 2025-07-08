@@ -23,8 +23,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \example shm.cpp
- * This is an example of how to use the Wayland C++ bindings with SHM.
+/** \example dcor.cpp
+ * This is an example of how to use the Wayland C++ bindings with libdecor.
  */
 
 #include <stdexcept>
@@ -34,9 +34,9 @@
 
 #include <wayland-client.hpp>
 #include <wayland-client-protocol-extra.hpp>
-#include <wayland-client-protocol-unstable.hpp>
 #include <linux/input.h>
 #include <wayland-cursor.hpp>
+#include <libdecor.h>
 
 #include "shm_common.hpp"
 
@@ -50,24 +50,23 @@ private:
   display_t display;
   registry_t registry;
   compositor_t compositor;
-  shell_t shell;
-  xdg_wm_base_t xdg_wm_base;
-  zxdg_decoration_manager_v1_t xdg_decoration_manager;
   seat_t seat;
   shm_t shm;
 
   // local objects
   surface_t surface;
-  shell_surface_t shell_surface;
-  xdg_surface_t xdg_surface;
-  xdg_toplevel_t xdg_toplevel;
-  zxdg_toplevel_decoration_v1_t xdg_toplevel_decoration;
   pointer_t pointer;
   keyboard_t keyboard;
   callback_t frame_cb;
   cursor_image_t cursor_image;
   buffer_t cursor_buffer;
   surface_t cursor_surface;
+
+  // libdecor
+  libdecor_interface libdecor_iface;
+  libdecor_frame_interface frame_iface;
+  std::shared_ptr<libdecor> decor_context;
+  libdecor_frame *frame = nullptr;
 
   std::shared_ptr<shared_mem_t> shared_mem;
   std::array<buffer_t, 2> buffer;
@@ -164,12 +163,6 @@ public:
     {
       if(interface == compositor_t::interface_name)
         registry.bind(name, compositor, std::min(compositor_t::interface_version, version));
-      else if(interface == shell_t::interface_name)
-        registry.bind(name, shell, std::min(shell_t::interface_version, version));
-      else if(interface == xdg_wm_base_t::interface_name)
-        registry.bind(name, xdg_wm_base, std::min(xdg_wm_base_t::interface_version, version));
-      else if(interface == zxdg_decoration_manager_v1_t::interface_name)
-        registry.bind(name, xdg_decoration_manager, std::min(zxdg_decoration_manager_v1_t::interface_version, version));
       else if(interface == seat_t::interface_name)
         registry.bind(name, seat, std::min(seat_t::interface_version, version));
       else if(interface == shm_t::interface_name)
@@ -186,40 +179,6 @@ public:
     // create a surface
     surface = compositor.create_surface();
 
-    // create a shell surface
-    if(xdg_wm_base)
-    {
-      xdg_wm_base.on_ping() = [&] (uint32_t serial) { xdg_wm_base.pong(serial); };
-      xdg_surface = xdg_wm_base.get_xdg_surface(surface);
-      xdg_surface.on_configure() = [&] (uint32_t serial) { xdg_surface.ack_configure(serial); };
-      xdg_toplevel = xdg_surface.get_toplevel();
-      xdg_toplevel.set_title("Window");
-      xdg_toplevel.on_close() = [&] () { running = false; };
-      xdg_toplevel.on_configure() = [&] (int32_t w, int32_t h, array_t)
-      {
-        create_buffers(w, h);
-        // Don't immediately redraw, as this would slow down resizes considerably.
-      };
-
-      if(xdg_decoration_manager)
-      {
-        xdg_toplevel_decoration = xdg_decoration_manager.get_toplevel_decoration(xdg_toplevel);
-        xdg_toplevel_decoration.on_configure() = [] (zxdg_toplevel_decoration_v1_mode) {};
-        xdg_toplevel_decoration.set_mode(zxdg_toplevel_decoration_v1_mode::server_side);
-      }
-    }
-    else
-    {
-      shell_surface = shell.get_shell_surface(surface);
-      shell_surface.on_ping() = [&] (uint32_t serial) { shell_surface.pong(serial); };
-      shell_surface.set_title("Window");
-      shell_surface.set_toplevel();
-      shell_surface.on_configure() = [&] (wayland::shell_surface_resize, int32_t w, int32_t h)
-      {
-        create_buffers(w, h);
-        // Don't immediately redraw, as this would slow down resizes considerably.
-      };
-    }
     surface.commit();
 
     display.roundtrip();
@@ -235,6 +194,59 @@ public:
 
     // create shared memory
     create_buffers(width, height);
+
+    // initialize libdecor callbacks
+    frame_iface = {
+      .configure = [] (libdecor_frame *frame,
+                       libdecor_configuration *configuration,
+                       void *user_data)
+      {
+        // Since configuration is opaque, we have to call a function to get the new size.
+        int width, height;
+        if (!libdecor_configuration_get_content_size(configuration, frame, &width, &height))
+          return;
+
+        // Resize our buffers.
+        auto *e = static_cast<example*>(user_data);
+        e->create_buffers(width, height);
+
+        // Report actual new size back to libdecor.
+        std::shared_ptr<libdecor_state> state(libdecor_state_new(e->width, e->height), libdecor_state_free);
+        libdecor_frame_commit(frame, state.get(), configuration);
+
+        // Don't immediately redraw, as this would slow down resizes considerably.
+      },
+      .close = [] (libdecor_frame *frame,
+                   void *user_data)
+      {
+        static_cast<example*>(user_data)->running = false;
+      },
+      .commit = [] (libdecor_frame *frame,
+                    void *user_data)
+      {
+        static_cast<example*>(user_data)->surface.commit();
+      },
+      .dismiss_popup = [](libdecor_frame *frame,
+                          const char *seat_name,
+                          void *user_data) { },
+    };
+    libdecor_iface = {
+      .error  =
+      [] (libdecor *context,
+          libdecor_error error,
+          const char *message)
+      {
+        throw std::runtime_error("libdecor error " + std::to_string(error) + ": " + message);
+      }
+    };
+
+    // initialize libdecor
+    decor_context.reset(libdecor_new(reinterpret_cast<wl_display*>(display.c_ptr()), &libdecor_iface), libdecor_unref);
+    frame = libdecor_decorate(decor_context.get(), reinterpret_cast<wl_surface*>(surface.c_ptr()), &frame_iface, this);
+    libdecor_frame_set_title(frame, "Window");
+    libdecor_frame_map(frame);
+
+    display.roundtrip();
 
     // load cursor theme
     cursor_theme_t cursor_theme = cursor_theme_t("default", 16, shm);
@@ -254,18 +266,6 @@ public:
       pointer.set_cursor(serial, cursor_surface, 0, 0);
     };
 
-    // window movement
-    pointer.on_button() = [&] (uint32_t serial, uint32_t /*unused*/, uint32_t button, pointer_button_state state)
-    {
-      if(button == BTN_LEFT && state == pointer_button_state::pressed)
-      {
-        if(xdg_toplevel)
-          xdg_toplevel.move(seat, serial);
-        else
-          shell_surface.move(seat, serial);
-      }
-    };
-
     // press 'q' to exit
     keyboard.on_key() = [&] (uint32_t /*unused*/, uint32_t /*unused*/, uint32_t key, keyboard_key_state state)
     {
@@ -282,7 +282,7 @@ public:
     // event loop
     running = true;
     while(running)
-      display.dispatch();
+      libdecor_dispatch(decor_context.get(), -1);
   }
 };
 
