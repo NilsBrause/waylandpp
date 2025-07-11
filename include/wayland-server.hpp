@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Nils Christopher Brause
+ * Copyright (c) 2022-2025, Nils Christopher Brause
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
