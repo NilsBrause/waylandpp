@@ -22,7 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 cmake_minimum_required(VERSION 3.4...4.0)
-project(waylandpp VERSION 1.0.0 LANGUAGES CXX)
+project(waylandpp VERSION 1.0.1 LANGUAGES CXX)
 
 # packages
 include(FindPkgConfig)
