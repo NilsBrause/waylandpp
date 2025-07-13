@@ -1,3 +1,5 @@
+[![Build](https://github.com/NilsBrause/waylandpp/actions/workflows/build.yml/badge.svg?branch=master&event=push)](https://github.com/NilsBrause/waylandpp/actions/workflows/build.yml) [![Packaging status](https://repology.org/badge/tiny-repos/waylandpp.svg)](https://repology.org/project/waylandpp/versions)
+
 # Introduction
 
 Wayland is an object oriented display protocol, which features request
