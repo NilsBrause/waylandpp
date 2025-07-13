@@ -253,6 +253,7 @@ namespace wayland
        */
       void set_global_filter(const std::function<bool(client_t, global_base_t)>& filter);
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 22
       /** Sets the default maximum size for connection buffers of new clients.
        *  This function sets the default size of the internal connection buffers for new clients. It doesn't change the buffer size for existing clients.
        *
@@ -263,6 +264,7 @@ namespace wayland
        * The minimum buffer size is 4096.
        */
       void set_default_max_buffer_size(size_t max_buffer_size);
+#endif
     };
 
     class resource_t;
@@ -278,8 +280,10 @@ namespace wayland
         wayland::detail::any user_data;
         std::atomic<unsigned int> counter{1};
         bool destroyed = false;
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
         std::function<void()> destroy_late;
         detail::listener_t destroy_late_listener;
+#endif
         std::function<void(resource_t&)> resource_created;
         detail::listener_t resource_created_listener;
       };
@@ -289,7 +293,12 @@ namespace wayland
 
       static void destroy_func(wl_listener *listener, void *data);
       static wl_iterator_result resource_iterator(wl_resource *resource, void *data);
+#if WAYLAND_VERSION_MAJOR < 2 && WAYLAND_VERSION_MINOR < 23
+      static data_t *wl_client_get_user_data(wl_client *client);
+#endif
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
       static void destroy_late_func(wl_listener *listener, void *data);
+#endif
       static void resource_created_func(wl_listener *listener, void *data);
       static void user_data_destroy_func(void *data);
 
@@ -444,6 +453,7 @@ namespace wayland
        */
       display_t get_display() const;
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 22
       /** Adjust the maximum size of the client connection buffers
        *
        * \param max_buffer_size The maximum size of the connection buffers
@@ -458,6 +468,7 @@ namespace wayland
        * @see display_t::set_default_max_buffer_size().
        */
       void set_max_buffer_size(size_t max_buffer_size);
+#endif
 
       /** Get a list of the clients resources.
        *
@@ -465,12 +476,14 @@ namespace wayland
        */
       std::list<resource_t> get_resource_list() const;
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
       /** Add a callback to be called at the end of wl_client destruction.
        *
        * The callback provided will be called when wl_client destroy is nearly complete,
        * after all of that client's resources have been destroyed.
        */
       std::function<void()> &on_destroy_late();
+#endif
 
       /** Add a callback for the client's resource creation signal
        *
@@ -681,24 +694,30 @@ namespace wayland
        */
       void remove();
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
       /** Get the name of the global.
        *
        * \param client Client for which to look up the global.
        * \return The name of the global, or 0 if the global is not visible to the client.
        */
       uint32_t get_name(const client_t& client);
+#endif
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 20
       /** Get the version of the given global.
        *
        * \return The version advertised by the global.
        */
       uint32_t get_version();
+#endif
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 19
       /** Get the display object for the given global
        *
        * \return The display object the global is associated with.
        */
       display_t get_display();
+#endif
     };
 
     /** Global object.

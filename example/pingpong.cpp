@@ -63,10 +63,12 @@ int main()
       std::cerr << "Client destroy: " << client.get_fd() << std::endl;
     };
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
     client.on_destroy_late() = [=] ()
     {
       std::cerr << "Client destroy late: " << client.c_ptr() << std::endl;
     };
+#endif
 
     client.on_resource_created() = [=] (wayland::server::resource_t resource)
     {

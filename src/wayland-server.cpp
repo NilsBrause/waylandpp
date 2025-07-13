@@ -270,12 +270,24 @@ void display_t::set_global_filter(const std::function<bool(client_t, global_base
   wl_display_set_global_filter(c_ptr(), c_filter_func, data);
 }
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 22
 void display_t::set_default_max_buffer_size(size_t max_buffer_size)
 {
   wl_display_set_default_max_buffer_size(c_ptr(), max_buffer_size);
 }
+#endif
 
 //-----------------------------------------------------------------------------
+
+#if WAYLAND_VERSION_MAJOR < 2 && WAYLAND_VERSION_MINOR < 23
+client_t::data_t *client_t::wl_client_get_user_data(wl_client *client)
+{
+  wl_listener *listener = wl_client_get_destroy_listener(client, destroy_func);
+  if(listener)
+    return reinterpret_cast<data_t*>(reinterpret_cast<listener_t*>(listener)->user);
+  return nullptr;
+}
+#endif
 
 void client_t::destroy_func(wl_listener *listener, void */*unused*/)
 {
@@ -284,12 +296,14 @@ void client_t::destroy_func(wl_listener *listener, void */*unused*/)
     data->destroy();
 }
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
 void client_t::destroy_late_func(wl_listener *listener, void */*unused*/)
 {
   auto *data = reinterpret_cast<data_t*>(reinterpret_cast<listener_t*>(listener)->user);
     if(data->destroy_late)
       data->destroy_late();
 }
+#endif
 
 void client_t::resource_created_func(wl_listener *listener, void *resource_ptr)
 {
@@ -312,13 +326,19 @@ void client_t::init()
   data->destroyed = false;
   data->destroy_listener.user = data;
   data->destroy_listener.listener.notify = destroy_func;
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
   data->destroy_late_listener.user = data;
   data->destroy_late_listener.listener.notify = destroy_late_func;
+#endif
   data->resource_created_listener.user = data;
   data->resource_created_listener.listener.notify = resource_created_func;
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 22
   wl_client_set_user_data(client, data, user_data_destroy_func);
+#endif
   wl_client_add_destroy_listener(client, reinterpret_cast<wl_listener*>(&data->destroy_listener));
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
   wl_client_add_destroy_late_listener(client, reinterpret_cast<wl_listener*>(&data->destroy_late_listener));
+#endif
   wl_client_add_resource_created_listener(client, reinterpret_cast<wl_listener*>(&data->resource_created_listener));
 }
 
@@ -444,15 +464,19 @@ std::list<resource_t> client_t::get_resource_list() const
   return resources;
 }
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 22
 void client_t::set_max_buffer_size(size_t max_buffer_size)
 {
   wl_client_set_max_buffer_size(client, max_buffer_size);
 }
+#endif
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
 std::function<void()> &client_t::on_destroy_late()
 {
   return data->destroy_late;
 }
+#endif
 
 std::function<void(resource_t&)> &client_t::on_resource_created()
 {
@@ -821,20 +845,26 @@ void global_base_t::remove()
   }
 }
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 21
 uint32_t global_base_t::get_name(const client_t& client)
 {
   return wl_global_get_name(global, client.c_ptr());
 }
+#endif
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 20
 uint32_t global_base_t::get_version()
 {
   return wl_global_get_version(global);
 }
+#endif
 
+#if WAYLAND_VERSION_MAJOR > 1 || WAYLAND_VERSION_MINOR > 19
 display_t global_base_t::get_display()
 {
   return wl_global_get_display(global);
 }
+#endif
 
 //-----------------------------------------------------------------------------
 

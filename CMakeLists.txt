@@ -114,7 +114,7 @@ if(BUILD_LIBRARIES)
   # required libraries
   pkg_check_modules(WAYLAND_CLIENT REQUIRED "wayland-client>=1.11.0")
   if(BUILD_SERVER)
-    pkg_check_modules(WAYLAND_SERVER REQUIRED "wayland-server>=1.17.0")
+    pkg_check_modules(WAYLAND_SERVER REQUIRED "wayland-server>=1.18.0")
   endif()
   pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl)
   pkg_libs_full_path(WAYLAND_EGL)
