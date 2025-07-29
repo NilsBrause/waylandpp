@@ -263,7 +263,7 @@ public:
       cursor_surface.attach(cursor_buffer, 0, 0);
       cursor_surface.damage(0, 0, cursor_image.width(), cursor_image.height());
       cursor_surface.commit();
-      pointer.set_cursor(serial, cursor_surface, 0, 0);
+      pointer.set_cursor(serial, cursor_surface, cursor_image.hotspot_x(), cursor_image.hotspot_y());
     };
 
     // press 'q' to exit
