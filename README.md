@@ -32,22 +32,15 @@ by a `make`. After that, `make install` will install the library.
 There are several CMake variables that can be set in order to
 customise the build and install process:
 
-CMake Variable               | Effect
----------------------------- | ------
-`CMAKE_CXX_COMPILER`         | C++ compiler to use
-`CMAKE_CXX_FLAGS`            | Additional flags for the C++ compiler
-`CMAKE_INSTALL_PREFIX`       | Prefix folder, under which everything is installed
-`CMAKE_INSTALL_LIBDIR`       | Library folder relative to the prefix
-`CMAKE_INSTALL_INCLUDEDIR`   | Header folder relative to the prefix
-`CMAKE_INSTALL_BINDIR`       | Binary folder relative to the prefix
-`CMAKE_INSTALL_DATAROOTDIR`  | Shared folder relative to the prefix
-`CMAKE_INSTALL_DOCDIR`       | Documentation folder relative to the prefix
-`CMAKE_INSTALL_MANDIR`       | Manpage folder relative to the prefix
-`BUILD_SCANNER`              | Whether to build the scanner
-`BUILD_LIBRARIES`            | Whether to build the libraries
-`BUILD_DOCUMENTATION`        | Whether to build the documentation
-`BUILD_EXAMPLES`             | Whether to build the examples
-`INSTALL_UNSTABLE_PROTOCOLS` | Whether to install the unstable protocols
+CMake Variable                   | Effect                                             | Default Value
+-------------------------------- | ---------------------------------------------------|---------------
+`BUILD_SCANNER`                  | Whether to build the scanner                       | ON
+`BUILD_LIBRARIES`                | Whether to build the libraries                     | ON
+`BUILD_DOCUMENTATION`            | Whether to build the documentation                 | ON if doxygen is available
+`BUILD_EXAMPLES`                 | Whether to build the examples                      | OFF
+`INSTALL_UNSTABLE_PROTOCOLS`     | Whether to install the unstable protocols          | ON
+`INSTALL_STAGING_PROTOCOLS`      | Whether to install the staging protocols           | ON
+`INSTALL_EXPERIMENTAL_PROTOCOLS` | Whether to install the experimental protocols      | ON
 
 The installation root can also be changed using the environment variable
 `DESTDIR` when using `make install`.
