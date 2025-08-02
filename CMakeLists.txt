@@ -36,7 +36,6 @@ configure_file(include/wayland-version.hpp.in wayland-version.hpp @ONLY)
 
 # path shorthands
 set(INSTALL_FULL_PKGCONFIGDIR "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig")
-set(INSTALL_FULL_PKGDATADIR "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp")
 
 # user options
 option(BUILD_SCANNER "whether to build wayland-scanner++" ON)
@@ -59,11 +58,11 @@ endif()
 
 # variables for .pc.in files
 set(prefix "${CMAKE_INSTALL_PREFIX}")
-set(bindir "${CMAKE_INSTALL_FULL_BINDIR}")
-set(datarootdir "${CMAKE_INSTALL_FULL_DATAROOTDIR}")
-set(pkgdatadir "${INSTALL_FULL_PKGDATADIR}")
-set(libdir "${CMAKE_INSTALL_FULL_LIBDIR}")
-set(includedir "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
+set(bindir "\${prefix}/${CMAKE_INSTALL_BINDIR}")
+set(datarootdir "\${prefix}/${CMAKE_INSTALL_DATAROOTDIR}")
+set(pkgdatadir "\${prefix}/${CMAKE_INSTALL_DATADIR}/waylandpp")
+set(libdir "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+set(includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
 
 set(install_namespace "Waylandpp")
 
@@ -270,7 +269,7 @@ if(BUILD_LIBRARIES)
   target_link_libraries(wayland-cursor++ INTERFACE wayland-client++)
 
   # Install libraries
-  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} ${PROTO_XMLS_STAGING} ${PROTO_XMLS_EXPERIMENTAL} DESTINATION "${INSTALL_FULL_PKGDATADIR}/protocols")
+  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} ${PROTO_XMLS_STAGING} ${PROTO_XMLS_EXPERIMENTAL} DESTINATION "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp/protocols")
   list(APPEND INSTALL_TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++)
   if (INSTALL_UNSTABLE_PROTOCOLS)
 	  list(APPEND INSTALL_TARGETS wayland-client-unstable++)
