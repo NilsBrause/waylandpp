@@ -50,7 +50,7 @@ target_link_libraries(shm wayland-client++ wayland-client-extra++ wayland-client
 pkg_check_modules(LIBDECOR libdecor-0)
 if(LIBDECOR_FOUND)
   add_executable(decor decor.cpp shm_common.cpp)
-  target_link_libraries(decor PRIVATE wayland-client++ wayland-client-extra++ wayland-cursor++ ${LIBDECOR_LIBRARIES})
+  target_link_libraries(decor PRIVATE wayland-client++ wayland-client-extra++ wayland-cursor++ ${LIBDECOR_LINK_LIBRARIES})
   target_include_directories(decor PRIVATE ${LIBDECOR_INCLUDE_DIRS})
   target_compile_options(decor PRIVATE ${LIBDECOR_CFLAGS_OTHER})
 endif()
