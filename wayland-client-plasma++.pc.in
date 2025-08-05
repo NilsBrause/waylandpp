@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Nils Christopher Brause
+# Copyright (c) 2014-2022 Philipp Kerling, Nils Christopher Brause
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,10 +28,10 @@ pkgdatadir=@pkgdatadir@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: Wayland C++ Client Unstable
-Description: Wayland C++ client side library unstable protocols
+Name: Wayland C++ Client Plasma
+Description: Wayland C++ client side library plasma protocols
 Version: @PROJECT_VERSION@
 URL: https://github.com/NilsBrause/waylandpp
 Requires: wayland-client++
 Cflags: -I${includedir}
-Libs: -L${libdir} -lwayland-client-unstable++
+Libs: -L${libdir} -lwayland-client-plasma++
