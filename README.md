@@ -48,6 +48,7 @@ CMake Variable               | Effect
 `BUILD_DOCUMENTATION`        | Whether to build the documentation
 `BUILD_EXAMPLES`             | Whether to build the examples
 `INSTALL_UNSTABLE_PROTOCOLS` | Whether to install the unstable protocols
+`INSTALL_STAGING_PROTOCOLS`  | Whether to install the staging protocols
 
 The installation root can also be changed using the environment variable
 `DESTDIR` when using `make install`.
