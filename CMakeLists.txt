@@ -49,6 +49,7 @@ cmake_dependent_option(BUILD_EXAMPLES
   "whether to build the examples (requires BUILD_LIBRARIES to be ON)" OFF
   "BUILD_LIBRARIES" OFF)
 option(BUILD_SERVER "whether to build the server bindings." ON)
+option(ENABLE_PLASMA_PROTOCOLS "whether to build the library based on the plasma protocols" OFF)
 
 # Do not report undefined references in libraries, since the protocol libraries cannot be used on their own.
 if(CMAKE_SHARED_LINKER_FLAGS)
@@ -129,6 +130,9 @@ if(BUILD_LIBRARIES)
     set(WAYLAND_PROTOCOLS_PKGDATADIR "/usr/share/wayland-protocols")
     message(WARNING "pkgdatadir field not found in wayland-protocols.pc, fallback to ${WAYLAND_PROTOCOLS_PKGDATADIR}")
   endif()
+  if(ENABLE_PLASMA_PROTOCOLS)
+    find_package(PlasmaWaylandProtocols REQUIRED)
+  endif()
 
   function(get_interface_name base_name interface_name)
     set(_tmp_out)
@@ -170,6 +174,14 @@ if(BUILD_LIBRARIES)
   filter_xml_files("${PROTO_FILES}" "${_tmp_list}" PROTO_XMLS_UNSTABLE _tmp_list)
   file(GLOB PROTO_FILES "${WAYLAND_PROTOCOLS_PKGDATADIR}/staging/**/*.xml")
   filter_xml_files("${PROTO_FILES}" "${_tmp_list}" PROTO_XMLS_STAGING _tmp_list)
+  if(ENABLE_PLASMA_PROTOCOLS)
+    file(GLOB PROTO_FILES "${PLASMA_WAYLAND_PROTOCOLS_DIR}/*.xml")
+    # protocols in an unstable state are excluded because their pattern does not conform to the naming scheme
+    list(FILTER PROTO_FILES EXCLUDE REGEX ".*-unstable.*")
+    # conflicts with plasma-virtual-desktop.xml
+    list(FILTER PROTO_FILES EXCLUDE REGEX "org-kde-plasma-virtual-desktop.xml")
+    filter_xml_files("${PROTO_FILES}" "${_tmp_list}" PROTO_XMLS_PLASMA _tmp_list)
+  endif()
 
   set(PROTO_FILES
     "wayland-client-protocol.hpp"
@@ -183,6 +195,11 @@ if(BUILD_LIBRARIES)
   set(PROTO_FILES_STAGING
     "wayland-client-protocol-staging.hpp"
     "wayland-client-protocol-staging.cpp")
+  if(ENABLE_PLASMA_PROTOCOLS)
+    set(PROTO_FILES_PLASMA
+      "wayland-client-protocol-plasma.hpp"
+      "wayland-client-protocol-plasma.cpp")
+  endif()
   add_custom_command(
     OUTPUT ${PROTO_FILES}
     COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS} ${PROTO_FILES}
@@ -199,6 +216,12 @@ if(BUILD_LIBRARIES)
     OUTPUT ${PROTO_FILES_STAGING}
     COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_STAGING} ${PROTO_FILES_STAGING} "-x" "wayland-client-protocol-extra.hpp" "-x" "wayland-client-protocol-unstable.hpp"
     DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_STAGING} ${PROTO_FILES_EXTRA})
+  if(ENABLE_PLASMA_PROTOCOLS)
+    add_custom_command(
+      OUTPUT ${PROTO_FILES_PLASMA}
+      COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_PLASMA} ${PROTO_FILES_PLASMA} "-x" "wayland-client-protocol.hpp"
+      DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_PLASMA} ${PROTO_FILES_PLASMA})
+  endif()
 
   if(BUILD_SERVER)
     set(PROTO_FILES
@@ -213,6 +236,11 @@ if(BUILD_LIBRARIES)
     set(PROTO_FILES_STAGING
       "wayland-server-protocol-staging.hpp"
       "wayland-server-protocol-staging.cpp")
+    if(ENABLE_PLASMA_PROTOCOLS)
+      set(PROTO_FILES_PLASMA
+        "wayland-server-protocol-plasma.hpp"
+        "wayland-server-protocol-plasma.cpp")
+    endif()
     add_custom_command(
       OUTPUT ${PROTO_FILES}
       COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS} ${PROTO_FILES}
@@ -229,6 +257,12 @@ if(BUILD_LIBRARIES)
       OUTPUT ${PROTO_FILES_STAGING}
       COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS_STAGING} ${PROTO_FILES_STAGING} "-x" "wayland-server-protocol-extra.hpp" "-x" "wayland-server-protocol-unstable.hpp"
       DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_STAGING} ${PROTO_FILES_EXTRA})
+    if(ENABLE_PLASMA_PROTOCOLS)
+      add_custom_command(
+        OUTPUT ${PROTO_FILES_PLASMA}
+        COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS_PLASMA} ${PROTO_FILES_PLASMA} "-x" "wayland-server-protocol.hpp"
+        DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_PLASMA} ${PROTO_FILES_PLASMA})
+    endif()
   endif()
 
   # library building helper functions
@@ -273,6 +307,12 @@ if(BUILD_LIBRARIES)
       "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-unstable.hpp"
       wayland-server-protocol-unstable.cpp wayland-server-protocol-unstable.hpp wayland-server-protocol.hpp)
     target_link_libraries(wayland-server-unstable++ INTERFACE wayland-server-extra++)
+    if(ENABLE_PLASMA_PROTOCOLS)
+      define_library(wayland-server-plasma++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+        "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-plasma.hpp"
+        wayland-server-protocol-plasma.cpp wayland-server-protocol-plasma.hpp wayland-server-protocol.hpp)
+      target_link_libraries(wayland-server-plasma++ INTERFACE wayland-server-extra++)
+    endif()
     define_library(wayland-server-staging++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
       "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-staging.hpp"
       wayland-server-protocol-staging.cpp wayland-server-protocol-staging.hpp wayland-server-protocol.hpp)
@@ -285,6 +325,12 @@ if(BUILD_LIBRARIES)
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-unstable.hpp"
     wayland-client-protocol-unstable.cpp wayland-client-protocol-unstable.hpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-client-unstable++ INTERFACE wayland-client-extra++)
+  if(ENABLE_PLASMA_PROTOCOLS)
+    define_library(wayland-client-plasma++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
+      "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-plasma.hpp"
+      wayland-client-protocol-plasma.cpp wayland-client-protocol-plasma.hpp wayland-client-protocol.hpp)
+    target_link_libraries(wayland-client-plasma++ INTERFACE wayland-client-extra++)
+  endif()
   define_library(wayland-client-staging++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-staging.hpp"
     wayland-client-protocol-staging.cpp wayland-client-protocol-staging.hpp wayland-client-protocol.hpp)
@@ -294,7 +340,7 @@ if(BUILD_LIBRARIES)
   target_link_libraries(wayland-cursor++ INTERFACE wayland-client++)
 
   # Install libraries
-  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} ${PROTO_XMLS_STAGING} DESTINATION "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp/protocols")
+  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} ${PROTO_XMLS_STAGING} ${PROTO_XMLS_PLASMA} DESTINATION "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp/protocols")
   list(APPEND INSTALL_TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++)
   if (INSTALL_UNSTABLE_PROTOCOLS)
 	  list(APPEND INSTALL_TARGETS wayland-client-unstable++)
@@ -308,8 +354,14 @@ if(BUILD_LIBRARIES)
 	    list(APPEND INSTALL_TARGETS wayland-server-staging++)
     endif()
   endif()
+  if(ENABLE_PLASMA_PROTOCOLS)
+    list(APPEND INSTALL_TARGETS wayland-client-plasma++)
+  endif()
   if(BUILD_SERVER)
     list(APPEND INSTALL_TARGETS wayland-server++ wayland-server-extra++)
+    if(ENABLE_PLASMA_PROTOCOLS)
+      list(APPEND INSTALL_TARGETS wayland-server-plasma++)
+    endif()
   endif()
   install(TARGETS ${INSTALL_TARGETS} EXPORT ${CMAKE_PROJECT_NAME}-targets
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
@@ -352,7 +404,7 @@ if(BUILD_DOCUMENTATION)
 
   add_custom_command(
     OUTPUT "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html/index.html"
-    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" ${PROTO_FILES} ${PROTO_FILES_EXTRA} ${PROTO_FILES_UNSTABLE} ${PROTO_FILES_STAGING}
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" ${PROTO_FILES} ${PROTO_FILES_EXTRA} ${PROTO_FILES_UNSTABLE} ${PROTO_FILES_STAGING} ${PROTO_FILES_PLASMA}
     COMMAND ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMENT "Generating API documentation with Doxygen"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
