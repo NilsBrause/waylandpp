@@ -321,7 +321,7 @@ if(BUILD_LIBRARIES)
     set_target_properties("${TARGET}" PROPERTIES RESOURCE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc")
   endfunction()
 
-  define_library(wayland-client++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
+  define_library(wayland-client++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LINK_LIBRARIES}"
     "include/wayland-client.hpp;include/wayland-util.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-version.hpp"
     src/wayland-client.cpp src/wayland-util.cpp wayland-client-protocol.cpp wayland-client-protocol.hpp)
   # Report undefined references only for the base library.
@@ -329,63 +329,63 @@ if(BUILD_LIBRARIES)
     target_link_options(wayland-client++ PRIVATE "-Wl,--no-undefined")
   endif()
   if(BUILD_SERVER)
-    define_library(wayland-server++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+    define_library(wayland-server++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LINK_LIBRARIES}"
       "include/wayland-server.hpp;include/wayland-util.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol.hpp"
       src/wayland-server.cpp src/wayland-util.cpp wayland-server-protocol.cpp wayland-server-protocol.hpp)
     # Report undefined references only for the base library.
     if(${CMAKE_VERSION} VERSION_GREATER "3.14.0")
       target_link_options(wayland-server++ PRIVATE "-Wl,--no-undefined")
     endif()
-    define_library(wayland-server-extra++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+    define_library(wayland-server-extra++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LINK_LIBRARIES}"
       "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-extra.hpp"
       wayland-server-protocol-extra.cpp wayland-server-protocol-extra.hpp wayland-server-protocol.hpp)
     target_link_libraries(wayland-server-extra++ INTERFACE wayland-server++)
-    define_library(wayland-server-unstable++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+    define_library(wayland-server-unstable++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LINK_LIBRARIES}"
       "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-unstable.hpp"
       wayland-server-protocol-unstable.cpp wayland-server-protocol-unstable.hpp wayland-server-protocol.hpp)
     target_link_libraries(wayland-server-unstable++ INTERFACE wayland-server-extra++)
     if(ENABLE_PLASMA_PROTOCOLS)
-      define_library(wayland-server-plasma++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+      define_library(wayland-server-plasma++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LINK_LIBRARIES}"
         "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-plasma.hpp"
         wayland-server-protocol-plasma.cpp wayland-server-protocol-plasma.hpp wayland-server-protocol.hpp)
       target_link_libraries(wayland-server-plasma++ INTERFACE wayland-server-extra++)
     endif()
     if(ENABLE_WLR_PROTOCOLS)
-      define_library(wayland-server-wlr++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+      define_library(wayland-server-wlr++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LINK_LIBRARIES}"
         "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-wlr.hpp"
         wayland-server-protocol-wlr.cpp wayland-server-protocol-wlr.hpp wayland-server-protocol.hpp)
       target_link_libraries(wayland-server-wlr++ INTERFACE wayland-server-extra++)
     endif()
-    define_library(wayland-server-staging++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
+    define_library(wayland-server-staging++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LINK_LIBRARIES}"
       "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-staging.hpp"
       wayland-server-protocol-staging.cpp wayland-server-protocol-staging.hpp wayland-server-protocol.hpp)
   endif()
-  define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
+  define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LINK_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
     wayland-client-protocol-extra.cpp wayland-client-protocol-extra.hpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-client-extra++ INTERFACE wayland-client++)
-  define_library(wayland-client-unstable++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
+  define_library(wayland-client-unstable++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LINK_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-unstable.hpp"
     wayland-client-protocol-unstable.cpp wayland-client-protocol-unstable.hpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-client-unstable++ INTERFACE wayland-client-extra++)
   if(ENABLE_PLASMA_PROTOCOLS)
-    define_library(wayland-client-plasma++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
+    define_library(wayland-client-plasma++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LINK_LIBRARIES}"
       "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-plasma.hpp"
       wayland-client-protocol-plasma.cpp wayland-client-protocol-plasma.hpp wayland-client-protocol.hpp)
     target_link_libraries(wayland-client-plasma++ INTERFACE wayland-client-extra++)
   endif()
-  define_library(wayland-client-staging++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
+  define_library(wayland-client-staging++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LINK_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-staging.hpp"
     wayland-client-protocol-staging.cpp wayland-client-protocol-staging.hpp wayland-client-protocol.hpp)
   if(ENABLE_WLR_PROTOCOLS)
-    define_library(wayland-client-wlr++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES};wayland-client-extra++"
+    define_library(wayland-client-wlr++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LINK_LIBRARIES};wayland-client-extra++"
       "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp;${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-wlr.hpp"
       wayland-client-protocol-wlr.cpp wayland-client-protocol-wlr.hpp wayland-client-protocol.hpp)
     target_link_libraries(wayland-client-wlr++ INTERFACE wayland-client-extra++)
   endif()
-  define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LIBRARIES}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
+  define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LINK_LIBRARIES}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-egl++ INTERFACE wayland-client++)
-  define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LIBRARIES}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
+  define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LINK_LIBRARIES}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-cursor++ INTERFACE wayland-client++)
 
   # Install libraries
