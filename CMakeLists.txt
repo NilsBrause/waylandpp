@@ -21,7 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 3.4...4.0)
+cmake_minimum_required(VERSION 3.6...4.0)
 project(waylandpp VERSION 1.0.0 LANGUAGES CXX)
 
 # packages
@@ -45,7 +45,6 @@ cmake_dependent_option(BUILD_SHARED_LIBS "Build shared libraries" ON
 option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
 option(INSTALL_UNSTABLE_PROTOCOLS "whether to install the unstable protocols" ON)
 option(INSTALL_STAGING_PROTOCOLS "whether to install the staging protocols" ON)
-option(INSTALL_EXPERIMENTAL_PROTOCOLS "whether to install the experimental protocols" ON)
 cmake_dependent_option(BUILD_EXAMPLES
   "whether to build the examples (requires BUILD_LIBRARIES to be ON)" OFF
   "BUILD_LIBRARIES" OFF)
@@ -112,6 +111,11 @@ if(BUILD_LIBRARIES)
 
   # required libraries
   pkg_check_modules(WAYLAND_CLIENT REQUIRED "wayland-client>=1.11.0")
+  pkg_get_variable(WAYLAND_PKGDATADIR wayland-client pkgdatadir)
+  if(NOT WAYLAND_PKGDATADIR)
+    set(WAYLAND_PKGDATADIR "/usr/share/wayland")
+    message(WARNING "pkgdatadir field not found in wayland.pc, fallback to ${WAYLAND_PKGDATADIR}")
+  endif()
   if(BUILD_SERVER)
     pkg_check_modules(WAYLAND_SERVER REQUIRED "wayland-server>=1.18.0")
   endif()
@@ -119,13 +123,54 @@ if(BUILD_LIBRARIES)
   pkg_libs_full_path(WAYLAND_EGL)
   pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor)
   pkg_libs_full_path(WAYLAND_CURSOR)
+  pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+  pkg_get_variable(WAYLAND_PROTOCOLS_PKGDATADIR wayland-protocols pkgdatadir)
+  if(NOT WAYLAND_PROTOCOLS_PKGDATADIR)
+    set(WAYLAND_PROTOCOLS_PKGDATADIR "/usr/share/wayland-protocols")
+    message(WARNING "pkgdatadir field not found in wayland-protocols.pc, fallback to ${WAYLAND_PROTOCOLS_PKGDATADIR}")
+  endif()
+
+  function(get_interface_name base_name interface_name)
+    set(_tmp_out)
+    string(REGEX REPLACE "(-unstable)?-v[0-9]+$" "" _tmp_out "${base_name}")
+    set(${interface_name} "${_tmp_out}" PARENT_SCOPE)
+  endfunction()
+
+  # Avoids having several versions of the same interface, giving priority to those with the highest version number
+  function(filter_xml_files proto_files in_names accepted_xml_files out_names)
+    set(_tmp_accepted_xml_files)
+    set(_tmp_rejected_xml_files)
+    list(REVERSE proto_files)
+    foreach(file ${proto_files})
+      get_filename_component(base_name ${file} NAME_WE)
+      get_interface_name("${base_name}" interface_name)
+      list(FIND in_names "${interface_name}" idx)
+      if (idx EQUAL "-1")
+        list(APPEND in_names ${interface_name})
+        list(APPEND _tmp_accepted_xml_files ${file})
+      else()
+        get_filename_component(file_name "${file}" NAME)
+        list(APPEND _tmp_rejected_xml_files ${file_name})
+      endif()
+    endforeach()
+    list(LENGTH _tmp_rejected_xml_files length)
+    if(length GREATER 0)
+      message(STATUS "Reject the following protocol(s) file(s) to avoid duplicating symbols: ${_tmp_rejected_xml_files}")
+    endif()
+    set(${out_names} "${in_names}" PARENT_SCOPE)
+    set(${accepted_xml_files} "${_tmp_accepted_xml_files}" PARENT_SCOPE)
+  endfunction()
 
   # generate protocol source/headers from protocol XMLs
-  set(PROTO_XMLS "${CMAKE_SOURCE_DIR}/protocols/wayland.xml")
-  file(GLOB PROTO_XMLS_EXTRA "${CMAKE_SOURCE_DIR}/protocols/extra/*.xml")
-  file(GLOB PROTO_XMLS_UNSTABLE "${CMAKE_SOURCE_DIR}/protocols/unstable/*.xml")
-  file(GLOB PROTO_XMLS_STAGING "${CMAKE_SOURCE_DIR}/protocols/staging/*.xml")
-  file(GLOB PROTO_XMLS_EXPERIMENTAL "${CMAKE_SOURCE_DIR}/protocols/experimental/*.xml")
+  set(PROTO_XMLS "${WAYLAND_PKGDATADIR}/wayland.xml")
+  set(_tmp_list)
+  file(GLOB PROTO_FILES "${WAYLAND_PROTOCOLS_PKGDATADIR}/stable/**/*.xml")
+  filter_xml_files("${PROTO_FILES}" "${_tmp_list}" PROTO_XMLS_EXTRA _tmp_list)
+  file(GLOB PROTO_FILES "${WAYLAND_PROTOCOLS_PKGDATADIR}/unstable/**/*.xml")
+  filter_xml_files("${PROTO_FILES}" "${_tmp_list}" PROTO_XMLS_UNSTABLE _tmp_list)
+  file(GLOB PROTO_FILES "${WAYLAND_PROTOCOLS_PKGDATADIR}/staging/**/*.xml")
+  filter_xml_files("${PROTO_FILES}" "${_tmp_list}" PROTO_XMLS_STAGING _tmp_list)
+
   set(PROTO_FILES
     "wayland-client-protocol.hpp"
     "wayland-client-protocol.cpp")
@@ -138,9 +183,6 @@ if(BUILD_LIBRARIES)
   set(PROTO_FILES_STAGING
     "wayland-client-protocol-staging.hpp"
     "wayland-client-protocol-staging.cpp")
-  set(PROTO_FILES_EXPERIMENTAL
-    "wayland-client-protocol-experimental.hpp"
-    "wayland-client-protocol-experimental.cpp")
   add_custom_command(
     OUTPUT ${PROTO_FILES}
     COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS} ${PROTO_FILES}
@@ -155,12 +197,8 @@ if(BUILD_LIBRARIES)
     DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_EXTRA})
   add_custom_command(
     OUTPUT ${PROTO_FILES_STAGING}
-    COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_STAGING} ${PROTO_FILES_STAGING} "-x" "wayland-client-protocol-extra.hpp"
+    COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_STAGING} ${PROTO_FILES_STAGING} "-x" "wayland-client-protocol-extra.hpp" "-x" "wayland-client-protocol-unstable.hpp"
     DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_STAGING} ${PROTO_FILES_EXTRA})
-  add_custom_command(
-    OUTPUT ${PROTO_FILES_EXPERIMENTAL}
-    COMMAND "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_EXPERIMENTAL} ${PROTO_FILES_EXPERIMENTAL} "-x" "wayland-client-protocol-unstable.hpp"
-    DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_EXPERIMENTAL} ${PROTO_FILES_UNSTABLE})
 
   if(BUILD_SERVER)
     set(PROTO_FILES
@@ -175,9 +213,6 @@ if(BUILD_LIBRARIES)
     set(PROTO_FILES_STAGING
       "wayland-server-protocol-staging.hpp"
       "wayland-server-protocol-staging.cpp")
-    set(PROTO_FILES_EXPERIMENTAL
-      "wayland-server-protocol-experimental.hpp"
-      "wayland-server-protocol-experimental.cpp")
     add_custom_command(
       OUTPUT ${PROTO_FILES}
       COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS} ${PROTO_FILES}
@@ -192,12 +227,8 @@ if(BUILD_LIBRARIES)
       DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_UNSTABLE} ${PROTO_FILES_EXTRA})
     add_custom_command(
       OUTPUT ${PROTO_FILES_STAGING}
-      COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS_STAGING} ${PROTO_FILES_STAGING} "-x" "wayland-server-protocol-extra.hpp"
+      COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS_STAGING} ${PROTO_FILES_STAGING} "-x" "wayland-server-protocol-extra.hpp" "-x" "wayland-server-protocol-unstable.hpp"
       DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_STAGING} ${PROTO_FILES_EXTRA})
-    add_custom_command(
-      OUTPUT ${PROTO_FILES_EXPERIMENTAL}
-      COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${PROTO_XMLS_EXPERIMENTAL} ${PROTO_FILES_EXPERIMENTAL} "-x" "wayland-server-protocol-unstable.hpp"
-      DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS_EXPERIMENTAL} ${PROTO_FILES_UNSTABLE})
   endif()
 
   # library building helper functions
@@ -245,9 +276,6 @@ if(BUILD_LIBRARIES)
     define_library(wayland-server-staging++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
       "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-staging.hpp"
       wayland-server-protocol-staging.cpp wayland-server-protocol-staging.hpp wayland-server-protocol.hpp)
-    define_library(wayland-server-experimental++ "${WAYLAND_SERVER_CFLAGS}" "${WAYLAND_SERVER_LIBRARIES}"
-      "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-experimental.hpp"
-      wayland-server-protocol-experimental.cpp wayland-server-protocol-experimental.hpp wayland-server-protocol.hpp)
   endif()
   define_library(wayland-client-extra++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
@@ -260,16 +288,13 @@ if(BUILD_LIBRARIES)
   define_library(wayland-client-staging++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
     "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-staging.hpp"
     wayland-client-protocol-staging.cpp wayland-client-protocol-staging.hpp wayland-client-protocol.hpp)
-  define_library(wayland-client-experimental++ "${WAYLAND_CLIENT_CFLAGS}" "${WAYLAND_CLIENT_LIBRARIES}"
-    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-experimental.hpp"
-    wayland-client-protocol-experimental.cpp wayland-client-protocol-experimental.hpp wayland-client-protocol.hpp)
   define_library(wayland-egl++ "${WAYLAND_EGL_CFLAGS}" "${WAYLAND_EGL_LIBRARIES}" include/wayland-egl.hpp src/wayland-egl.cpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-egl++ INTERFACE wayland-client++)
   define_library(wayland-cursor++ "${WAYLAND_CURSOR_CFLAGS}" "${WAYLAND_CURSOR_LIBRARIES}" include/wayland-cursor.hpp src/wayland-cursor.cpp wayland-client-protocol.hpp)
   target_link_libraries(wayland-cursor++ INTERFACE wayland-client++)
 
   # Install libraries
-  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} ${PROTO_XMLS_STAGING} ${PROTO_XMLS_EXPERIMENTAL} DESTINATION "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp/protocols")
+  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} ${PROTO_XMLS_STAGING} DESTINATION "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp/protocols")
   list(APPEND INSTALL_TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++)
   if (INSTALL_UNSTABLE_PROTOCOLS)
 	  list(APPEND INSTALL_TARGETS wayland-client-unstable++)
@@ -281,12 +306,6 @@ if(BUILD_LIBRARIES)
 	  list(APPEND INSTALL_TARGETS wayland-client-staging++)
     if(BUILD_SERVER)
 	    list(APPEND INSTALL_TARGETS wayland-server-staging++)
-    endif()
-  endif()
-  if (INSTALL_EXPERIMENTAL_PROTOCOLS)
-	  list(APPEND INSTALL_TARGETS wayland-client-experimental++)
-    if(BUILD_SERVER)
-	    list(APPEND INSTALL_TARGETS wayland-server-experimental++)
     endif()
   endif()
   if(BUILD_SERVER)
@@ -333,7 +352,7 @@ if(BUILD_DOCUMENTATION)
 
   add_custom_command(
     OUTPUT "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html/index.html"
-    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" ${PROTO_FILES} ${PROTO_FILES_EXTRA} ${PROTO_FILES_UNSTABLE} ${PROTO_FILES_STAGING} ${PROTO_FILES_EXPERIMENTAL}
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" ${PROTO_FILES} ${PROTO_FILES_EXTRA} ${PROTO_FILES_UNSTABLE} ${PROTO_FILES_STAGING}
     COMMAND ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMENT "Generating API documentation with Doxygen"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
