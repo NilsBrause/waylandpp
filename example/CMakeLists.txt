@@ -47,6 +47,9 @@ target_link_libraries(proxy_wrapper wayland-client++ Threads::Threads)
 add_executable(shm shm.cpp shm_common.cpp)
 target_link_libraries(shm wayland-client++ wayland-client-extra++ wayland-client-unstable++ wayland-cursor++)
 
+add_executable(clipboard clipboard.cpp shm_common.cpp)
+target_link_libraries(clipboard wayland-client++ wayland-client-extra++  wayland-cursor++)
+
 pkg_check_modules(LIBDECOR libdecor-0)
 if(LIBDECOR_FOUND)
   add_executable(decor decor.cpp shm_common.cpp)
