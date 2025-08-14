@@ -43,6 +43,7 @@ CMake Variable                   | Effect                                       
 `INSTALL_STAGING_PROTOCOLS`      | Whether to install the staging protocols                     | ON
 `INSTALL_EXPERIMENTAL_PROTOCOLS` | Whether to install the experimental protocols                | ON
 `USE_SYSTEM_PROTOCOLS`           | Whether to use system protocols instead of bundled protocols | OFF
+`INSTALL_WLR_PROTOCOLS`          | Whether to install the wlr protocols                         | OFF
 
 Notes:
 - When using the system protocols, the experimental protocols cannot be installed.

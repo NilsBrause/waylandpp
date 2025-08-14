@@ -108,3 +108,21 @@ define_library(wayland-cursor++
   src/wayland-cursor.cpp
   wayland-client-protocol.hpp)
 target_link_libraries(wayland-cursor++ INTERFACE wayland-client++)
+
+if(INSTALL_WLR_PROTOCOLS)
+  set(PROTO_FILES_WLR
+    "wayland-client-protocol-wlr.hpp"
+    "wayland-client-protocol-wlr.cpp")
+  generate_cpp_client_files("${PROTO_XMLS_WLR}" "${PROTO_FILES_WLR}" "-x;wayland-client-protocol-extra.hpp" "")
+  set(WAYLAND_CLIENT_WLR_HEADERS
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp"
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-wlr.hpp")
+  define_library(wayland-client-wlr++
+    "${WAYLAND_CLIENT_CFLAGS}"
+    "${WAYLAND_CLIENT_LIBRARIES};wayland-client-extra++"
+    "${WAYLAND_CLIENT_WLR_HEADERS}"
+    wayland-client-protocol-wlr.cpp 
+    wayland-client-protocol-wlr.hpp
+    wayland-client-protocol.hpp)
+  target_link_libraries(wayland-client-wlr++ INTERFACE wayland-client-extra++)
+endif()

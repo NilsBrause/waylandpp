@@ -87,3 +87,20 @@ if(INSTALL_EXPERIMENTAL_PROTOCOLS)
     wayland-server-protocol-experimental.hpp
     wayland-server-protocol.hpp)
 endif()
+
+if(INSTALL_WLR_PROTOCOLS)
+  set(PROTO_FILES_WLR
+    "wayland-server-protocol-wlr.hpp"
+    "wayland-server-protocol-wlr.cpp")
+  generate_cpp_server_files("${PROTO_XMLS_WLR}" "${PROTO_FILES_WLR}" "-x;wayland-server-protocol-extra.hpp" "")
+  set(WAYLAND_SERVER_WLR_HEADERS
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-wlr.hpp")
+  define_library(wayland-server-wlr++
+    "${WAYLAND_SERVER_CFLAGS}"
+    "${WAYLAND_SERVER_LIBRARIES}"
+    "${WAYLAND_SERVER_WLR_HEADERS}"
+    wayland-server-protocol-wlr.cpp
+    wayland-server-protocol-wlr.hpp
+    wayland-server-protocol.hpp)
+  target_link_libraries(wayland-server-wlr++ INTERFACE wayland-server-extra++)
+endif()
