@@ -21,7 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 3.4...4.0)
+cmake_minimum_required(VERSION 3.6...4.0)
 project(waylandpp VERSION 1.0.0 LANGUAGES CXX)
 
 # packages
@@ -48,9 +48,11 @@ option(BUILD_LIBRARIES "whether to build the libraries" ON)
 cmake_dependent_option(BUILD_SHARED_LIBS "Build shared libraries" ON
   "BUILD_LIBRARIES" OFF)
 option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
-option(INSTALL_UNSTABLE_PROTOCOLS "whether to install the unstable protocols" ON)
-option(INSTALL_STAGING_PROTOCOLS "whether to install the staging protocols" ON)
-option(INSTALL_EXPERIMENTAL_PROTOCOLS "whether to install the experimental protocols" ON)
+option(ENABLE_WAYLAND_PROTOCOLS "whether to build libraries from the wayland-protocols package" OFF)
+cmake_dependent_option(INSTALL_UNSTABLE_PROTOCOLS "whether to install the unstable protocols" ON
+  "ENABLE_WAYLAND_PROTOCOLS" OFF)
+cmake_dependent_option(INSTALL_STAGING_PROTOCOLS "whether to install the staging protocols" ON
+  "ENABLE_WAYLAND_PROTOCOLS" OFF)
 cmake_dependent_option(BUILD_EXAMPLES
   "whether to build the examples (requires BUILD_LIBRARIES to be ON)" OFF
   "BUILD_LIBRARIES" OFF)
@@ -104,6 +106,13 @@ if(BUILD_LIBRARIES)
 
   # required libraries
   pkg_check_modules(WAYLAND_CLIENT REQUIRED "wayland-client>=1.11.0")
+  pkg_get_variable(WAYLAND_PKGDATADIR wayland-client pkgdatadir)
+  if(NOT WAYLAND_PKGDATADIR)
+    set(WAYLAND_PKGDATADIR "/usr/share/wayland")
+    message(WARNING "pkgdatadir field not found in wayland.pc, fallback to ${WAYLAND_PKGDATADIR}")
+  else()
+    message(STATUS "Use [wayland] protocols found at ${WAYLAND_PKGDATADIR}")
+  endif()
   if(BUILD_SERVER)
     pkg_check_modules(WAYLAND_SERVER REQUIRED "wayland-server>=1.18.0")
   endif()
@@ -112,12 +121,28 @@ if(BUILD_LIBRARIES)
   pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor)
   pkg_libs_full_path(WAYLAND_CURSOR)
 
+  if(ENABLE_WAYLAND_PROTOCOLS)
+    pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+    pkg_get_variable(WAYLAND_PROTOCOLS_PKGDATADIR wayland-protocols pkgdatadir)
+    if(NOT WAYLAND_PROTOCOLS_PKGDATADIR)
+      set(WAYLAND_PROTOCOLS_PKGDATADIR "/usr/share/wayland-protocols")
+      message(WARNING "pkgdatadir field not found in wayland-protocols.pc, fallback to ${WAYLAND_PROTOCOLS_PKGDATADIR}")
+    else()
+      message(STATUS "Use [wayland-protocols] protocols found at ${WAYLAND_PROTOCOLS_PKGDATADIR}")
+    endif()
+  endif()
+
   # generate protocol source/headers from protocol XMLs
-  set(PROTO_XMLS "${CMAKE_SOURCE_DIR}/protocols/wayland.xml")
-  file(GLOB PROTO_XMLS_EXTRA "${CMAKE_SOURCE_DIR}/protocols/extra/*.xml")
-  file(GLOB PROTO_XMLS_UNSTABLE "${CMAKE_SOURCE_DIR}/protocols/unstable/*.xml")
-  file(GLOB PROTO_XMLS_STAGING "${CMAKE_SOURCE_DIR}/protocols/staging/*.xml")
-  file(GLOB PROTO_XMLS_EXPERIMENTAL "${CMAKE_SOURCE_DIR}/protocols/experimental/*.xml")
+  set(PROTO_XMLS "${WAYLAND_PKGDATADIR}/wayland.xml")
+  if(ENABLE_WAYLAND_PROTOCOLS)
+    set(_unique_interface_list)
+    file(GLOB _PROTO_XMLS_EXTRA "${WAYLAND_PROTOCOLS_PKGDATADIR}/stable/**/*.xml")
+    filter_out_older_versions("${_PROTO_XMLS_EXTRA}" "${_unique_interface_list}" PROTO_XMLS_EXTRA _unique_interface_list)
+    file(GLOB _PROTO_XMLS_UNSTABLE "${WAYLAND_PROTOCOLS_PKGDATADIR}/unstable/**/*.xml")
+    filter_out_older_versions("${_PROTO_XMLS_UNSTABLE}" "${_unique_interface_list}" PROTO_XMLS_UNSTABLE _unique_interface_list)
+    file(GLOB _PROTO_XMLS_STAGING "${WAYLAND_PROTOCOLS_PKGDATADIR}/staging/**/*.xml")
+    filter_out_older_versions("${_PROTO_XMLS_STAGING}" "${_unique_interface_list}" PROTO_XMLS_STAGING _unique_interface_list)
+  endif()
 
   include(build_client_libraries)
 
@@ -126,8 +151,11 @@ if(BUILD_LIBRARIES)
   endif()
 
   # Install libraries
-  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} ${PROTO_XMLS_STAGING} ${PROTO_XMLS_EXPERIMENTAL} DESTINATION "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp/protocols")
-  list(APPEND INSTALL_TARGETS wayland-client++ wayland-client-extra++ wayland-egl++ wayland-cursor++)
+  install(FILES ${PROTO_XMLS} ${PROTO_XMLS_EXTRA} ${PROTO_XMLS_UNSTABLE} ${PROTO_XMLS_STAGING} DESTINATION "${CMAKE_INSTALL_FULL_DATADIR}/waylandpp/protocols")
+  list(APPEND INSTALL_TARGETS wayland-client++ wayland-egl++ wayland-cursor++)
+  if(ENABLE_WAYLAND_PROTOCOLS)
+    list(APPEND INSTALL_TARGETS wayland-client-extra++)
+  endif()
   if (INSTALL_UNSTABLE_PROTOCOLS)
 	  list(APPEND INSTALL_TARGETS wayland-client-unstable++)
     if(BUILD_SERVER)
@@ -140,14 +168,11 @@ if(BUILD_LIBRARIES)
 	    list(APPEND INSTALL_TARGETS wayland-server-staging++)
     endif()
   endif()
-  if (INSTALL_EXPERIMENTAL_PROTOCOLS)
-	  list(APPEND INSTALL_TARGETS wayland-client-experimental++)
-    if(BUILD_SERVER)
-	    list(APPEND INSTALL_TARGETS wayland-server-experimental++)
-    endif()
-  endif()
   if(BUILD_SERVER)
-    list(APPEND INSTALL_TARGETS wayland-server++ wayland-server-extra++)
+    list(APPEND INSTALL_TARGETS wayland-server++)
+    if(ENABLE_WAYLAND_PROTOCOLS)
+      list(APPEND INSTALL_TARGETS wayland-server-extra++)
+    endif()
   endif()
   install(TARGETS ${INSTALL_TARGETS} EXPORT ${CMAKE_PROJECT_NAME}-targets
     LIBRARY DESTINATION "${CMAKE_INSTALL_FULL_LIBDIR}"
@@ -190,7 +215,7 @@ if(BUILD_DOCUMENTATION)
 
   add_custom_command(
     OUTPUT "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html/index.html"
-    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" ${PROTO_FILES} ${PROTO_FILES_EXTRA} ${PROTO_FILES_UNSTABLE} ${PROTO_FILES_STAGING} ${PROTO_FILES_EXPERIMENTAL}
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" ${PROTO_FILES} ${PROTO_FILES_EXTRA} ${PROTO_FILES_UNSTABLE} ${PROTO_FILES_STAGING}
     COMMAND ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMENT "Generating API documentation with Doxygen"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"

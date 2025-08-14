@@ -21,67 +21,54 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.14.0")
   target_link_options(wayland-client++ PRIVATE "-Wl,--no-undefined")
 endif()
 
-# build wayland-extra++ library
-set(PROTO_FILES_EXTRA
-  "wayland-client-protocol-extra.hpp"
-  "wayland-client-protocol-extra.cpp")
-generate_cpp_client_files("${PROTO_XMLS_EXTRA}" "${PROTO_FILES_EXTRA}" "" "")
-set(WAYLAND_CLIENT_EXTRA_HEADERS
-  "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp")
-define_library(wayland-client-extra++
-  "${WAYLAND_CLIENT_CFLAGS}"
-  "${WAYLAND_CLIENT_LINK_LIBRARIES}"
-  "${WAYLAND_CLIENT_EXTRA_HEADERS}"
-  wayland-client-protocol-extra.cpp
-  wayland-client-protocol-extra.hpp
-  wayland-client-protocol.hpp)
-target_link_libraries(wayland-client-extra++ INTERFACE wayland-client++)
-
-# build wayland-client-unstable++ library
-set(PROTO_FILES_UNSTABLE
-  "wayland-client-protocol-unstable.hpp"
-  "wayland-client-protocol-unstable.cpp")
-generate_cpp_client_files("${PROTO_XMLS_UNSTABLE}" "${PROTO_FILES_UNSTABLE}" "-x;wayland-client-protocol-extra.hpp" "${PROTO_FILES_EXTRA}")
-set(WAYLAND_CLIENT_UNSTABLE_HEADERS
-  "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-unstable.hpp")
-define_library(wayland-client-unstable++
-  "${WAYLAND_CLIENT_CFLAGS}"
-  "${WAYLAND_CLIENT_LINK_LIBRARIES}"
-  "${WAYLAND_CLIENT_UNSTABLE_HEADERS}"
-  wayland-client-protocol-unstable.cpp
-  wayland-client-protocol-unstable.hpp
-  wayland-client-protocol.hpp)
-target_link_libraries(wayland-client-unstable++ INTERFACE wayland-client-extra++)
-
-# build wayland-client-staging++ library
-set(PROTO_FILES_STAGING
-  "wayland-client-protocol-staging.hpp"
-  "wayland-client-protocol-staging.cpp")
-generate_cpp_client_files("${PROTO_XMLS_STAGING}" "${PROTO_FILES_STAGING}" "-x;wayland-client-protocol-extra.hpp" "${PROTO_FILES_EXTRA}")
-set(WAYLAND_CLIENT_STAGING_HEADERS
-  "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-staging.hpp")
-define_library(wayland-client-staging++
-  "${WAYLAND_CLIENT_CFLAGS}"
-  "${WAYLAND_CLIENT_LINK_LIBRARIES}"
-  "${WAYLAND_CLIENT_STAGING_HEADERS}"
-  wayland-client-protocol-staging.cpp
-  wayland-client-protocol-staging.hpp
-  wayland-client-protocol.hpp)
-
-# build wayland-client-experimental++ library
-set(PROTO_FILES_EXPERIMENTAL
-  "wayland-client-protocol-experimental.hpp"
-  "wayland-client-protocol-experimental.cpp")
-generate_cpp_client_files("${PROTO_XMLS_EXPERIMENTAL}" "${PROTO_FILES_EXPERIMENTAL}" "-x;wayland-client-protocol-unstable.hpp" "${PROTO_FILES_UNSTABLE}")
-set(WAYLAND_CLIENT_STAGING_HEADERS
-  "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-experimental.hpp")
-define_library(wayland-client-experimental++
-  "${WAYLAND_CLIENT_CFLAGS}"
-  "${WAYLAND_CLIENT_LINK_LIBRARIES}"
-  "${WAYLAND_CLIENT_STAGING_HEADERS}"
-  wayland-client-protocol-experimental.cpp
-  wayland-client-protocol-experimental.hpp
-  wayland-client-protocol.hpp)
+if(ENABLE_WAYLAND_PROTOCOLS)
+  # build wayland-extra++ library
+  set(PROTO_FILES_EXTRA
+    "wayland-client-protocol-extra.hpp"
+    "wayland-client-protocol-extra.cpp")
+  generate_cpp_client_files("${PROTO_XMLS_EXTRA}" "${PROTO_FILES_EXTRA}" "" "")
+  set(WAYLAND_CLIENT_EXTRA_HEADERS
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-extra.hpp")
+  define_library(wayland-client-extra++
+    "${WAYLAND_CLIENT_CFLAGS}"
+    "${WAYLAND_CLIENT_LINK_LIBRARIES}"
+    "${WAYLAND_CLIENT_EXTRA_HEADERS}"
+    wayland-client-protocol-extra.cpp
+    wayland-client-protocol-extra.hpp
+    wayland-client-protocol.hpp)
+  target_link_libraries(wayland-client-extra++ INTERFACE wayland-client++)
+  
+  # build wayland-client-unstable++ library
+  set(PROTO_FILES_UNSTABLE
+    "wayland-client-protocol-unstable.hpp"
+    "wayland-client-protocol-unstable.cpp")
+  generate_cpp_client_files("${PROTO_XMLS_UNSTABLE}" "${PROTO_FILES_UNSTABLE}" "-x;wayland-client-protocol-extra.hpp" "${PROTO_FILES_EXTRA}")
+  set(WAYLAND_CLIENT_UNSTABLE_HEADERS
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-unstable.hpp")
+  define_library(wayland-client-unstable++
+    "${WAYLAND_CLIENT_CFLAGS}"
+    "${WAYLAND_CLIENT_LINK_LIBRARIES}"
+    "${WAYLAND_CLIENT_UNSTABLE_HEADERS}"
+    wayland-client-protocol-unstable.cpp
+    wayland-client-protocol-unstable.hpp
+    wayland-client-protocol.hpp)
+  target_link_libraries(wayland-client-unstable++ INTERFACE wayland-client-extra++)
+  
+  # build wayland-client-staging++ library
+  set(PROTO_FILES_STAGING
+    "wayland-client-protocol-staging.hpp"
+    "wayland-client-protocol-staging.cpp")
+  generate_cpp_client_files("${PROTO_XMLS_STAGING}" "${PROTO_FILES_STAGING}" "-x;wayland-client-protocol-extra.hpp" "${PROTO_FILES_EXTRA}")
+  set(WAYLAND_CLIENT_STAGING_HEADERS
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-staging.hpp")
+  define_library(wayland-client-staging++
+    "${WAYLAND_CLIENT_CFLAGS}"
+    "${WAYLAND_CLIENT_LINK_LIBRARIES}"
+    "${WAYLAND_CLIENT_STAGING_HEADERS}"
+    wayland-client-protocol-staging.cpp
+    wayland-client-protocol-staging.hpp
+    wayland-client-protocol.hpp)
+endif()
 
 # build wayland-egl++ library
 define_library(wayland-egl++
