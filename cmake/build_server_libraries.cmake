@@ -20,7 +20,7 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.14.0")
   target_link_options(wayland-server++ PRIVATE "-Wl,--no-undefined")
 endif()
 
-if(ENABLE_WAYLAND_PROTOCOLS)
+if(INSTALL_EXTRA_PROTOCOLS)
   # build wayland-server-extra++ library
   set(PROTO_FILES_EXTRA
     "wayland-server-protocol-extra.hpp"
@@ -34,7 +34,9 @@ if(ENABLE_WAYLAND_PROTOCOLS)
     "${WAYLAND_SERVER_EXTRA_HEADERS}"
     wayland-server-protocol-extra.cpp wayland-server-protocol-extra.hpp wayland-server-protocol.hpp)
   target_link_libraries(wayland-server-extra++ INTERFACE wayland-server++)
+endif()
 
+if(INSTALL_UNSTABLE_PROTOCOLS)
   # build wayland-server-unstable++ library
   set(PROTO_FILES_UNSTABLE
     "wayland-server-protocol-unstable.hpp"
@@ -50,7 +52,9 @@ if(ENABLE_WAYLAND_PROTOCOLS)
     wayland-server-protocol-unstable.hpp
     wayland-server-protocol.hpp)
   target_link_libraries(wayland-server-unstable++ INTERFACE wayland-server-extra++)
+endif()
 
+if(INSTALL_STAGING_PROTOCOLS)
   # build wayland-server-staging++ library
   set(PROTO_FILES_STAGING
     "wayland-server-protocol-staging.hpp"
@@ -64,5 +68,22 @@ if(ENABLE_WAYLAND_PROTOCOLS)
     "${WAYLAND_SERVER_STAGING_HEADERS}"
     wayland-server-protocol-staging.cpp
     wayland-server-protocol-staging.hpp
+    wayland-server-protocol.hpp)
+endif()
+
+if(INSTALL_EXPERIMENTAL_PROTOCOLS)
+  # build wayland-server-experimental++ library
+  set(PROTO_FILES_EXPERIMENTAL
+    "wayland-server-protocol-experimental.hpp"
+    "wayland-server-protocol-experimental.cpp")
+  generate_cpp_server_files("${PROTO_XMLS_EXPERIMENTAL}" "${PROTO_FILES_EXPERIMENTAL}" "-x;wayland-server-protocol-extra.hpp;-x;wayland-server-protocol-unstable.hpp" "${PROTO_FILES_EXTRA}" "${PROTO_FILES_UNSTABLE}")
+  set(WAYLAND_SERVER_EXPERIMENTAL_HEADERS
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-experimental.hpp")
+  define_library(wayland-server-experimental++
+    "${WAYLAND_SERVER_CFLAGS}"
+    "${WAYLAND_SERVER_LINK_LIBRARIES}"
+    "${WAYLAND_SERVER_EXPERIMENTAL_HEADERS}"
+    wayland-server-protocol-experimental.cpp
+    wayland-server-protocol-experimental.hpp
     wayland-server-protocol.hpp)
 endif()

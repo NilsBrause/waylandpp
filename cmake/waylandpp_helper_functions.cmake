@@ -40,12 +40,12 @@ function(define_library TARGET CFLAGS LIBRARIES HEADERS)
 endfunction()
 
 # generate server protocol source/headers from protocol XMLs
-function(generate_cpp_server_files PROTO_XMLS PROTO_FILES EXTRA_CMD_ARGS EXTRA_DEPENDS)
+function(generate_cpp_server_files PROTO_XMLS PROTO_FILES EXTRA_CMD_ARGS)
     list(APPEND COMMAND_LINE_ARGS ${PROTO_XMLS} ${PROTO_FILES} ${EXTRA_CMD_ARGS})
     add_custom_command(
         OUTPUT ${PROTO_FILES}
         COMMAND "${WAYLAND_SCANNERPP}" "-s" "on" ${COMMAND_LINE_ARGS}
-        DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS} ${EXTRA_DEPENDS})
+        DEPENDS "${WAYLAND_SCANNERPP}" ${PROTO_XMLS} ${ARGN})
 endfunction()
 
 # get unique interface name from xml file name

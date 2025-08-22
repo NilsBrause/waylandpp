@@ -32,15 +32,23 @@ by a `make`. After that, `make install` will install the library.
 There are several CMake variables that can be set in order to
 customise the build and install process:
 
-CMake Variable                   | Effect                                             | Default Value
--------------------------------- | ---------------------------------------------------|---------------
-`BUILD_SCANNER`                  | Whether to build the scanner                       | ON
-`BUILD_LIBRARIES`                | Whether to build the libraries                     | ON
-`BUILD_DOCUMENTATION`            | Whether to build the documentation                 | ON if doxygen is available
-`BUILD_EXAMPLES`                 | Whether to build the examples                      | OFF
-`INSTALL_UNSTABLE_PROTOCOLS`     | Whether to install the unstable protocols          | ON
-`INSTALL_STAGING_PROTOCOLS`      | Whether to install the staging protocols           | ON
-`INSTALL_EXPERIMENTAL_PROTOCOLS` | Whether to install the experimental protocols      | ON
+CMake Variable                   | Effect                                                       | Default Value
+-------------------------------- | -------------------------------------------------------------|---------------
+`BUILD_SCANNER`                  | Whether to build the scanner                                 | ON
+`BUILD_LIBRARIES`                | Whether to build the libraries                               | ON
+`BUILD_DOCUMENTATION`            | Whether to build the documentation                           | ON if doxygen is available
+`BUILD_EXAMPLES`                 | Whether to build the examples                                | OFF
+`INSTALL_EXTRA_PROTOCOLS`        | Whether to install additional stable protocols               | ON
+`INSTALL_UNSTABLE_PROTOCOLS`     | Whether to install the unstable protocols                    | ON
+`INSTALL_STAGING_PROTOCOLS`      | Whether to install the staging protocols                     | ON
+`INSTALL_EXPERIMENTAL_PROTOCOLS` | Whether to install the experimental protocols                | ON
+`USE_SYSTEM_PROTOCOLS`           | Whether to use system protocols instead of bundled protocols | OFF
+
+Notes:
+- When using the system protocols, the experimental protocols cannot be installed.
+- The experimental protocols require installing the unstable protocols.
+- The unstable and staging protocols require installing the additional stable protocols.
+- Documentation is only built for the installed protocols.
 
 The installation root can also be changed using the environment variable
 `DESTDIR` when using `make install`.

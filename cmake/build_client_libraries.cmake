@@ -21,7 +21,7 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.14.0")
   target_link_options(wayland-client++ PRIVATE "-Wl,--no-undefined")
 endif()
 
-if(ENABLE_WAYLAND_PROTOCOLS)
+if(INSTALL_EXTRA_PROTOCOLS)
   # build wayland-extra++ library
   set(PROTO_FILES_EXTRA
     "wayland-client-protocol-extra.hpp"
@@ -37,7 +37,9 @@ if(ENABLE_WAYLAND_PROTOCOLS)
     wayland-client-protocol-extra.hpp
     wayland-client-protocol.hpp)
   target_link_libraries(wayland-client-extra++ INTERFACE wayland-client++)
-  
+endif()
+
+if(INSTALL_UNSTABLE_PROTOCOLS)
   # build wayland-client-unstable++ library
   set(PROTO_FILES_UNSTABLE
     "wayland-client-protocol-unstable.hpp"
@@ -53,7 +55,9 @@ if(ENABLE_WAYLAND_PROTOCOLS)
     wayland-client-protocol-unstable.hpp
     wayland-client-protocol.hpp)
   target_link_libraries(wayland-client-unstable++ INTERFACE wayland-client-extra++)
-  
+endif()
+
+if(INSTALL_STAGING_PROTOCOLS)
   # build wayland-client-staging++ library
   set(PROTO_FILES_STAGING
     "wayland-client-protocol-staging.hpp"
@@ -67,6 +71,23 @@ if(ENABLE_WAYLAND_PROTOCOLS)
     "${WAYLAND_CLIENT_STAGING_HEADERS}"
     wayland-client-protocol-staging.cpp
     wayland-client-protocol-staging.hpp
+    wayland-client-protocol.hpp)
+endif()
+
+if(INSTALL_EXPERIMENTAL_PROTOCOLS)
+  # build wayland-client-experimental++ library
+  set(PROTO_FILES_EXPERIMENTAL
+    "wayland-client-protocol-experimental.hpp"
+    "wayland-client-protocol-experimental.cpp")
+  generate_cpp_client_files("${PROTO_XMLS_EXPERIMENTAL}" "${PROTO_FILES_EXPERIMENTAL}" "-x;wayland-client-protocol-extra.hpp;-x;wayland-client-protocol-unstable.hpp" "${PROTO_FILES_EXTRA}" "${PROTO_FILES_UNSTABLE}")
+  set(WAYLAND_CLIENT_EXPERIMENTAL_HEADERS
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-experimental.hpp")
+  define_library(wayland-client-experimental++
+    "${WAYLAND_CLIENT_CFLAGS}"
+    "${WAYLAND_CLIENT_LINK_LIBRARIES}"
+    "${WAYLAND_CLIENT_EXPERIMENTAL_HEADERS}"
+    wayland-client-protocol-experimental.cpp
+    wayland-client-protocol-experimental.hpp
     wayland-client-protocol.hpp)
 endif()
 
