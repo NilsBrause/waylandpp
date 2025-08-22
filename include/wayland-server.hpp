@@ -27,6 +27,7 @@
 #define WAYLAND_SERVER_HPP
 
 #include <atomic>
+#include <cstdint>
 #include <functional>
 #include <list>
 #include <memory>
