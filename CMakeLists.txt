@@ -157,11 +157,11 @@ if(BUILD_LIBRARIES)
       filter_out_older_versions("${_PROTO_XMLS_STAGING}" "${_unique_interface_list}" PROTO_XMLS_STAGING _unique_interface_list)
     endif()
   else()
-    set(PROTO_XMLS "${CMAKE_SOURCE_DIR}/protocols/wayland.xml")
-    file(GLOB PROTO_XMLS_EXTRA "${CMAKE_SOURCE_DIR}/protocols/extra/*.xml")
-    file(GLOB PROTO_XMLS_UNSTABLE "${CMAKE_SOURCE_DIR}/protocols/unstable/*.xml")
-    file(GLOB PROTO_XMLS_STAGING "${CMAKE_SOURCE_DIR}/protocols/staging/*.xml")
-    file(GLOB PROTO_XMLS_EXPERIMENTAL "${CMAKE_SOURCE_DIR}/protocols/experimental/*.xml")
+    set(PROTO_XMLS "${CMAKE_CURRENT_SOURCE_DIR}/protocols/wayland.xml")
+    file(GLOB PROTO_XMLS_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/protocols/extra/*.xml")
+    file(GLOB PROTO_XMLS_UNSTABLE "${CMAKE_CURRENT_SOURCE_DIR}/protocols/unstable/*.xml")
+    file(GLOB PROTO_XMLS_STAGING "${CMAKE_CURRENT_SOURCE_DIR}/protocols/staging/*.xml")
+    file(GLOB PROTO_XMLS_EXPERIMENTAL "${CMAKE_CURRENT_SOURCE_DIR}/protocols/experimental/*.xml")
   endif()
 
   include(build_client_libraries)
@@ -257,7 +257,7 @@ if(BUILD_DOCUMENTATION)
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" ${DOCUMENTATION_DEPENDENCIES}
     COMMAND ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
     COMMENT "Generating API documentation with Doxygen"
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     VERBATIM
   )
   add_custom_target(doc ALL DEPENDS "${WAYLANDPP_DOXYGEN_OUTPUT_DIRECTORY}/html/index.html")
