@@ -87,3 +87,20 @@ if(INSTALL_EXPERIMENTAL_PROTOCOLS)
     wayland-server-protocol-experimental.hpp
     wayland-server-protocol.hpp)
 endif()
+
+if(INSTALL_PLASMA_PROTOCOLS)
+  set(PROTO_FILES_PLASMA
+    "wayland-server-protocol-plasma.hpp"
+    "wayland-server-protocol-plasma.cpp")
+  generate_cpp_server_files("${PROTO_XMLS_PLASMA}" "${PROTO_FILES_PLASMA}" "-x;wayland-server-protocol.hpp" "")
+  set(WAYLAND_SERVER_PLASMA_HEADERS
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-server-protocol-plasma.hpp")
+  define_library(wayland-server-plasma++
+    "${WAYLAND_SERVER_CFLAGS}"
+    "${WAYLAND_SERVER_LIBRARIES}"
+    "${WAYLAND_SERVER_PLASMA_HEADERS}"
+    wayland-server-protocol-plasma.cpp
+    wayland-server-protocol-plasma.hpp
+    wayland-server-protocol.hpp)
+  target_link_libraries(wayland-server-plasma++ INTERFACE wayland-server++)
+endif()

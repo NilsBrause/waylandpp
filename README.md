@@ -42,6 +42,7 @@ CMake Variable                   | Effect                                       
 `INSTALL_UNSTABLE_PROTOCOLS`     | Whether to install the unstable protocols                    | ON
 `INSTALL_STAGING_PROTOCOLS`      | Whether to install the staging protocols                     | ON
 `INSTALL_EXPERIMENTAL_PROTOCOLS` | Whether to install the experimental protocols                | ON
+`INSTALL_PLASMA_PROTOCOLS`       | Whether to install the plasma protocols                      | OFF
 `USE_SYSTEM_PROTOCOLS`           | Whether to use system protocols instead of bundled protocols | OFF
 
 Notes:
