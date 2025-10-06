@@ -621,13 +621,19 @@ int resource_t::c_dispatcher(const void *implementation, void *target, uint32_t 
     {
       // int_32_t
     case 'i':
-    case 'h':
-    case 'f':
       a = args[c].i;
       break;
       // uint32_t
     case 'u':
       a = args[c].u;
+      break;
+      // fd
+    case 'h':
+      a = args[c].h;
+      break;
+      // fixed
+    case 'f':
+      a = wl_fixed_to_double(args[c].f);
       break;
       // string
     case 's':
