@@ -64,6 +64,8 @@ option(BUILD_SERVER "whether to build the server bindings." ON)
 # To activate the following option, it is necessary to deactivate option INSTALL_EXPERIMENTAL_PROTOCOLS and activate option USE_SYSTEM_PROTOCOLS.
 cmake_dependent_option(INSTALL_WLR_PROTOCOLS "whether to build the library based on the wlr protocols" OFF
   USE_SYSTEM_PROTOCOLS OFF)
+cmake_dependent_option(INSTALL_PLASMA_PROTOCOLS "whether to build the library based on the plasma protocols" OFF
+  USE_SYSTEM_PROTOCOLS OFF)
 
 # Do not report undefined references in libraries, since the protocol libraries cannot be used on their own.
 if(CMAKE_SHARED_LINKER_FLAGS)
@@ -142,10 +144,15 @@ if(BUILD_LIBRARIES)
       endif()
     endif()
   endif()
+
   if(INSTALL_WLR_PROTOCOLS)
     pkg_check_modules(WLR_PROTOCOLS REQUIRED wlr-protocols)
     pkg_get_variable(WLR_PROTOCOLS_PKGDATADIR wlr-protocols pkgdatadir)
     message(STATUS "Use [wlr-protocols] protocols found at ${WLR_PROTOCOLS_PKGDATADIR}")
+  endif()
+  if(INSTALL_PLASMA_PROTOCOLS)
+    find_package(PlasmaWaylandProtocols REQUIRED)
+    message(STATUS "Use [plasma-wayland-protocols] protocols found at ${PLASMA_WAYLAND_PROTOCOLS_DIR}")
   endif()
 
   # generate protocol source/headers from protocol XMLs
@@ -174,6 +181,15 @@ if(BUILD_LIBRARIES)
   if(INSTALL_WLR_PROTOCOLS)
     file(GLOB _PROTO_XMLS_WLR "${WLR_PROTOCOLS_PKGDATADIR}/**/*.xml")
     filter_out_older_versions("${_PROTO_XMLS_WLR}" "${_unique_interface_list}" PROTO_XMLS_WLR _unique_interface_list)
+  endif()
+
+  if(INSTALL_PLASMA_PROTOCOLS)
+    file(GLOB _PROTO_XMLS_PLASMA "${PLASMA_WAYLAND_PROTOCOLS_DIR}/*.xml")
+    # conflicts with plasma-virtual-desktop.xml
+    list(FILTER _PROTO_XMLS_PLASMA EXCLUDE REGEX "org-kde-plasma-virtual-desktop.xml")
+    # conflicts with screencast.xml
+    list(FILTER _PROTO_XMLS_PLASMA EXCLUDE REGEX "zkde-screencast-unstable-v1.xml")
+    filter_out_older_versions("${_PROTO_XMLS_PLASMA}" "${_unique_interface_list}" PROTO_XMLS_PLASMA _unique_interface_list)
   endif()
 
   include(build_client_libraries)
@@ -215,6 +231,12 @@ if(BUILD_LIBRARIES)
     list(APPEND INSTALL_TARGETS wayland-client-wlr++)
     if(BUILD_SERVER)
       list(APPEND INSTALL_TARGETS wayland-server-wlr++)
+    endif()
+  endif()
+  if(INSTALL_PLASMA_PROTOCOLS)
+    list(APPEND INSTALL_TARGETS wayland-client-plasma++)
+    if(BUILD_SERVER)
+      list(APPEND INSTALL_TARGETS wayland-server-plasma++)
     endif()
   endif()
   install(TARGETS ${INSTALL_TARGETS} EXPORT ${CMAKE_PROJECT_NAME}-targets
@@ -271,6 +293,9 @@ if(BUILD_DOCUMENTATION)
   endif()
   if (INSTALL_WLR_PROTOCOLS)
     set(DOCUMENTATION_DEPENDENCIES ${DOCUMENTATION_DEPENDENCIES} ${PROTO_FILES_WLR})
+  endif()
+  if (INSTALL_PLASMA_PROTOCOLS)
+    set(DOCUMENTATION_DEPENDENCIES ${DOCUMENTATION_DEPENDENCIES} ${PROTO_FILES_PLASMA})
   endif()
 
   add_custom_command(

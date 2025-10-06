@@ -126,3 +126,19 @@ if(INSTALL_WLR_PROTOCOLS)
     wayland-client-protocol.hpp)
   target_link_libraries(wayland-client-wlr++ INTERFACE wayland-client-extra++)
 endif()
+if(INSTALL_PLASMA_PROTOCOLS)
+  set(PROTO_FILES_PLASMA
+    "wayland-client-protocol-plasma.hpp"
+    "wayland-client-protocol-plasma.cpp")
+  generate_cpp_client_files("${PROTO_XMLS_PLASMA}" "${PROTO_FILES_PLASMA}" "-x;wayland-client-protocol.hpp" "")
+  set(WAYLAND_CLIENT_PLASMA_HEADERS
+    "${CMAKE_CURRENT_BINARY_DIR}/wayland-client-protocol-plasma.hpp")
+define_library(wayland-client-plasma++
+  "${WAYLAND_CLIENT_CFLAGS}"
+  "${WAYLAND_CLIENT_LIBRARIES}"
+  "${WAYLAND_CLIENT_PLASMA_HEADERS}"
+  wayland-client-protocol-plasma.cpp
+  wayland-client-protocol-plasma.hpp
+  wayland-client-protocol.hpp)
+  target_link_libraries(wayland-client-plasma++ INTERFACE wayland-client++)
+endif()
