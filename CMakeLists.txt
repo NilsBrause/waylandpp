@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2025 Philipp Kerling, Nils Christopher Brause, Craig Andrews, Tobias Kortkamp, Balint Reczey
+# Copyright (c) 2014-2026 Philipp Kerling, Nils Christopher Brause, Craig Andrews, Tobias Kortkamp, Balint Reczey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 3.6...4.0)
+cmake_minimum_required(VERSION 3.22...4.0)
 project(waylandpp VERSION 1.0.0 LANGUAGES CXX)
 
 # packages
